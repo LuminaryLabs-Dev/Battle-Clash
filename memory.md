@@ -19,6 +19,9 @@ audio, text, or balance.
 - A GitHub Pages workflow deploys the production `dist/` artifact only when
   `main` is pushed; adding the workflow does not authorize creating or pushing
   `main` before the implementation is ready.
+- GitHub Pages is configured to use Actions at
+  `https://luminarylabs-dev.github.io/Battle-Clash/`. The repository remains
+  private, but a successful Pages deployment will be public.
 
 ## Repository Policy
 

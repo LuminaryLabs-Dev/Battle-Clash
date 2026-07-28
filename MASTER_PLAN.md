@@ -424,6 +424,11 @@ future implementation is pushed there, it must:
 The workflow can exist safely on the planning branch without deploying it.
 There is no `main` branch or deployable application yet.
 
+GitHub Pages is configured for Actions at
+`https://luminarylabs-dev.github.io/Battle-Clash/`. The source repository is
+private; the deployed Pages site will be public after a successful `main`
+workflow run.
+
 ## Implementation Sequence
 
 ### Phase 0: planning repository

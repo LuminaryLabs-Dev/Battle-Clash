@@ -7,7 +7,7 @@ build when `main` is pushed, without creating or pushing `main` now.
 
 ## Status
 
-In progress.
+Complete. GitHub accepted the workflow and Pages now uses the Actions source.
 
 ## Success Criteria
 
