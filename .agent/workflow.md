@@ -8,4 +8,6 @@
 | Validate local scope | Complete | Codex |
 | Create private GitHub remote | Complete | Codex |
 | Push non-main planning branch | Complete | Codex |
+| Add main-push GitHub Pages workflow | In progress | Codex |
+| Validate and publish workflow on planning branch | Pending | Codex |
 | Implement gameplay | Blocked pending explicit user authorization | User |

@@ -2,17 +2,18 @@
 
 ## Goal
 
-Publish the planning-only Battle Clash repository and preserve a
-decision-complete architecture plan for future implementation.
+Add and validate a GitHub Pages workflow that deploys the future production
+build when `main` is pushed, without creating or pushing `main` now.
 
 ## Status
 
-Complete. The private remote and planning branch are verified.
+In progress.
 
 ## Success Criteria
 
-- Required agent workspace files exist.
-- Root goal, memory, instructions, README, and master plan exist.
-- No gameplay source, package dependencies, or generated build artifacts exist.
-- Private `LuminaryLabs-Dev/Battle-Clash` remote exists.
-- Only the non-main planning branch is pushed.
+- `.github/workflows/deploy-pages.yml` exists.
+- The only automatic trigger is a push to `main`.
+- The workflow uses the future npm build contract and uploads `dist/`.
+- The workflow requires `dist/index.html` before deployment.
+- The change is pushed only to `agent/planning-foundation`.
+- No `main` branch is created or pushed.

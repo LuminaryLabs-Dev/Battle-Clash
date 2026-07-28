@@ -410,6 +410,20 @@ agent/planning-foundation
 Do not create or push `main` during planning. A later default-branch decision
 requires explicit user direction.
 
+### Deployment workflow
+
+`.github/workflows/deploy-pages.yml` listens only for pushes to `main`. When a
+future implementation is pushed there, it must:
+
+- install exactly from the committed npm lockfile with `npm ci`
+- run the repository's `npm run build`
+- require `dist/index.html`
+- upload only `dist/`
+- deploy through GitHub Pages with minimal Pages permissions
+
+The workflow can exist safely on the planning branch without deploying it.
+There is no `main` branch or deployable application yet.
+
 ## Implementation Sequence
 
 ### Phase 0: planning repository
@@ -518,4 +532,3 @@ requires explicit user direction.
 - The first playable claim and deferred scope remain accepted.
 - The implementation branch is confirmed and is not `main`.
 - The visual color key and hero controls are accepted.
-

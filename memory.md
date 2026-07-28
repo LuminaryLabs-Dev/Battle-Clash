@@ -16,10 +16,12 @@ audio, text, or balance.
 - Three.js is a presentation host only and never owns gameplay outcomes.
 - The first playable is a colored-cube greybox with a bird's-eye orthographic camera.
 - The first implementation branch must not be `main`.
+- A GitHub Pages workflow deploys the production `dist/` artifact only when
+  `main` is pushed; adding the workflow does not authorize creating or pushing
+  `main` before the implementation is ready.
 
 ## Repository Policy
 
 - This repository is private.
 - No gameplay implementation is authorized yet.
 - Update this file only when a lasting decision changes.
-
