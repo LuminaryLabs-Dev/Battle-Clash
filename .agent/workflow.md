@@ -16,5 +16,5 @@
 | Validate local player view and controls | Complete | Codex |
 | Validate two-browser room, ward, XP, and level gain | Complete | Codex |
 | Push implementation to main | Complete | Codex |
-| Recover Pages through main/docs after Actions billing rejection | In progress | Codex |
-| Verify Pages deployment and public game | Pending | Codex |
+| Recover Pages through main/docs after Actions billing rejection | Complete | Codex |
+| Verify Pages deployment and public game | Complete | Codex |

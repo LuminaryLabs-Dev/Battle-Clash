@@ -38,3 +38,18 @@
 - Proved two independent browser sessions auto-matched as defender and attacker.
 - Proved visible pointer deployment, synchronized combat, defender ward use,
   persistent XP, and a visible level-two result without console errors.
+
+## 2026-07-28 20:58:00 EDT
+
+- Pushed the validated implementation to `main` and made `main` the default branch.
+- Allowed `main` through the `github-pages` environment policy.
+- Confirmed the custom private-repository runner was blocked by the
+  organization's failed payment or Actions spending limit, not by the build.
+- Switched Pages to the supported `main/docs` publishing source and retained the
+  artifact workflow as a manual path for when billing is restored.
+- Completed managed Pages run `30412526291` successfully from commit `bbf4029`.
+- Verified the public URL returned HTTP 200 and Pages reported `built`.
+- Completed a live public dungeon run with a real pointer deployment, a win,
+  persistent XP, and zero browser console errors.
+- Proved two separate public browser sessions auto-matched into room 0 as
+  authoritative defender and remote attacker.

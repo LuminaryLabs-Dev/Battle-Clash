@@ -8,7 +8,8 @@ room, atomic game kits, and a Three.js bird's-eye host.
 
 ## Status
 
-In progress.
+Complete. Commit `bbf4029` deployed through GitHub Pages and the public site
+passed live solo and paired-browser validation.
 
 ## Success Criteria
 

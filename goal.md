@@ -8,8 +8,9 @@ progression, and a PeerJS attack/defend room.
 
 ## Status
 
-Implementation, deterministic proof, and local two-browser multiplayer proof
-are complete. GitHub `main`, Pages deployment, and live-site proof remain.
+Complete. The implementation is on `main`, the managed Pages deployment
+succeeded from `/docs`, and the public game passed solo and two-browser PeerJS
+proof without console errors.
 
 ## Release Criteria
 

@@ -29,6 +29,10 @@ console review.
   `output/playwright/local-peer-room/.playwright-cli/page-2026-07-29T00-41-27-383Z.png`
 - Production preview:
   `output/playwright/production-preview/.playwright-cli/page-2026-07-29T00-47-16-689Z.png`
+- Public launch:
+  `output/playwright/live-pages/.playwright-cli/page-2026-07-29T00-56-06-137Z.png`
+- Public terminal state:
+  `output/playwright/live-pages/.playwright-cli/page-2026-07-29T00-56-53-865Z.png`
 
 ## Observations
 
@@ -44,10 +48,12 @@ console review.
 - PASS: two networked wins produced Level 2, 84 / 135 XP, and one perk point.
 - PASS: reload restored Level 2 and 84 XP before reconnecting as attacker.
 - PASS: the production `dist/` preview loaded 49 Core World cells with no errors.
+- PASS: the public Pages URL returned HTTP 200 and completed a full solo run.
+- PASS: two public Pages sessions auto-matched as defender and attacker in room 0.
+- PASS: the public consoles reported zero errors and zero warnings.
 - PASS: both browser consoles reported zero errors and zero warnings.
 - PASS: the result state clearly exposes the next-run action.
 
 ## Disposition
 
-Local player-view acceptance passed. Public Pages proof remains a separate
-release gate.
+Local and public player-view acceptance passed.
