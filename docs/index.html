@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Battle Clash: level a cube delver party and raid an auto-matched dungeon room in a NexusEngine ECS greybox."
+    />
+    <meta name="theme-color" content="#07111f" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2313b8ff'/%3E%3Cpath d='M17 14h21c8 0 13 4 13 11 0 4-2 7-5 9 4 2 6 6 6 10 0 8-6 12-15 12H17V14zm12 10v7h8c3 0 4-1 4-4s-2-3-5-3h-7zm0 16v7h9c3 0 5-1 5-4 0-2-2-3-5-3h-9z' fill='%2307111f'/%3E%3C/svg%3E"
+    />
+    <title>Battle Clash</title>
+    <script type="module" crossorigin src="/Battle-Clash/assets/index-CWKHNLxo.js"></script>
+    <link rel="stylesheet" crossorigin href="/Battle-Clash/assets/index-B1lOE-hM.css">
+  </head>
+  <body>
+    <main id="app">
+      <canvas
+        id="game"
+        aria-label="Battle Clash dungeon. Deploy blue delvers on the glowing perimeter, then attack the purple Dungeon Heart."
+      ></canvas>
+
+      <header class="hero-panel" aria-label="Battle Clash objective">
+        <div class="brand-row">
+          <span class="brand-mark" aria-hidden="true">BC</span>
+          <div>
+            <p class="eyebrow">NEXUSENGINE DUNGEON RUN</p>
+            <h1>Battle Clash</h1>
+          </div>
+        </div>
+        <p id="objective" class="objective" aria-live="polite">
+          Deploy your delver party, then shatter the Dungeon Heart.
+        </p>
+        <div class="progression-strip" aria-label="Delver progression">
+          <span id="networkBadge" class="network-badge">MATCHMAKING</span>
+          <div class="xp-track" aria-hidden="true"><i id="xpFill"></i></div>
+          <span id="xpValue">0 / 100 XP</span>
+        </div>
+      </header>
+
+      <section class="status-panel" aria-label="Raid status">
+        <div>
+          <span class="status-label">RAID</span>
+          <strong id="phaseValue">DEPLOY</strong>
+        </div>
+        <div>
+          <span class="status-label">TIME</span>
+          <strong id="timeValue">45.0</strong>
+        </div>
+        <div>
+          <span class="status-label">DELVERS</span>
+          <strong id="raiderValue">8</strong>
+        </div>
+        <div>
+          <span class="status-label">HEART</span>
+          <strong id="coreValue">100%</strong>
+        </div>
+        <div>
+          <span class="status-label">ROLE</span>
+          <strong id="roleValue">SOLO</strong>
+        </div>
+        <div>
+          <span class="status-label">LEVEL</span>
+          <strong id="levelValue">1</strong>
+        </div>
+      </section>
+
+      <section class="hero-controls" aria-label="Hero controls">
+        <button id="deployModeButton" class="hero-button hero-button--selected" type="button" aria-pressed="true">
+          <span class="button-key">1</span>
+          <span><small>SELECT</small> BLUE DELVER</span>
+        </button>
+        <button id="startRaidButton" class="hero-button hero-button--primary" type="button">
+          <span class="button-key">SPACE</span>
+          <span><small>WHEN READY</small> START RAID</span>
+        </button>
+        <button id="resetButton" class="hero-button" type="button">
+          <span class="button-key">R</span>
+          <span><small>TRY AGAIN</small> RESET</span>
+        </button>
+        <button id="fortifyButton" class="hero-button hero-button--ward" type="button" hidden>
+          <span class="button-key">F</span>
+          <span><small>DEFENDER</small> FORTIFY HEART</span>
+        </button>
+      </section>
+
+      <div id="fieldPrompt" class="field-prompt" aria-live="polite">
+        Click a glowing blue edge tile to deploy a delver.
+      </div>
+
+      <section id="resultPanel" class="result-panel" hidden aria-live="assertive">
+        <p id="resultEyebrow" class="eyebrow">RAID COMPLETE</p>
+        <h2 id="resultTitle">Dungeon Heart shattered</h2>
+        <p id="resultCopy">Your delvers cleared the Obsidian Vault.</p>
+        <button id="playAgainButton" class="hero-button hero-button--primary" type="button">NEXT RUN</button>
+      </section>
+
+      <details class="advanced-panel">
+        <summary>Advanced</summary>
+        <div class="advanced-content">
+          <p><strong>Domain graph</strong></p>
+          <code id="domainValue">Loading Nexus domains…</code>
+          <p><strong>Live state</strong></p>
+          <code id="diagnosticValue">Entities 0 · Cells 0 · Tick 0</code>
+          <p><strong>Peer room</strong></p>
+          <code id="networkValue">PeerJS auto-discovery starting…</code>
+          <p class="legend">
+            <span><i class="swatch swatch--blue"></i> Delver</span>
+            <span><i class="swatch swatch--red"></i> Sentinel</span>
+            <span><i class="swatch swatch--purple"></i> Heart</span>
+            <span><i class="swatch swatch--orange"></i> Relic</span>
+          </p>
+        </div>
+      </details>
+
+      <section id="errorPanel" class="error-panel" hidden role="alert"></section>
+    </main>
+
+  </body>
+</html>

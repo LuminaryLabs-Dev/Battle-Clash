@@ -26,15 +26,17 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
   newly deployed delvers through data, not renderer logic.
 - Three.js owns browser input projection and presentation only.
 - The playable remains a colored-cube greybox with an orthographic bird's-eye camera.
-- The private repository deploys a public `dist/` artifact through GitHub Pages
-  when the default branch is pushed.
+- The private repository publishes the prebuilt `/docs` artifact from `main`
+  through GitHub Pages. The custom `dist/` artifact workflow remains manual
+  until organization Actions runner billing is restored.
 
 ## Repository And Release
 
 - Local folder: `/Users/crimsonwheeler/Documents/GitHub/Battle-Clash`
 - GitHub repository: `LuminaryLabs-Dev/Battle-Clash` (private)
 - Public Pages URL: `https://luminarylabs-dev.github.io/Battle-Clash/`
-- Default release workflow: `.github/workflows/deploy-pages.yml`
+- Active Pages source: `main` and `/docs`
+- Optional artifact workflow: `.github/workflows/deploy-pages.yml`
 
 ## Conventions
 

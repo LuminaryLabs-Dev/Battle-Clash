@@ -15,5 +15,6 @@
 | Validate deterministic Nexus simulation | Complete | Codex |
 | Validate local player view and controls | Complete | Codex |
 | Validate two-browser room, ward, XP, and level gain | Complete | Codex |
-| Push implementation to main | Pending | Codex |
-| Verify Pages workflow and public game | Pending | Codex |
+| Push implementation to main | Complete | Codex |
+| Recover Pages through main/docs after Actions billing rejection | In progress | Codex |
+| Verify Pages deployment and public game | Pending | Codex |

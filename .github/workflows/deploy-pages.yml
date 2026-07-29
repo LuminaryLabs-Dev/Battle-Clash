@@ -1,9 +1,7 @@
 name: Deploy Battle Clash to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: read

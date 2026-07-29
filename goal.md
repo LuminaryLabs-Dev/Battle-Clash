@@ -23,7 +23,7 @@ are complete. GitHub `main`, Pages deployment, and live-site proof remain.
 - Core Network owns session, authority, peer, and envelope descriptors.
 - Core Persistence owns the profile slot contract; browser storage is only an adapter.
 - Three.js and PeerJS never own gameplay outcomes.
-- Deterministic checks, production build, local human-view proof, Pages workflow,
+- Deterministic checks, production build, local human-view proof, Pages deployment,
   and public browser proof all pass.
 
 ## Later Product Work
@@ -33,4 +33,3 @@ are complete. GitHub `main`, Pages deployment, and live-site proof remain.
 - Hosted PeerServer plus production TURN infrastructure.
 - Defender-authored dungeon layouts and seasonal room rotation.
 - Original production art, sound, and animation.
-

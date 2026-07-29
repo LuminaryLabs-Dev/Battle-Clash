@@ -83,9 +83,16 @@ NAT environments.
 
 ## Deployment
 
-`.github/workflows/deploy-pages.yml` builds and publishes `dist/` whenever the
-default release branch is pushed. The GitHub repository remains private while
-the Pages game is public.
+The active Pages source is the prebuilt `/docs` folder on `main`, so a verified
+static build can publish even when private-repository Actions runners are
+unavailable. Refresh it with:
+
+```sh
+npm run build:pages
+```
+
+The artifact-based `.github/workflows/deploy-pages.yml` remains available as a
+manual release path when organization Actions billing is healthy. The GitHub
+repository remains private while the Pages game is public.
 
 See [MASTER_PLAN.md](MASTER_PLAN.md) for the domain and product roadmap.
-

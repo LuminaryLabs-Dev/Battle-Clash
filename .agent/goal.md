@@ -23,5 +23,5 @@ In progress.
 - PeerJS remains a transport adapter and failures preserve solo play.
 - Build and deterministic replay checks pass.
 - Local browser screenshots and interaction proof pass.
-- `main` is pushed and the GitHub Pages workflow succeeds.
+- `main` is pushed and the GitHub Pages deployment succeeds.
 - The public Pages game loads and is playable without console errors.

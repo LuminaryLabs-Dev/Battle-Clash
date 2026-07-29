@@ -200,6 +200,7 @@ PeerJS does not own:
 Battle-Clash/
 ├─ .agent/
 ├─ .github/workflows/deploy-pages.yml
+├─ docs/
 ├─ server/peer-server.mjs
 ├─ scripts/validate-simulation.mjs
 ├─ src/
@@ -268,5 +269,5 @@ Battle-Clash/
 - attacker command produces synchronized authoritative state
 - defender ward produces synchronized authoritative state
 - two runs visibly produce a level gain
-- `main` push triggers a successful Pages workflow
+- `main/docs` triggers a successful Pages deployment
 - public URL loads, plays, and reports no console errors

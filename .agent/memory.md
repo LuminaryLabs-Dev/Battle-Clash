@@ -16,7 +16,8 @@
 - Multiplayer failure degrades to a complete solo run.
 - Progression persists in the browser and scales newly deployed delvers by level.
 - Three.js is a presentation/input host only.
-- The Pages workflow publishes verified `dist/` output on the default release branch.
+- Pages publishes verified `/docs` output from `main`; the custom `dist/`
+  artifact workflow is manual while organization Actions billing is unavailable.
 
 ## Conventions
 
