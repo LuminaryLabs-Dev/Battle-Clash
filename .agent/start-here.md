@@ -13,5 +13,5 @@ Read in this order:
 9. `feedback.md`
 10. `change-log.md`
 
-No gameplay implementation is authorized yet.
-
+The first playable is implemented and locally proven. The active release lane
+is `main` push, GitHub Pages completion, and live public browser proof.

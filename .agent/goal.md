@@ -2,18 +2,26 @@
 
 ## Goal
 
-Add and validate a GitHub Pages workflow that deploys the future production
-build when `main` is pushed, without creating or pushing `main` now.
+Publicly deploy the first playable Battle Clash dungeon run using NexusEngine
+ECS, Core World, Core Network, persistent progression, a PeerJS attack/defend
+room, atomic game kits, and a Three.js bird's-eye host.
 
 ## Status
 
-Complete. GitHub accepted the workflow and Pages now uses the Actions source.
+In progress.
 
 ## Success Criteria
 
-- `.github/workflows/deploy-pages.yml` exists.
-- The only automatic trigger is a push to `main`.
-- The workflow uses the future npm build contract and uploads `dist/`.
-- The workflow requires `dist/index.html` before deployment.
-- The change is pushed only to `agent/planning-foundation`.
-- No `main` branch is created or pushed.
+- A player can deploy blue cube delvers and start a deterministic dungeon run.
+- Delvers move, target, attack, take defensive fire, and reach win or loss.
+- NexusEngine Core World owns the flat uniform-grid world contract.
+- NexusEngine Core Network owns session and authority contracts.
+- A second browser auto-discovers the defender host as attacker.
+- XP persists and two wins visibly produce a level gain.
+- Gameplay truth remains in ECS entities, components, resources, events, and atomic kits.
+- Three.js remains a presentation/input host.
+- PeerJS remains a transport adapter and failures preserve solo play.
+- Build and deterministic replay checks pass.
+- Local browser screenshots and interaction proof pass.
+- `main` is pushed and the GitHub Pages workflow succeeds.
+- The public Pages game loads and is playable without console errors.

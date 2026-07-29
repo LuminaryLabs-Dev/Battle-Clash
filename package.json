@@ -1,0 +1,26 @@
+{
+  "name": "battle-clash",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A NexusEngine ECS village-battle greybox rendered with Three.js.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "node scripts/validate-simulation.mjs",
+    "server": "node server/peer-server.mjs"
+  },
+  "dependencies": {
+    "nexusengine": "https://codeload.github.com/LuminaryLabs-Dev/NexusEngine/tar.gz/d90dccb6bb23678a9cba0b7cac7351819f4f4eb0",
+    "peer": "1.0.2",
+    "peerjs": "1.5.5",
+    "three": "0.185.1"
+  },
+  "devDependencies": {
+    "vite": "8.1.5"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

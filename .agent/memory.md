@@ -3,21 +3,25 @@
 ## Decisions
 
 - Display name: Battle Clash.
-- Repository name: `Battle-Clash`.
-- GitHub owner: verified `LuminaryLabs-Dev`.
-- Visibility: private.
-- Planning branch: `agent/planning-foundation`.
-- No `main` push.
-- No gameplay implementation yet.
-- GitHub Pages deployment is triggered only by a future push to `main` and
-  publishes the verified `dist/` production artifact.
-- Pages uses the GitHub Actions source. The private repository's eventual Pages
-  site is public at `https://luminarylabs-dev.github.io/Battle-Clash/`.
+- Repository: private `LuminaryLabs-Dev/Battle-Clash`.
+- Public game: `https://luminarylabs-dev.github.io/Battle-Clash/`.
+- Product direction: original dungeon attack/defend RPG greybox, not a village clone.
 - Architecture: deep game domains compose NexusEngine Core domains through
-  atomic idempotent kits; Three.js is a presentation host only.
+  atomic idempotent kits.
+- Core World owns the flat uniform-grid world.
+- Core Network owns session, peer, envelope, and authority descriptors.
+- Core Persistence owns the progression slot contract.
+- The defender peer hosts the authoritative ECS simulation.
+- PeerJS transports commands and snapshots through deterministic auto-discovered rooms.
+- Multiplayer failure degrades to a complete solo run.
+- Progression persists in the browser and scales newly deployed delvers by level.
+- Three.js is a presentation/input host only.
+- The Pages workflow publishes verified `dist/` output on the default release branch.
 
 ## Conventions
 
 - Reconcile active work in `.agent/workflow.md`.
 - Append meaningful progress to `.agent/change-log.md`.
+- Store human-view routing and proof in `.agent/feedback-packets/`.
+- Keep provider SDK details outside gameplay domains.
 - Mark unknown future product decisions as `TBD`.

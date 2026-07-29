@@ -1,0 +1,1 @@
+{"type":"task-created","id":"battle-clash-first-playable","time":"2026-07-28T23:02:32Z","intentKey":"build-deploy-first-playable","request":"Implement the Battle Clash colored-cube ECS greybox, push it to main, deploy it with GitHub Pages, and prove the public game is playable.","status":"in_progress"}

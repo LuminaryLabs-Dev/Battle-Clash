@@ -1,539 +1,272 @@
 # Battle Clash Master Plan
 
-## Summary
+## Product Direction
 
-Battle Clash will be an original, small browser village-battle game. The first
-playable is a deterministic greybox: colored cubes on a square battlefield,
-viewed through a bird's-eye orthographic Three.js camera.
-
-The architecture is deliberately layered:
+Battle Clash is a compact dungeon attack/defend RPG, not a village-building
+clone. The repeatable loop is:
 
 ```txt
-Browser shell
-└─ Three.js host adapters
-   └─ renderer-neutral descriptors
-      └─ Battle Clash composition
-         ├─ deep game domains
-         │  └─ atomic game kits
-         └─ NexusEngine Core domains
-            └─ ECS, resources, events, scheduler, snapshots
+load persistent delver profile
+  -> auto-discover an attack/defend room
+  -> deploy a party around the dungeon
+  -> run an authoritative deterministic battle
+  -> earn XP and levels
+  -> begin a stronger run
 ```
 
-Gameplay flows outward from ECS state to descriptors to Three.js. Input flows
-inward as semantic intents. Three.js never decides damage, targeting, economy,
-placement validity, movement, victory, or progression.
+The greybox uses original colored-cube visuals so systems, readability, and
+network authority can be proven before production content.
 
-## Product Shape
+## First Public Slice
 
-### First playable claim
+Required player actions:
 
-The player sees one compact enemy village, deploys a limited group of units
-along the map edge, starts a short raid, and watches units acquire targets,
-move, attack, take defensive fire, and either destroy the enemy Core or fail.
+- Attacker: deploy delvers, start the run, reset or continue.
+- Defender: observe the authoritative room, trigger one Heart ward, reset.
+- Solo: use attacker controls while matchmaking remains a progressive enhancement.
 
-### Required first-screen actions
+Hero controls stay on the first screen. Domain, room, entity, and tick details
+stay inside the Advanced foldout.
 
-Hero controls:
-
-- Select troop type.
-- Deploy troop.
-- Start raid.
-- Reset battle.
-
-Advanced foldout:
-
-- World seed.
-- Simulation speed.
-- Grid and path overlays.
-- ECS/entity inspector.
-- Snapshot save/load controls.
-- Camera tuning and diagnostics.
-
-### Explicitly deferred
-
-- Village editing and persistent building construction.
-- Multiple currencies and long-term upgrades.
-- Online multiplayer, clans, chat, matchmaking, or asynchronous attack servers.
-- Monetization, accounts, cloud saves, production art, audio, and animation.
-
-## Visual Target
+## Authority And Room Structure
 
 ```txt
-Camera        orthographic, angled bird's-eye, fixed readable battlefield
-Ground        muted green plane with a subtle square grid
-Player units  blue cubes
-Enemy units   red cubes
-Enemy Core    purple tall cube
-Defenses      dark red cubes
-Walls         gray low cubes
-Resources     orange cubes
-Projectiles   yellow small cubes
-Selection     cyan outline or ground marker
-Blocked tile  translucent red
-Valid tile    translucent green
+PeerServer signaling layer
+└─ deterministic room directory
+   ├─ room 0
+   ├─ room 1
+   └─ bounded overflow rooms
+
+one attack/defend room
+├─ defender host
+│  ├─ owns the NexusEngine instance
+│  ├─ accepts validated semantic commands
+│  ├─ advances deterministic ECS ticks
+│  └─ publishes authoritative snapshots
+└─ attacker peer
+   ├─ sends deploy, start, and reset commands
+   ├─ renders authoritative snapshots
+   └─ persists awarded progression
 ```
 
-The camera should frame the whole first battlefield at spawn. Pan and zoom may
-be added later, but they must not be required to understand the first raid.
+The first client claims a deterministic room ID. If that ID is already claimed,
+the next client receives a random peer ID and connects as attacker. Filled or
+failed rooms move discovery to the next bounded room. If signaling or WebRTC
+cannot connect, the client remains fully playable in solo mode.
 
-## Domain Architecture
+PeerJS and PeerServer only broker and transport. They do not own combat,
+progression, validation, or results. A production networking phase should add a
+hosted HTTPS PeerServer, TURN, authentication, abuse limits, and signed profile
+receipts.
 
-### Core layer
+## Domain Boundaries
 
-`n:realtime`
-
-- Owns ECS entities, components, resources, events, queries, scheduler phases,
-  deterministic ticks, and lifecycle surfaces.
-
-`n:core-world`
-
-- Owns world identity, seed, flat surface mapping, uniform-grid partitioning,
-  cell identity/lifecycle, focus, provider status, portable snapshots, and
-  deterministic diagnostics.
-- Does not own authored buildings, units, combat rules, Three.js meshes, GPU
-  state, or game-specific content.
-
-`n:core-object` and `n:object:placement`
-
-- Own renderer-neutral object identity, intrinsic bounds, pivots, ground
-  anchors, world transforms, grounding, fitting, overlap checks, and placement
-  validation.
-- Do not own building costs, construction rules, target priorities, or meshes.
-
-`n:core-data`
-
-- Owns state contracts, schemas, selectors, reset/load semantics, deterministic
-  random streams, completion/idempotency ledgers, and state digests.
-
-`n:core-spatial`
-
-- Owns transforms, bounds, zones, distances, and query descriptors.
-
-`n:core-simulation`
-
-- Owns generic resources, timers, cooldowns, objectives, proposal ordering,
-  resolution policy, and committed deterministic frames.
-- Does not own Battle Clash fiction or balance.
-
-`n:core-input`
-
-- Owns semantic actions and action state, not DOM or gameplay outcomes.
-
-`n:core-camera`
-
-- Owns camera intent, target, framing policy, and zoom descriptors, not the
-  `THREE.OrthographicCamera`.
-
-`n:core-graphics`
-
-- Owns renderer-neutral mesh, material, light, visibility, and effect
-  descriptors, not WebGL objects.
-
-`n:core-ui`
-
-- Owns HUD, prompt, selection, notification, and accessibility descriptors,
-  not concrete DOM.
-
-`n:core-physics`
-
-- Owns backend-neutral collider/contact/query contracts when needed. The first
-  playable should prefer deterministic grid/spatial rules over a full physics
-  backend.
-
-### Deep game-domain layer
-
-`battle-clash.world`
-
-- Composes Core World, Object, Placement, and Spatial.
-- Owns the authored battlefield definition, deployment perimeter, village
-  zones, walkability data, and mapping from authored cells to game entities.
-
-`battle-clash.roster`
-
-- Owns unit and building archetype data, team/faction data, spawn recipes, and
-  entity creation policy.
-
-`battle-clash.deployment`
-
-- Owns troop inventory for the current raid, legal edge deployment, deployment
-  commands, and deployment receipts.
-
-`battle-clash.navigation`
-
-- Owns target-reachable grid data, path requests, paths, movement intent, and
-  blocked-cell policy.
-- Uses Core Spatial and world cell data; it does not mutate combat health.
-
-`battle-clash.targeting`
-
-- Owns candidate evaluation, target priority data, target selection, target
-  loss, and retarget events.
-- Reads spatial and faction data; it does not apply damage.
-
-`battle-clash.combat`
-
-- Owns attack requests, ranges, cooldown use, damage resolution, health
-  mutation policy, destruction receipts, and projectile gameplay descriptors.
-- It does not create Three.js projectiles.
-
-`battle-clash.defense`
-
-- Composes targeting and combat for stationary defensive entities.
-- Owns defense-specific authored policy, not generic health or targeting APIs.
-
-`battle-clash.raid`
-
-- Orchestrates setup, ready, active, won, lost, and reset states.
-- Owns the timer, victory conditions, star/result calculation for this game,
-  and the authoritative raid result.
-
-`battle-clash.presentation`
-
-- Converts ECS/game-domain read models into Core Graphics, Camera, and UI
-  descriptors.
-- It never mutates authoritative gameplay state.
-
-### Atomic kit layer
-
-Each game domain is implemented through small idempotent kits:
+### NexusEngine Core
 
 ```txt
-world
-├─ battlefield-definition-kit
-├─ deployment-perimeter-kit
-└─ battlefield-entity-spawn-kit
-
-roster
-├─ archetype-catalog-kit
-└─ entity-recipe-kit
-
-deployment
-├─ troop-budget-kit
-└─ edge-deployment-kit
-
-navigation
-├─ grid-walkability-kit
-├─ path-request-kit
-└─ path-follow-kit
-
-targeting
-├─ target-candidate-kit
-└─ nearest-priority-target-kit
-
-combat
-├─ health-kit
-├─ attack-cooldown-kit
-├─ damage-resolution-kit
-└─ destruction-kit
-
-raid
-├─ raid-lifecycle-kit
-├─ victory-condition-kit
-└─ raid-reset-kit
-
-presentation
-├─ battle-render-descriptor-kit
-├─ battle-camera-descriptor-kit
-└─ battle-hud-descriptor-kit
+n:world             world identity, cells, surface, focus, snapshots
+n:core-data         schemas, deterministic random, digest contracts
+n:core-spatial      transforms, distances, zones
+n:core-simulation   timers, objectives, ordered resolution
+n:core-input        semantic action contracts
+n:core-network      sessions, peers, envelopes, authority, sync policy
+n:core-persistence  profile slots and adapter contracts
+n:core-graphics     renderer-neutral presentation descriptors
+n:core-camera       camera intent and framing contracts
+n:core-ui           HUD and accessibility descriptors
 ```
 
-These remain game-local until evidence proves that a kit is reusable,
-renderer-neutral, deterministic, independently testable, and appropriate for a
-trusted registry.
-
-## ECS Data Model
-
-### Components
+### Deep Game Domains
 
 ```txt
-Identity         stable game id and archetype id
-Faction          player, enemy, or neutral
-Transform        position, facing, and scale descriptor
-GridFootprint    occupied cells and placement anchor
-Renderable       renderer-neutral shape/material descriptor id
-Health           current and maximum hit points
-Attack           damage, range, cooldown, projectile style
-Targeting        priority policy and current target entity
-Movement         speed, path, waypoint index, and movement status
-Building         building role and destruction value
-Troop            troop role and deployment cost
-Defense          defense role and firing state
-ResourceStore    resource kind and amount, initially visual/read-only
-PendingDamage    ordered damage proposals for resolution
-PendingDespawn   deterministic removal marker
+n:game:battle-clash
+├─ world
+│  └─ authored Obsidian Vault over Core World
+├─ deployment
+│  └─ delver budget and legal perimeter commands
+├─ targeting
+│  └─ deterministic target priorities
+├─ navigation
+│  └─ target approach and stopping range
+├─ combat
+│  └─ cooldowns, damage, destruction, projectile state
+├─ defense
+│  └─ defender Heart ward
+├─ raid
+│  └─ deploy, active, won, lost, and reset lifecycle
+├─ progression
+│  └─ XP, levels, perk points, and power scaling
+└─ session
+   └─ attack/defend role and authority read model
 ```
 
-### Resources
+Each game domain is installed as an atomic domain service kit with explicit
+requirements, services, ownership, and non-ownership metadata.
+
+## ECS Truth
+
+Components:
 
 ```txt
-BattleConfig       immutable balance and archetype tables
-BattlefieldConfig  authored grid, zones, and initial entity recipes
-RaidState          lifecycle, time remaining, result, and score
-DeploymentBudget   remaining troop counts
-SelectionState     selected troop and hovered deployment cell
+Identity  Position  Faction  Renderable  Footprint
+Health    Attack    Targeting  Movement
+Troop     Building  Defense
 ```
 
-### Events
+Resources:
 
 ```txt
-deployment.requested / accepted / rejected
-target.acquired / lost
-attack.requested / resolved
-damage.applied
-entity.destroyed
-raid.started / won / lost / reset
+RaidState         lifecycle, timer, result, destroyed count
+DeploymentState   party budget, selected archetype, receipts
+CommandQueue      deploy, start, reset, fortify
+EffectsState      renderer-neutral projectile effects
+ProgressionState  XP, level, runs, wins, perks, last reward
+DefenseState      ward charges and use receipt
+SessionState      role, room, peer, status, authority
+BattleMetadata    scenario, seed, version
 ```
 
-### System order
+Events:
+
+```txt
+deployment accepted / rejected
+target acquired
+attack resolved
+entity destroyed
+raid started / completed / reset
+progression awarded / level gained
+defense fortified
+session changed
+```
+
+System order:
 
 ```txt
 input
-  semantic input -> deployment/start/reset requests
+  -> validate commands
+  -> deploy, start, reset, or fortify
 simulate
-  navigation -> targeting -> attack proposals -> defense proposals
+  -> target
+  -> navigate
 resolve
-  ordered damage -> health -> destruction -> victory evaluation
+  -> attack and damage
 cleanup
-  despawn -> descriptor refresh -> committed snapshot/digest
+  -> raid result
+  -> destruction
+  -> progression award
+  -> committed snapshot
 ```
 
-No system directly mutates Three.js objects.
+## Progression Model
 
-## Data-Driven Content
+- A win awards base XP plus structure-destruction XP.
+- A loss still awards a smaller amount so a run always advances the profile.
+- XP rolls through deterministic level thresholds.
+- Each level grants one perk point and raises newly deployed delver health and damage.
+- The browser adapter stores the portable profile in localStorage.
+- Multiplayer hosts temporarily use the attacker's portable profile for party scaling.
+- Account identity, inventory, cloud saves, and anti-cheat remain later server work.
 
-Authored content lives in plain JavaScript or JSON-compatible records:
+## Host Boundaries
 
-```txt
-data/archetypes/buildings
-data/archetypes/troops
-data/balance/combat
-data/battlefields/first-village
-data/presentation/colors
-```
+Three.js owns:
 
-Changing a cube color, hit points, attack range, grid footprint, deployment
-count, or battlefield layout must not require changing a system.
+- Canvas and resize lifecycle.
+- Orthographic camera, lighting, cube meshes, and health bars.
+- Pointer-to-ground raycasting.
+- Visual-only interpolation and projectile meshes.
 
-## Three.js Host Boundary
+Three.js does not own:
 
-The Three.js host owns:
+- Deployment legality.
+- Targeting, navigation, damage, death, raid results, XP, or levels.
+- Session roles or network authority.
 
-- Browser canvas and resize lifecycle.
-- `THREE.Scene`, `THREE.WebGLRenderer`, and `THREE.OrthographicCamera`.
-- Cube geometry and material caching.
-- Descriptor-to-mesh creation and synchronization.
-- Raycasting from pointer to ground cell.
-- Visual interpolation between committed ECS transforms.
-- Selection markers, valid/invalid cell overlays, and visual-only projectiles.
+PeerJS owns:
 
-The host does not own:
+- Signaling-client lifecycle.
+- WebRTC data connections.
+- Delivery of validated message envelopes.
 
-- Entity health or destruction.
-- Grid occupancy or placement validity.
-- Target selection, paths, attack cooldowns, or damage.
-- Raid state, score, victory, economy, or persistence.
+PeerJS does not own:
 
-## Proposed Repository Shape
+- Game commands after validation.
+- Simulation timing or snapshots.
+- Persistence or progression meaning.
+
+## Repository Shape
 
 ```txt
 Battle-Clash/
 ├─ .agent/
-│  ├─ goal-packets/
-│  ├─ feedback-packets/
-│  ├─ start-here.md
-│  ├─ intention.md
-│  ├─ goal.md
-│  ├─ workflow.md
-│  ├─ memory.md
-│  ├─ feedback.md
-│  └─ change-log.md
-├─ AGENTS.md
-├─ README.md
-├─ MASTER_PLAN.md
+├─ .github/workflows/deploy-pages.yml
+├─ server/peer-server.mjs
+├─ scripts/validate-simulation.mjs
+├─ src/
+│  ├─ composition/
+│  ├─ data/
+│  ├─ domains/
+│  │  ├─ combat/
+│  │  ├─ defense/
+│  │  ├─ deployment/
+│  │  ├─ navigation/
+│  │  ├─ progression/
+│  │  ├─ raid/
+│  │  ├─ session/
+│  │  ├─ shared/
+│  │  ├─ targeting/
+│  │  └─ world/
+│  ├─ hosts/three/
+│  ├─ network/
+│  ├─ persistence/
+│  ├─ main.js
+│  └─ styles.css
 ├─ goal.md
 ├─ memory.md
-├─ package.json
-├─ index.html
-└─ src/
-   ├─ main.js
-   ├─ composition/
-   │  └─ battle-clash-composition.js
-   ├─ data/
-   │  ├─ archetypes.js
-   │  ├─ balance.js
-   │  ├─ battlefield.js
-   │  └─ presentation.js
-   ├─ domains/
-   │  ├─ world/
-   │  ├─ roster/
-   │  ├─ deployment/
-   │  ├─ navigation/
-   │  ├─ targeting/
-   │  ├─ combat/
-   │  ├─ defense/
-   │  ├─ raid/
-   │  └─ presentation/
-   └─ hosts/
-      ├─ browser/
-      │  ├─ input-adapter.js
-      │  └─ ui-adapter.js
-      └─ three/
-         ├─ three-host.js
-         ├─ descriptor-adapter.js
-         └─ picking-adapter.js
+├─ README.md
+└─ package.json
 ```
 
-Only the documentation and `.agent/` files exist during planning. Code files
-are created only after explicit implementation authorization.
+## Delivery Phases
 
-## GitHub And Branch Plan
+### Phase 1: Public systems greybox
 
-Local folder:
+- Deterministic dungeon battle.
+- Attacker/defender PeerJS room.
+- Solo fallback.
+- Persistent XP and levels.
+- Human-view and two-browser proof.
+- GitHub Pages deployment.
 
-```txt
-/Users/crimsonwheeler/Documents/GitHub/Battle-Clash
-```
+### Phase 2: Dungeon depth
 
-Remote:
+- Multiple room data sets, bosses, hazards, elites, and encounter modifiers.
+- Delver classes, gear, perks, and meaningful build choices.
+- Defender layout choices with validated budgets.
+- Better movement, telegraphs, feedback, audio, and camera feel.
 
-```txt
-LuminaryLabs-Dev/Battle-Clash
-visibility: private
-```
+### Phase 3: Production services
 
-Initial branch:
+- Hosted signaling and TURN.
+- Authenticated accounts and cloud profiles.
+- Server-issued result and progression receipts.
+- Matchmaking regions, reconnection, rate limits, moderation, and telemetry.
 
-```txt
-agent/planning-foundation
-```
+### Phase 4: Original content production
 
-Do not create or push `main` during planning. A later default-branch decision
-requires explicit user direction.
+- Original art direction, characters, animation, sound, narrative, and balance.
+- Accessibility, mobile interaction, performance budgets, and content pipeline.
 
-### Deployment workflow
+## Release Gates
 
-`.github/workflows/deploy-pages.yml` listens only for pushes to `main`. When a
-future implementation is pushed there, it must:
-
-- install exactly from the committed npm lockfile with `npm ci`
-- run the repository's `npm run build`
-- require `dist/index.html`
-- upload only `dist/`
-- deploy through GitHub Pages with minimal Pages permissions
-
-The workflow can exist safely on the planning branch without deploying it.
-There is no `main` branch or deployable application yet.
-
-GitHub Pages is configured for Actions at
-`https://luminarylabs-dev.github.io/Battle-Clash/`. The source repository is
-private; the deployed Pages site will be public after a successful `main`
-workflow run.
-
-## Implementation Sequence
-
-### Phase 0: planning repository
-
-- Create the local repository and agent workspace.
-- Commit only planning documents.
-- Create the private GitHub repository.
-- Push only `agent/planning-foundation`.
-
-### Phase 1: deterministic headless foundation
-
-- Add the NexusEngine dependency through a public package entrypoint.
-- Compose ECS, Core Data, Core World, Core Object/Placement, Core Spatial, and
-  Core Simulation.
-- Register `battle-clash-greybox` with a flat surface and uniform grid.
-- Load archetype and battlefield data.
-- Spawn initial entities and prove deterministic reset/snapshot behavior.
-
-### Phase 2: raid state
-
-- Add deployment, navigation, targeting, combat, defense, and raid domains.
-- Implement one ordered deterministic tick pipeline.
-- Reach win/loss/reset without a renderer.
-
-### Phase 3: descriptor presentation
-
-- Add Graphics, Camera, and UI descriptors.
-- Convert committed ECS state to cube/material/camera/HUD descriptors.
-- Keep all descriptors serializable and renderer-neutral.
-
-### Phase 4: Three.js browser host
-
-- Add orthographic camera, scene, lights, ground grid, cube mesh cache, picking,
-  and semantic input adapters.
-- Render one full raid without gameplay logic inside the host.
-
-### Phase 5: human-view refinement
-
-- Capture and review initial spawn, troop selection/deployment, active raid,
-  target attack, destruction, victory, loss, and reset states.
-- Fix the highest-visibility issue before adding more systems.
-
-### Phase 6: optional expansion
-
-- Village edit mode.
-- Resource collection and building upgrades.
-- More troop/defense archetypes.
-- Save/load UX.
-- Kit promotion review for genuinely reusable game-local atomic kits.
-
-## Validation
-
-### Architecture gates
-
-- Every state owner has explicit `owns` and `doesNotOwn` boundaries.
-- Every atomic kit is idempotent and declares dependencies.
-- Core is consumed only through public exports.
-- Game domains do not mutate one another directly.
-- Three.js imports appear only under `src/hosts/three`.
-- DOM side effects appear only under browser/host adapters.
-
-### Determinism gates
-
-- Same seed plus same semantic inputs produces the same committed digest.
-- Snapshot, advance, restore, and replay reaches the same result.
-- Reset returns entity/resource/event state to the authored baseline.
-- Damage and destruction ordering is stable.
-
-### Browser gates
-
-- App starts with no console errors.
-- Canvas resizes without stretching or changing simulation state.
-- Pointer selection maps to the correct world cell.
-- A full raid can be completed and reset.
-
-### Human-view acceptance
-
-- Initial spawn: the full battlefield, enemy Core, defenses, and deployment
-  perimeter are immediately readable.
-- Deployment view: selected troop, valid cell, invalid cell, and remaining troop
-  count are visually distinct.
-- Active raid: blue attackers and red defenders separate clearly; paths and
-  attacks are understandable without a debug panel.
-- Objective view: the enemy Core is visually dominant.
-- Victory/loss: result and reset action are unmistakable.
-- The first screen contains only the four hero controls; diagnostics remain
-  folded away.
-
-## Risks And Controls
-
-- Similarity risk: use only genre-level inspiration; keep the name, visual
-  language, copy, content, balance, and layouts original.
-- Domain leakage: require explicit ownership metadata and reject renderer-side
-  gameplay.
-- Overbuilding: stop at one battlefield, one troop type, one defense type, one
-  Core target, and one raid result until human-view proof passes.
-- Core drift: pin a known NexusEngine revision and use public exports; update
-  only after compatibility validation.
-- Dirty sibling repositories: do not edit or absorb changes from the existing
-  NexusEngine or NexusEngine-Experiments worktrees.
-
-## Definition Of Ready To Implement
-
-- User explicitly authorizes implementation.
-- NexusEngine revision and dependency strategy are selected.
-- The first playable claim and deferred scope remain accepted.
-- The implementation branch is confirmed and is not `main`.
-- The visual color key and hero controls are accepted.
+- `npm ci`
+- `npm run check`
+- `npm run build`
+- no diff whitespace errors
+- solo browser flow with no console errors
+- two independent browser sessions auto-match as defender and attacker
+- attacker command produces synchronized authoritative state
+- defender ward produces synchronized authoritative state
+- two runs visibly produce a level gain
+- `main` push triggers a successful Pages workflow
+- public URL loads, plays, and reports no console errors

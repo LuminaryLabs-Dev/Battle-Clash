@@ -2,9 +2,9 @@
 
 ## Current Boundary
 
-- This repository is planning-only until the user explicitly authorizes implementation.
-- Do not push to `main`.
-- Do not deploy or change repository visibility without explicit authorization.
+- The first playable implementation and default-branch release are authorized.
+- Deploy the playable Pages artifact; keep the GitHub repository private.
+- Do not change repository visibility without new explicit authorization.
 - Preserve NexusEngine as an external Core dependency; do not copy Core source here.
 
 ## Architecture
@@ -28,8 +28,11 @@ Battle Clash composition
 - Use Core Data for snapshots, reset, selectors, schemas, ledgers, and deterministic random streams.
 - Use Core Spatial for transforms, bounds, zones, and renderer-neutral spatial queries.
 - Use Core Simulation for resources, timers, cooldowns, objectives, and deterministic resolution primitives.
+- Use Core Network for session, peer, envelope, authority, sync, and reconnect contracts.
+- Use Core Persistence for save-slot and persistence-adapter contracts.
 - Use Core Input, Camera, Graphics, UI, and Physics only for their declared renderer-neutral contracts.
 - Keep Three.js objects, raycasters, cameras, materials, GPU state, DOM, and WebGL side effects inside host adapters.
+- Keep PeerJS and signaling-provider details inside network adapters and server layers.
 - Keep authored units, buildings, balance, colors, battle rules, and scenario data in this game repository.
 - Begin local-only behavior as game-owned atomic kits. Promote reusable behavior only after independent proof and a separate ownership decision.
 
@@ -45,4 +48,3 @@ Battle Clash composition
 - Prefer deterministic headless state proof before browser validation.
 - Validate browser startup, zero console errors, gameplay interaction, and human-view screenshots.
 - Player-visible acceptance requires screenshots; build success alone is insufficient.
-
