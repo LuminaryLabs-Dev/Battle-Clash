@@ -36,6 +36,7 @@ import {
 import { ARCHETYPES, WORLD_SEED } from "../data/battlefield.js";
 import { WORLD_SCENES, sceneForTerritory } from "../data/world.js";
 import { createPlayerKit } from "../domains/player/player-kit.js";
+import { normalizePlayerObservation } from "../domains/player/player-observation.js";
 import {
   PRODUCTION_CONTENT_SCHEMA, CONTENT_TERRITORIES, ROOM_TYPES, ENEMY_FAMILIES,
   BOSS_PHASES, GEAR_ITEMS, QUESTS, CRAFTING_RECIPES, SANCTUM_ROOMS
@@ -496,6 +497,7 @@ export function createBattleClashGame(options = {}) {
     getDeterministicSnapshot,
     getDigest,
     getPlayerState: () => engine.n.battleClashPlayer.getState(),
+    getPlayerObservation: (options = {}) => normalizePlayerObservation(getSnapshot(), options),
     startPlayerEpisode: (request) => engine.n.battleClashPlayer.startEpisode(request),
     recordPlayerObservation: (observation) => engine.n.battleClashPlayer.recordObservation(observation),
     retrievePlayerMemory: (memories) => engine.n.battleClashPlayer.retrieveMemory(memories),

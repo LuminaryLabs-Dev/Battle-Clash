@@ -7,6 +7,7 @@ import { createPeerMessage, normalizePeerCommand, parsePeerMessage } from "../sr
 import { APPROVED_ASSETS, ASSET_CATALOG_SCHEMA, assetById, resolveRenderableAsset, validateAssetEntry } from "../src/assets/catalog.js";
 import { createReviewRun, promoteAfterConsecutivePasses, reviewPassAccepted } from "../src/assets/asset-review.js";
 import { createAuthenticatedHello, validateAuthenticatedHello, validateCommandEnvelope, createMatchReceipt, acceptMatchReceipt } from "../src/network/peer-room-contract.js";
+import { normalizePlayerObservation, playerObservationKey } from "../src/domains/player/player-observation.js";
 import {
   PRODUCTION_CONTENT_SCHEMA, CONTENT_TERRITORIES, ROOM_TYPES, ENEMY_FAMILIES,
   BOSS_PHASES, GEAR_ITEMS, QUESTS, CRAFTING_RECIPES, SANCTUM_ROOMS
@@ -269,6 +270,7 @@ const apiMethods = [
   "upgradeSanctum", "tradeResources", "interactLandmark", "findHeroPath", "findWorldPath", "findCombatPath",
   "tickEconomy", "changeLandscape", "transitionToScene", "canDeployAt", "getSnapshot", "getDeterministicSnapshot", "getDigest",
   "getPlayerState", "startPlayerEpisode", "recordPlayerObservation", "retrievePlayerMemory", "recordPlayerDecision",
+  "getPlayerObservation",
   "recordPlayerActionResult", "recordPlayerOutcome", "completePlayerEpisode", "promotePlayerSkill"
 ];
 for (const method of apiMethods) check("api", method, () => requireValue(typeof baseline[method] === "function", "missing composition API method"));
@@ -285,6 +287,15 @@ check("player-behavior", "observation-decision-outcome-lifecycle", () => {
   const completed = game.completePlayerEpisode("complete", { result: "returned-home" });
   requireValue(completed.episode.status === "complete", "player episode did not complete");
   return { status: completed.state.status, episode: completed.episode.episodeId };
+});
+check("player-behavior", "stable-observation-normalization", () => {
+  const game = createBattleClashGame();
+  const first = normalizePlayerObservation(game.getSnapshot(), { viewport: "compact" });
+  const second = normalizePlayerObservation({ ...game.getSnapshot(), frame: 99, elapsed: 8.2 }, { viewport: "compact" });
+  requireValue(first.schema === "battle-clash.observation/1", "observation schema missing");
+  requireValue(playerObservationKey(first) === playerObservationKey(second), "volatile frame changed observation key");
+  requireValue(game.getPlayerObservation({ viewport: "portrait" }).viewport === "portrait", "composition observation projection unavailable");
+  return { keyLength: playerObservationKey(first).length, actions: first.availableActions.length };
 });
 
 for (const [kind, command] of commandCases) check("command", kind, () => {
