@@ -1,6 +1,12 @@
+import manifest from "./approved-manifest.json" with { type: "json" };
+
 export const ASSET_CATALOG_SCHEMA = "battle-clash.asset-catalog/1";
 
-export const APPROVED_ASSETS = Object.freeze([]);
+export const APPROVED_ASSETS = Object.freeze(
+  (manifest?.schema === ASSET_CATALOG_SCHEMA ? manifest.assets : [])
+    .filter((asset) => asset?.status === "approved")
+    .map((asset) => Object.freeze({ ...asset }))
+);
 
 export function assetById(id, catalog = APPROVED_ASSETS) {
   return catalog.find((asset) => asset.id === id && asset.status === "approved") ?? null;
