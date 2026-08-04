@@ -268,6 +268,22 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
   deploys on pushes to `main` while still supporting manual dispatch, preserving
   the private-repository/public-Pages boundary.
 
+## Online Foundation And Asset Boundary
+
+- Supabase Auth is the online identity boundary; the companion Rails API is the
+  policy and receipt layer, while PeerJS remains the live room transport.
+- Durable profile sync uses `battle-clash.profile-snapshot/1` and excludes ECS
+  render entities, particles, and per-frame transforms. Offline receipts queue
+  locally with idempotency keys until an authenticated API is available.
+- The backend contract is published privately as
+  `LuminaryLabs-Dev/LuminaryLabs-Backend` on `agent/online-foundation`; Rails 8
+  and Ruby 3.3 remain required provisioning gates for running it locally.
+- Objaverse ingestion is quarantine-first. Only approved catalog entries may
+  reach the Three.js asset boundary, with cube fallback retained for missing or
+  over-budget GLBs. Review promotion requires three consecutive passing runs.
+- Hero combat is an ECS kit at `n:game:battle-clash:hero-combat`; its ability
+  emits renderer-only effects and never becomes gameplay authority in Three.js.
+
 ## Repository And Release
 
 - Local folder: `/Users/crimsonwheeler/Documents/GitHub/Battle-Clash`
