@@ -31,3 +31,7 @@
 - Store human-view routing and proof in `.agent/feedback-packets/`.
 - Keep provider SDK details outside gameplay domains.
 - Mark unknown future product decisions as `TBD`.
+- A validator now measures registered domains, ECS vocabulary, archetypes,
+  territories, scenes, composition APIs, peer commands, deterministic replay,
+  and the full Home Base → frontier → territory → encounter → raid → Home Base
+  flow. Coverage is a gate, not a claim about untested external services.

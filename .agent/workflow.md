@@ -22,4 +22,6 @@
 | Move deployment, damage, pressure, and terminal feedback into the world | Complete | Codex |
 | Validate projected camera framing at desktop, compact, and portrait sizes | Complete | Codex |
 | Prove pointer deployment, combat, win, loss, restart, and invoked menu | Complete | Codex |
-| Push and deploy immersive visual pass | Awaiting authorization | User |
+| Push and deploy immersive visual pass | Complete | Codex |
+| Add semantic domain/object coverage validator | In progress | Codex |
+| Connect BattleClash-Player validator gate | In progress | Codex |

@@ -37,6 +37,9 @@ jobs:
       - name: Run deterministic simulation checks
         run: npm run check
 
+      - name: Validate semantic domain coverage
+        run: npm run check:domains
+
       - name: Build production site
         run: npm run build
 

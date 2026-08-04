@@ -117,3 +117,9 @@
   additional fronts, strongholds, dungeons, wilds, and resource profiles.
 - Added NexusEngine world-graph A* alongside territory-grid A* and validated a
   Dawnwatch-to-Blackglass route.
+
+## 2026-08-04 03:40:00 EDT
+
+- Added `scripts/validate-domain-coverage.mjs` with 498 semantic checks and a
+  99% threshold. The current report passes at 100% and is consumed by the
+  BattleClash-Player cross-repository gate.

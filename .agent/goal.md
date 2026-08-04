@@ -8,8 +8,9 @@ polished colored cubes, and responsive bird's-eye camera framing.
 
 ## Status
 
-Complete locally on `agent/immersive-world-ui`. No push or deployment was
-performed; the public Pages build remains the prior `main` release.
+The immersive game is deployed from `main`. The active continuation is a
+cross-repository semantic validator and player-harness gate; full AAA content
+and production art remain larger follow-on work.
 
 ## Success Criteria
 
@@ -27,3 +28,9 @@ performed; the public Pages build remains the prior `main` release.
 - PeerJS remains a transport adapter and failures preserve solo play.
 - Build and deterministic replay checks pass.
 - Local browser screenshots, readability metrics, and zero-console-error proof pass.
+
+## Continuation: semantic validation
+
+- `npm run check:domains` must cover at least 99% of registered domains,
+  semantic objects, commands, scenes, territories, and the complete flow.
+- `BattleClash-Player/npm run check:game` delegates to that validator.
