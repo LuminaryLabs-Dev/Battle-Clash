@@ -35,6 +35,10 @@ import {
 } from "../domains/boundaries/boundary-kits.js";
 import { ARCHETYPES, WORLD_SEED } from "../data/battlefield.js";
 import { WORLD_SCENES, sceneForTerritory } from "../data/world.js";
+import {
+  PRODUCTION_CONTENT_SCHEMA, CONTENT_TERRITORIES, ROOM_TYPES, ENEMY_FAMILIES,
+  BOSS_PHASES, GEAR_ITEMS, QUESTS, CRAFTING_RECIPES, SANCTUM_ROOMS
+} from "../data/production-content.js";
 
 export const FIXED_DELTA = 1 / 30;
 
@@ -342,6 +346,17 @@ export function createBattleClashGame(options = {}) {
       economy,
       territory,
       landscape,
+      productionContent: {
+        schema: PRODUCTION_CONTENT_SCHEMA,
+        territories: CONTENT_TERRITORIES,
+        rooms: ROOM_TYPES,
+        enemyFamilies: ENEMY_FAMILIES,
+        bossPhases: BOSS_PHASES,
+        gear: GEAR_ITEMS,
+        quests: QUESTS,
+        crafting: CRAFTING_RECIPES,
+        sanctumRooms: SANCTUM_ROOMS
+      },
       domains: engine.n.paths().map((entry) => entry.path)
     };
   }
@@ -362,6 +377,7 @@ export function createBattleClashGame(options = {}) {
       economy: snapshot.economy,
       territory: snapshot.territory,
       landscape: snapshot.landscape,
+      productionContent: snapshot.productionContent,
       defense: snapshot.defense,
       ability: snapshot.ability,
       objective: snapshot.objective,

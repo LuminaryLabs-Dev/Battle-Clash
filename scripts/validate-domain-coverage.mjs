@@ -140,6 +140,8 @@ check("content-behavior", "production-content-integrity", () => {
   requireValue(QUESTS.length >= 3 && QUESTS.every((quest) => CONTENT_TERRITORIES.some((territory) => territory.id === quest.territoryId) && quest.steps.length >= 3), "quest chains incomplete");
   requireValue(CRAFTING_RECIPES.every((recipe) => GEAR_ITEMS.some((item) => item.id === recipe.output) && Object.values(recipe.costs).every((cost) => cost > 0)), "crafting recipe references invalid gear or cost");
   requireValue(new Set(SANCTUM_ROOMS.map((room) => room.id)).size === SANCTUM_ROOMS.length && SANCTUM_ROOMS.every((room) => QUESTS.some((quest) => quest.id === room.unlock)), "Sanctum unlock graph incomplete");
+  requireValue(snapshot.productionContent?.schema === PRODUCTION_CONTENT_SCHEMA, "production content is not exposed by runtime snapshot");
+  requireValue(snapshot.productionContent?.territories?.length === CONTENT_TERRITORIES.length, "runtime content territory projection drifted");
   return { territories: CONTENT_TERRITORIES.length, rooms: roomIds.size, enemyFamilies: Object.keys(ENEMY_FAMILIES).length, bossPhases: BOSS_PHASES.length };
 });
 check("network-behavior", "authenticated-room-receipt-contract", () => {
