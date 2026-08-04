@@ -52,6 +52,9 @@ jobs:
       - name: Verify Pages artifact
         run: test -f dist/index.html
 
+      - name: Smoke-test Pages artifact
+        run: npm run check:pages-artifact
+
       - name: Configure Pages
         uses: actions/configure-pages@v6
 
