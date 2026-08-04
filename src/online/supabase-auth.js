@@ -21,6 +21,18 @@ function saveSession(session, storage = window.localStorage) {
   else storage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
 }
 
+function sessionFromRedirect(location = window.location) {
+  const hash = new URLSearchParams(String(location.hash ?? "").replace(/^#/, ""));
+  const accessToken = hash.get("access_token");
+  const refreshToken = hash.get("refresh_token");
+  return accessToken && refreshToken ? {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    expires_in: Number(hash.get("expires_in") ?? 3600),
+    token_type: hash.get("token_type") ?? "bearer"
+  } : null;
+}
+
 async function request(path, options = {}) {
   const { url, anonKey } = config();
   if (!url || !anonKey) throw new Error("Supabase Auth is not configured");
@@ -38,7 +50,11 @@ async function request(path, options = {}) {
 }
 
 export function createSupabaseAuth({ storage = window.localStorage, onChange } = {}) {
-  let session = storedSession(storage);
+  let session = sessionFromRedirect() ?? storedSession(storage);
+  if (session) saveSession(session, storage);
+  if (sessionFromRedirect()?.access_token && typeof window !== "undefined" && window.history?.replaceState) {
+    window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
+  }
 
   function publish() {
     onChange?.(session ? {
@@ -79,6 +95,17 @@ export function createSupabaseAuth({ storage = window.localStorage, onChange } =
     return result.user ?? null;
   }
 
+  async function refreshSession() {
+    if (!session?.refresh_token) return null;
+    session = await request("token?grant_type=refresh_token", {
+      method: "POST",
+      body: JSON.stringify({ refresh_token: session.refresh_token })
+    });
+    saveSession(session, storage);
+    publish();
+    return session.user ?? null;
+  }
+
   function signInWithProvider(provider = "google", redirectTo = window.location.href) {
     const { url, anonKey } = config();
     if (!url || !anonKey) throw new Error("Supabase Auth is not configured");
@@ -109,5 +136,5 @@ export function createSupabaseAuth({ storage = window.localStorage, onChange } =
   }
 
   publish();
-  return Object.freeze({ signIn, signUp, signInWithProvider, signOut, getSession, getAccessToken });
+  return Object.freeze({ signIn, signUp, signInWithProvider, refreshSession, signOut, getSession, getAccessToken });
 }

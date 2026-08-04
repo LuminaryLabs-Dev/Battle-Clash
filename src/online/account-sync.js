@@ -118,5 +118,13 @@ export function createAccountSync({ auth, getSnapshot, onSync, storage = window.
     return result;
   }
 
-  return Object.freeze({ pushReceipt, pushSnapshot, pullProfile, flushQueue, pending: () => readQueue().length });
+  async function exportProfile() {
+    return request("/api/v1/profiles/current/export");
+  }
+
+  async function requestAccountDeletion() {
+    return request("/api/v1/profiles/current", { method: "DELETE" });
+  }
+
+  return Object.freeze({ pushReceipt, pushSnapshot, pullProfile, exportProfile, requestAccountDeletion, flushQueue, pending: () => readQueue().length });
 }
