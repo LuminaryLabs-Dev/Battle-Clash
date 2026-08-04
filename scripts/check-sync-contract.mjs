@@ -45,7 +45,7 @@ assert.equal(sync.pending(), 0);
 assert.ok(requests >= 2, "transient server failures must retry");
 
 mode = "online";
-const match = await sync.pushMatchReceipt({ roomId: "room-1", result: "victory", sequenceStart: 1, sequenceEnd: 8 });
+const match = await sync.pushMatchReceipt({ roomId: "room-1", authorityId: "host-1", result: "victory", profileRevision: 2, sequenceStart: 1, sequenceEnd: 8, rewardIdempotencyKey: "reward-1" });
 assert.equal(match.accepted, true);
 
 mode = "conflict";

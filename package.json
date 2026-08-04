@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/prepare-approved-assets.mjs && vite build",
-    "build:pages": "node scripts/prepare-approved-assets.mjs && vite build --outDir docs",
+    "build:pages": "node scripts/prepare-approved-assets.mjs && vite build --outDir docs --emptyOutDir false",
     "check:domains": "node scripts/validate-domain-coverage.mjs",
     "check:release": "node scripts/validate-release.mjs",
     "check:pages-artifact": "node scripts/validate-pages-artifact.mjs",

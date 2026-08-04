@@ -24,12 +24,7 @@ export function durableProfileSnapshot(snapshot = {}) {
     territory: snapshot.territory ?? null,
     landscape: snapshot.landscape ?? null,
     account: snapshot.account ?? null,
-    loot: snapshot.loot ?? null,
-    session: snapshot.session ? {
-      schema: snapshot.session.schema,
-      role: snapshot.session.role,
-      roomId: snapshot.session.roomId
-    } : null
+    loot: snapshot.loot ?? null
   };
 }
 

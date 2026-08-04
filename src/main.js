@@ -470,19 +470,30 @@ function updateUi(snapshot) {
     previousPhase = snapshot.raid.phase;
     announcePhase(snapshot);
     if (["won", "lost"].includes(snapshot.raid.phase) && accountSync && accountState.status === "authenticated") {
-      const identity = `${snapshot.session.roomId ?? "solo"}:${snapshot.progression.runs}:${snapshot.raid.phase}`;
-      if (identity !== submittedMatchReceiptIdentity) {
-        submittedMatchReceiptIdentity = identity;
-        accountSync.pushMatchReceipt({
-          roomId: snapshot.session.roomId ?? "solo",
-          result: snapshot.raid.phase,
-          sequenceStart: 1,
-          sequenceEnd: Math.max(1, Number(snapshot.frame) || 1),
-          profileRevision: Number(snapshot.progression.runs) || 0
-        }).then((result) => updateAccountUi({
-          syncStatus: result.queued ? "queued" : result.conflict ? "conflict" : "synced",
-          pendingReceipts: accountSync.pending()
-        })).catch(() => updateAccountUi({ syncStatus: "queued", pendingReceipts: accountSync.pending() }));
+      const receiptContext = network?.getReceiptContext?.() ?? {
+        roomId: snapshot.session.roomId ?? "solo",
+        authorityId: accountState.userId ?? "local",
+        sequenceEnd: Number(snapshot.frame) || 1,
+        authenticated: true
+      };
+      if (receiptContext.roomId === "solo" || receiptContext.authenticated) {
+        const rewardIdempotencyKey = `battle-clash:${receiptContext.roomId}:${snapshot.progression.runs}:${snapshot.raid.phase}`;
+        const identity = `${receiptContext.roomId}:${rewardIdempotencyKey}`;
+        if (identity !== submittedMatchReceiptIdentity) {
+          submittedMatchReceiptIdentity = identity;
+          accountSync.pushMatchReceipt({
+            roomId: receiptContext.roomId,
+            authorityId: receiptContext.authorityId,
+            result: snapshot.raid.phase,
+            sequenceStart: 1,
+            sequenceEnd: Math.max(receiptContext.sequenceEnd, Number(snapshot.frame) || 1),
+          profileRevision: Number(snapshot.world?.revision) || 0,
+            rewardIdempotencyKey
+          }).then((result) => updateAccountUi({
+            syncStatus: result.queued ? "queued" : result.conflict ? "conflict" : "synced",
+            pendingReceipts: accountSync.pending()
+          })).catch(() => updateAccountUi({ syncStatus: "queued", pendingReceipts: accountSync.pending() }));
+        }
       }
     }
   }
@@ -996,7 +1007,7 @@ try {
     getProfile: () => currentSnapshot().progression,
     getIdentity: () => ({
       userId: accountState.status === "authenticated" ? accountState.userId : null,
-      profileRevision: currentSnapshot().progression.runs
+      profileRevision: currentSnapshot().world?.revision ?? 0
     }),
     getAuthoritativeSnapshot: () => createPeerSnapshot(game.getSnapshot()),
     onCommand(command) {

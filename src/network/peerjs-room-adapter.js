@@ -8,6 +8,7 @@ import {
 } from "./peer-protocol.js";
 import {
   createAuthenticatedHello,
+  validateCommandEnvelope,
   validateAuthenticatedHello
 } from "./peer-room-contract.js";
 
@@ -170,8 +171,19 @@ export function createPeerJsRoomAdapter({
     if (!connection?.open) return false;
     if (kind !== "snapshot") {
       sequence += 1;
+      const nextPayload = kind === "command"
+        ? {
+            ...payload,
+            envelope: {
+              roomId: state.roomId,
+              senderId: peer?.id,
+              authorityId: state.role === "defender" ? peer?.id : state.connectedPeerId,
+              sequence
+            }
+          }
+        : payload;
       connection.send(
-        createPeerMessage(kind, payload, {
+        createPeerMessage(kind, nextPayload, {
           roomId: state.roomId,
           senderId: peer?.id,
           sequence
@@ -278,6 +290,12 @@ export function createPeerJsRoomAdapter({
             return;
           }
           updateState({ authenticated: true, remoteUserId: authenticatedHello.userId, reconnectToken: authenticatedHello.reconnectToken });
+          send("hello", {
+            profile: structuredClone(getProfile?.() ?? {}),
+            roomHello: roomHello(state.roomId, "defender")
+          });
+        } else {
+          updateState({ authenticated: false });
         }
         onRemoteProfile?.(message.payload.profile ?? {});
         send("snapshot", {
@@ -287,8 +305,30 @@ export function createPeerJsRoomAdapter({
       }
 
       if (message.kind === "command" && role === "defender") {
+        const envelope = message.payload?.envelope;
+        const validation = validateCommandEnvelope({
+          roomId: envelope?.roomId,
+          senderId: envelope?.senderId,
+          authorityId: envelope?.authorityId,
+          sequence: envelope?.sequence,
+          command: message.payload?.command
+        });
+        if (!validation.accepted || envelope.senderId !== message.senderId || envelope.authorityId !== peer?.id || envelope.sequence !== message.sequence) return;
         const command = normalizePeerCommand(message.payload.command);
         if (command) onCommand?.(command);
+        return;
+      }
+
+      if (message.kind === "hello" && role === "attacker") {
+        const authenticatedHello = message.payload?.roomHello;
+        if (authenticatedHello) {
+          const validation = validateAuthenticatedHello(authenticatedHello, state.roomId, { expectedRole: "defender", requireReconnectToken: true });
+          if (!validation.accepted) {
+            connection.close();
+            return;
+          }
+          updateState({ authenticated: true, remoteUserId: authenticatedHello.userId, reconnectToken: authenticatedHello.reconnectToken });
+        }
         return;
       }
 
@@ -376,11 +416,12 @@ export function createPeerJsRoomAdapter({
       connectedPeerId: nextConnection.peer,
       authority: "remote",
       message: "Matched — attack commands route to the defender host",
-      authenticated: Boolean(roomHello(nextRoomId, "attacker"))
+      authenticated: false
     });
+    const hello = roomHello(nextRoomId, "attacker");
     send("hello", {
       profile: structuredClone(getProfile?.() ?? {}),
-      roomHello: roomHello(nextRoomId, "attacker")
+      roomHello: hello
     });
   }
 
@@ -464,6 +505,20 @@ export function createPeerJsRoomAdapter({
   return {
     start: () => (soloAuditRequested() ? enterSoloAudit() : discover(0)),
     getState: () => structuredClone(state),
+    getReceiptContext() {
+      const identity = getIdentity?.() ?? {};
+      const authorityId = state.role === "defender"
+        ? identity.userId ?? state.peerId ?? "local"
+        : state.role === "attacker"
+          ? state.remoteUserId ?? state.connectedPeerId ?? "remote"
+          : identity.userId ?? "local";
+      return {
+        roomId: state.roomId ?? "solo",
+        authorityId,
+        sequenceEnd: Math.max(1, sequence),
+        authenticated: state.role === "solo" || state.authenticated === true
+      };
+    },
     isRemoteAuthority: () =>
       state.status === "connected" && state.role === "attacker",
     sendCommand(command) {

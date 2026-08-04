@@ -50,10 +50,10 @@ jobs:
         run: npm run build:pages
 
       - name: Verify Pages artifact
-        run: test -f dist/index.html
+        run: test -f docs/index.html
 
       - name: Smoke-test Pages artifact
-        run: npm run check:pages-artifact
+        run: PAGES_ARTIFACT_ROOT=docs npm run check:pages-artifact
 
       - name: Configure Pages
         uses: actions/configure-pages@v6
@@ -61,7 +61,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: dist
+          path: docs
 
       - name: Deploy to GitHub Pages
         id: deployment

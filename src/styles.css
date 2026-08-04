@@ -428,7 +428,7 @@ button {
     0 14px 30px rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(8px);
   pointer-events: auto;
-  animation: result-arrive 320ms ease both;
+  animation: world-panel-arrive 320ms ease both;
 }
 
 .world-panel__eyebrow,
@@ -804,6 +804,17 @@ button {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes world-panel-arrive {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 }
 
