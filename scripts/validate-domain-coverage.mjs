@@ -4,7 +4,7 @@ import { ARCHETYPES } from "../src/data/battlefield.js";
 import { TERRITORIES, WORLD_SCENES, sceneForTerritory } from "../src/data/world.js";
 import { Components, Events, Resources } from "../src/domains/shared/definitions.js";
 import { createPeerMessage, normalizePeerCommand, parsePeerMessage } from "../src/network/peer-protocol.js";
-import { assetById, resolveRenderableAsset, validateAssetEntry } from "../src/assets/catalog.js";
+import { APPROVED_ASSETS, ASSET_CATALOG_SCHEMA, assetById, resolveRenderableAsset, validateAssetEntry } from "../src/assets/catalog.js";
 import { createReviewRun, promoteAfterConsecutivePasses, reviewPassAccepted } from "../src/assets/asset-review.js";
 
 const expectedDomains = [
@@ -89,6 +89,11 @@ for (const [name, event] of Object.entries(Events)) check("event", name, () => r
 check("asset-behavior", "quarantine-requires-metadata", () => {
   const rejected = validateAssetEntry({ id: "quarantine", status: "quarantined" });
   requireValue(!rejected.accepted && rejected.missing.length >= 1, "incomplete asset crossed catalog boundary");
+});
+check("asset-behavior", "checked-in-manifest-integrity", () => {
+  requireValue(ASSET_CATALOG_SCHEMA === "battle-clash.asset-catalog/1", "asset catalog schema drifted");
+  requireValue(new Set(APPROVED_ASSETS.map((asset) => asset.id)).size === APPROVED_ASSETS.length, "duplicate approved asset id");
+  for (const asset of APPROVED_ASSETS) requireValue(validateAssetEntry(asset).accepted, `invalid approved manifest entry ${asset.id}`);
 });
 check("asset-behavior", "approved-catalog-entry", () => {
   const entry = { id: "objaverse_demo", objaverseUid: "demo", slug: "demo", sourceUrl: "https://example.invalid/demo", license: "CC-BY", sha256: "hash", path: "assets/demo.glb", status: "approved" };
