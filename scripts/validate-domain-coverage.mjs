@@ -6,6 +6,10 @@ import { Components, Events, Resources } from "../src/domains/shared/definitions
 import { createPeerMessage, normalizePeerCommand, parsePeerMessage } from "../src/network/peer-protocol.js";
 import { APPROVED_ASSETS, ASSET_CATALOG_SCHEMA, assetById, resolveRenderableAsset, validateAssetEntry } from "../src/assets/catalog.js";
 import { createReviewRun, promoteAfterConsecutivePasses, reviewPassAccepted } from "../src/assets/asset-review.js";
+import {
+  PRODUCTION_CONTENT_SCHEMA, CONTENT_TERRITORIES, ROOM_TYPES, ENEMY_FAMILIES,
+  BOSS_PHASES, GEAR_ITEMS, QUESTS, CRAFTING_RECIPES, SANCTUM_ROOMS
+} from "../src/data/production-content.js";
 
 const expectedDomains = [
   "n:core-camera", "n:core-data", "n:core-graphics", "n:core-input", "n:core-interaction",
@@ -114,6 +118,28 @@ check("asset-behavior", "three-pass-review-gate", () => {
   requireValue(reviewPassAccepted(pass(1)), "passing review rejected");
   requireValue(promoteAfterConsecutivePasses([pass(1), pass(2), pass(3)]), "three consecutive passes did not promote");
   requireValue(!promoteAfterConsecutivePasses([pass(1), pass(2)]), "incomplete review sequence promoted");
+});
+check("content-behavior", "production-content-integrity", () => {
+  requireValue(PRODUCTION_CONTENT_SCHEMA === "battle-clash.production-content/1", "production content schema drifted");
+  requireValue(CONTENT_TERRITORIES.length >= 3, "fewer than three authored territories");
+  const roomIds = new Set(Object.keys(ROOM_TYPES));
+  requireValue(roomIds.size >= 9, "fewer than nine authored room types");
+  for (const territory of CONTENT_TERRITORIES) {
+    requireValue(territory.sceneId && territory.rooms.length >= 3, `incomplete territory ${territory.id}`);
+    for (const roomId of territory.rooms) {
+      const room = ROOM_TYPES[roomId];
+      requireValue(room, `unknown room ${roomId}`);
+      for (const exit of room.exits) requireValue(roomIds.has(exit), `unknown room exit ${exit}`);
+    }
+  }
+  requireValue(Object.keys(ENEMY_FAMILIES).length >= 3, "enemy families missing");
+  for (const family of Object.values(ENEMY_FAMILIES)) requireValue(family.archetypes?.length >= 2, `enemy family ${family.id} lacks variants`);
+  requireValue(BOSS_PHASES.length >= 3 && BOSS_PHASES.every((phase, index) => index === 0 || phase.threshold < BOSS_PHASES[index - 1].threshold), "boss phases are not ordered");
+  requireValue(new Set(GEAR_ITEMS.map((item) => item.id)).size === GEAR_ITEMS.length && GEAR_ITEMS.every((item) => item.slot && item.rarity && Object.keys(item.modifiers).length), "gear catalog incomplete");
+  requireValue(QUESTS.length >= 3 && QUESTS.every((quest) => CONTENT_TERRITORIES.some((territory) => territory.id === quest.territoryId) && quest.steps.length >= 3), "quest chains incomplete");
+  requireValue(CRAFTING_RECIPES.every((recipe) => GEAR_ITEMS.some((item) => item.id === recipe.output) && Object.values(recipe.costs).every((cost) => cost > 0)), "crafting recipe references invalid gear or cost");
+  requireValue(new Set(SANCTUM_ROOMS.map((room) => room.id)).size === SANCTUM_ROOMS.length && SANCTUM_ROOMS.every((room) => QUESTS.some((quest) => quest.id === room.unlock)), "Sanctum unlock graph incomplete");
+  return { territories: CONTENT_TERRITORIES.length, rooms: roomIds.size, enemyFamilies: Object.keys(ENEMY_FAMILIES).length, bossPhases: BOSS_PHASES.length };
 });
 for (const [name, resource] of Object.entries(Resources)) check("resource-behavior", name, () => {
   requireValue(baseline.engine.world.hasResource(resource), "resource is not registered");
