@@ -22,6 +22,7 @@ export function normalizePlayerObservation(snapshot = {}, { viewport = "desktop"
   if (phase === "deploy" && snapshot.defense?.fortifyAvailable) actions.push("fortify");
   if (phase === "deploy") actions.push("start_raid");
   if (snapshot.ability && Number(snapshot.ability.cooldownRemaining ?? 0) <= 0) actions.push("use_hero_ability");
+  if (phase === "won" && snapshot.room?.hasNext) actions.push("next_room");
   if (["won", "lost"].includes(phase)) actions.push("return_home");
   return {
     schema: "battle-clash.observation/1",
@@ -32,6 +33,9 @@ export function normalizePlayerObservation(snapshot = {}, { viewport = "desktop"
     hero: { healthRatio: round((snapshot.hero?.health?.current ?? snapshot.hero?.health ?? 0) / Math.max(1, snapshot.hero?.health?.maximum ?? 1)), abilityReady: Number(snapshot.ability?.cooldownRemaining ?? 0) <= 0 },
     army: { deployed: Number(snapshot.deployment?.deployed ?? 0), reserve: Number(snapshot.deployment?.remaining ?? 0) },
     objective: snapshot.objective?.current ?? snapshot.objective?.kind ?? null,
+    room: snapshot.room?.roomId
+      ? { id: snapshot.room.roomId, kind: snapshot.room.kind, index: snapshot.room.index, total: snapshot.room.total, hasNext: Boolean(snapshot.room.hasNext) }
+      : null,
     visibleThreats: Object.entries(threats).sort(([left], [right]) => left.localeCompare(right)).map(([family, count]) => ({ family, count })),
     availableActions: [...new Set(actions)],
     viewport,
@@ -40,6 +44,6 @@ export function normalizePlayerObservation(snapshot = {}, { viewport = "desktop"
 }
 
 export function playerObservationKey(observation) {
-  const stable = { scene: observation.scene, phase: observation.phase, territoryId: observation.territoryId, frontDirection: observation.frontDirection, hero: observation.hero, army: observation.army, objective: observation.objective, visibleThreats: observation.visibleThreats, availableActions: observation.availableActions };
+  const stable = { scene: observation.scene, phase: observation.phase, territoryId: observation.territoryId, frontDirection: observation.frontDirection, hero: observation.hero, army: observation.army, objective: observation.objective, room: observation.room, visibleThreats: observation.visibleThreats, availableActions: observation.availableActions };
   return JSON.stringify(stable);
 }

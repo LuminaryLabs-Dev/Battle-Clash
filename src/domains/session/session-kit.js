@@ -25,7 +25,8 @@ export function createSessionKit() {
     apiName: "battleClashSession",
     stability: "experimental",
     version: "0.1.0",
-    requires: ["n:game:battle-clash", "n:core-network"],
+    provides: ["n:game:battle-clash:session"],
+    requires: ["n:game:battle-clash", "n:network"],
     services: [
       "attack-defend-room",
       "authority-read-model",
@@ -41,7 +42,7 @@ export function createSessionKit() {
         update(patch = {}) {
           const next = normalizeSession(getState(), patch);
           world.setResource(Resources.SessionState, next);
-          engine.n.coreNetwork.update(
+          engine.n.network.update(
             {
               session: next,
               authority: {

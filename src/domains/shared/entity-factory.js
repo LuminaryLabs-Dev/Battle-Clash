@@ -9,6 +9,7 @@ import {
 import { territoryById } from "../../data/world.js";
 import { createDefaultWorldState, heroUnlocksForLevel } from "../world/world-state.js";
 import { createObjectiveState } from "../encounter/encounter-objectives.js";
+import { createRoomState } from "../encounter/room-state.js";
 import { Components, Resources } from "./definitions.js";
 
 function set(world, entity, component, value) {
@@ -447,12 +448,21 @@ export function seedBattleState(world, options = {}) {
     ...structuredClone(worldState.landscape),
     territoryId: worldState.currentTerritoryId
   });
+  const existingRoom = world.getResource(Resources.RoomState);
+  const roomState = encounterTerritoryId
+    ? createRoomState(
+      encounterTerritoryId,
+      options.roomId ?? (existingRoom?.territoryId === encounterTerritoryId && !existingRoom.completedRoomIds?.includes(existingRoom.roomId) ? existingRoom.roomId : null),
+      options.completedRoomIds ?? encounterTerritory?.roomProgress ?? (existingRoom?.territoryId === encounterTerritoryId ? existingRoom.completedRoomIds : [])
+    )
+    : createRoomState(worldState.currentTerritoryId);
   const recipes = encounterTerritoryId
     ? encounterRecipes(
       encounterTerritoryId,
       encounterTerritory,
       worldState.factionStrategy,
-      options.encounterFrontDirection
+      options.encounterFrontDirection,
+      roomState
     )
     : INITIAL_DUNGEON;
   const encounterFront = encounterTerritory
@@ -505,11 +515,17 @@ export function seedBattleState(world, options = {}) {
     frontPressure: Number((encounterFront?.pressure ?? 0).toFixed(3)),
     strategyIntent: encounterTerritory
       ? worldState.factionStrategy?.[encounterFront?.faction]?.intent ?? "pressure"
-      : "pressure"
+      : "pressure",
+    roomId: roomState.roomId,
+    roomKind: roomState.kind,
+    roomObjective: roomState.objective,
+    roomIndex: roomState.index,
+    roomCount: roomState.total
   });
+  world.setResource(Resources.RoomState, roomState);
   world.setResource(
     Resources.ObjectiveState,
-    createObjectiveState(encounterTerritoryId ?? "obsidian-vault", recipes)
+    createObjectiveState(encounterTerritoryId ?? "obsidian-vault", recipes, roomState)
   );
   world.setResource(Resources.LootState, {
     schema: "battle-clash.loot/1",
@@ -545,8 +561,9 @@ function encounterEnemyCount(territoryId, territoryState = null) {
   return Math.max(8, Number(territoryState?.encounterEnemyCount) || 8 + (territoryById(territoryId)?.fronts.length ?? 0));
 }
 
-function encounterRecipes(territoryId, territoryState = null, strategy = {}, preferredDirection = null) {
-  const count = encounterEnemyCount(territoryId, territoryState);
+function encounterRecipes(territoryId, territoryState = null, strategy = {}, preferredDirection = null, roomState = null) {
+  const roomKind = roomState?.kind ?? null;
+  const count = encounterEnemyCount(territoryId, territoryState) + (roomKind === "ambush" || roomKind === "elite" ? 1 : 0);
   const territory = territoryById(territoryId);
   const layoutKind = territory?.kind ?? "frontier";
   const front = hostileFront(territoryState ?? territory, preferredDirection);
@@ -560,7 +577,13 @@ function encounterRecipes(territoryId, territoryState = null, strategy = {}, pre
     const radius = layoutKind === "stronghold" ? 5.4 : layoutKind === "dungeon" ? 4.9 : 4.6;
     const angle = (index / Math.max(1, count - 2)) * Math.PI * 2
       + (layoutKind === "wilds" ? 0.28 : layoutKind === "dungeon" ? 0.12 : 0);
-    const archetype = territory?.kind === "stronghold"
+    const archetype = roomKind === "boss" && territory?.kind === "stronghold"
+      ? "boss"
+      : roomKind === "elite" && index === 0
+        ? "elite"
+        : roomKind === "trap" && index % 3 === 0
+          ? "bastion"
+          : territory?.kind === "stronghold"
       ? index % 7 === 0 ? "elite" : index % 3 === 0 ? "bastion" : "sentinel"
       : territory?.kind === "wilds"
         ? index % 2 === 0 ? "scout" : "sentinel"

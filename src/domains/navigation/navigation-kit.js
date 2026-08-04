@@ -1,5 +1,5 @@
 import { defineDomainServiceKit } from "nexusengine/domain-service-kit";
-import { createAStarPathfinder } from "nexusengine";
+import { createAStarPathfinder } from "nexusengine/domains/world/navigation/pathfinding";
 import { Components, Resources } from "../shared/definitions.js";
 import { identityOf, isAlive } from "../shared/entity-factory.js";
 
@@ -170,10 +170,11 @@ export function createNavigationKit() {
     apiName: "battleClashNavigation",
     stability: "experimental",
     version: "0.1.0",
+    provides: ["n:game:battle-clash:navigation"],
     requires: [
       "n:game:battle-clash",
       "n:game:battle-clash:targeting",
-      "n:core-spatial"
+      "n:spatial"
     ],
     services: ["movement-intent", "direct-path-follow"],
     createApi({ engine }) {

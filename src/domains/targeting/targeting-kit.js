@@ -91,10 +91,11 @@ export function createTargetingKit() {
     apiName: "battleClashTargeting",
     stability: "experimental",
     version: "0.1.0",
+    provides: ["n:game:battle-clash:targeting"],
     requires: [
       "n:game:battle-clash",
       "n:game:battle-clash:world",
-      "n:core-spatial"
+      "n:spatial"
     ],
     services: ["candidate-selection", "target-priority"],
     systems: [

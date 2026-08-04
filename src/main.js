@@ -161,8 +161,11 @@ function objectiveFor(snapshot) {
   }
   if (snapshot.scene?.current === "encounter" && snapshot.objective) {
     const objective = snapshot.objective;
-    if (objective.completed) return `${objective.title} complete. Finish the assault on the Dungeon Heart.`;
-    return `${objective.title}: ${objective.description} (${objective.progress}/${objective.required})`;
+    const room = snapshot.room?.roomId
+      ? `Room ${Number(snapshot.room.index ?? 0) + 1}/${snapshot.room.total} · ${snapshot.room.kind}`
+      : null;
+    if (objective.completed) return `${room ? `${room} · ` : ""}${objective.title} complete. Finish the assault on the Dungeon Heart.`;
+    return `${room ? `${room} · ` : ""}${objective.title}: ${objective.description} (${objective.progress}/${objective.required})`;
   }
   if (isConnectedRole(snapshot, "defender")) {
     return snapshot.raid.phase === "active"
@@ -453,6 +456,9 @@ function updateUi(snapshot) {
   elements.returnAfterRaid.hidden = !terminal;
   if (terminal) {
     const won = snapshot.raid.phase === "won";
+    const nextRoom = won && snapshot.room?.hasNext && !defender;
+    elements.playAgain.setAttribute("aria-label", nextRoom ? "Enter next room" : "Begin next run");
+    elements.playAgain.dataset.tooltip = nextRoom ? "Next room" : "Next run";
     elements.resultEyebrow.textContent = won
       ? "VAULT BROKEN"
       : "RUN ENDED";
@@ -463,7 +469,7 @@ function updateUi(snapshot) {
       ? won
         ? "The attacking party broke through."
         : "The delvers were stopped."
-      : `+${snapshot.progression.lastReward} XP · Level ${snapshot.progression.level}`;
+      : `+${snapshot.progression.lastReward} XP · Level ${snapshot.progression.level}${nextRoom ? " · Next room ready" : ""}`;
   }
 
   if (snapshot.raid.phase !== previousPhase) {
@@ -502,7 +508,7 @@ function updateUi(snapshot) {
     .filter(
       (domainPath) =>
         domainPath.includes("battle-clash") ||
-        ["n:world", "n:core-network", "n:core-persistence"].includes(domainPath)
+        ["n:world", "n:network", "n:runtime:persistence"].includes(domainPath)
     )
     .join(" → ");
   elements.diagnostics.textContent =
@@ -798,6 +804,21 @@ function resetRun() {
   if (menuOpen) setMenuOpen(false);
 }
 
+function advanceOrResetRun() {
+  const snapshot = currentSnapshot();
+  if (snapshot.raid?.phase === "won" && snapshot.room?.hasNext && !network?.isRemoteAuthority()) {
+    const result = game.advanceRoom();
+    if (result?.accepted) {
+      host.setDeployMode(true);
+      showCue(`Room ${Number(result.state.index) + 1} opened.`, 1800);
+      renderNow();
+      return result;
+    }
+  }
+  resetRun();
+  return { accepted: true, reset: true };
+}
+
 function transitionScene(sceneId, payload = {}) {
   if (network?.isRemoteAuthority()) {
     const sent = network.sendCommand({
@@ -1075,7 +1096,7 @@ try {
     dispatchCommand({ kind: "hero-ability", abilityId: "arc-burst" });
     showCue("Ember releases an arc burst.", 1200);
   });
-  elements.playAgain.addEventListener("click", resetRun);
+  elements.playAgain.addEventListener("click", advanceOrResetRun);
   elements.accountSignIn.addEventListener("click", async () => {
     try {
       await auth.signIn(elements.accountEmail.value.trim(), elements.accountPassword.value);

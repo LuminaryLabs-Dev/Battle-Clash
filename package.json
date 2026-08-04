@@ -20,7 +20,7 @@
     "server": "node server/peer-server.mjs"
   },
   "dependencies": {
-    "nexusengine": "https://codeload.github.com/LuminaryLabs-Dev/NexusEngine/tar.gz/d90dccb6bb23678a9cba0b7cac7351819f4f4eb0",
+    "nexusengine": "https://codeload.github.com/LuminaryLabs-Dev/NexusEngine/tar.gz/c9218a79a84d8ea1980edef8a99df8918d688b6f",
     "peer": "1.0.2",
     "peerjs": "1.5.5",
     "three": "0.185.1"

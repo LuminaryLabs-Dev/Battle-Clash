@@ -1,17 +1,19 @@
 import { createEngine } from "nexusengine/engine";
 import { defineDomainServiceKit } from "nexusengine/domain-service-kit";
-import { createCoreCameraKit } from "nexusengine/core-kits/core-camera-kit";
-import { createCoreDataKit } from "nexusengine/core-kits/core-data-kit";
-import { createCoreGraphicsKit } from "nexusengine/core-kits/core-graphics-kit";
-import { createCoreInputKit } from "nexusengine/core-kits/core-input-kit";
-import { createCoreInteractionKit } from "nexusengine/core-kits/core-interaction-kit";
-import { createCoreNetworkKit } from "nexusengine/core-kits/core-network-kit";
-import { createCorePersistenceKit } from "nexusengine/core-kits/core-persistence-kit";
-import { createCoreSimulationKit } from "nexusengine/core-kits/core-simulation-kit";
-import { createCoreSceneKit } from "nexusengine/core-kits/core-scene-kit";
-import { createCoreSpatialKit } from "nexusengine/core-kits/core-spatial-kit";
-import { createCoreUIKit } from "nexusengine/core-kits/core-ui-kit";
-import { createCoreWorldDomain } from "nexusengine/core-domains/core-world-domain";
+import { createCameraFramingKit as createCoreCameraKit } from "nexusengine/domains/presentation/camera/framing";
+import { createDataKit as createCoreDataKit } from "nexusengine/domains/runtime/data";
+import { createGraphicsKit as createCoreGraphicsKit } from "nexusengine/domains/presentation/graphics";
+import { createInputKit as createCoreInputKit } from "nexusengine/domains/interaction/input";
+import { createInteractionKit as createCoreInteractionKit } from "nexusengine/domains/interaction/runtime";
+import { createNetworkKit as createCoreNetworkKit } from "nexusengine/domains/network";
+import { createPersistenceKit as createCorePersistenceKit } from "nexusengine/domains/runtime/persistence";
+import { createSimulationKit as createCoreSimulationKit } from "nexusengine/domains/simulation/runtime";
+import { createSceneKit as createCoreSceneKit } from "nexusengine/domains/world/scene";
+import { createSpatialKit as createCoreSpatialKit } from "nexusengine/domains/spatial";
+import { createUIKit as createCoreUIKit } from "nexusengine/domains/presentation/ui";
+import { createPresentationKit } from "nexusengine/domains/presentation/registry";
+import { createPresentationOutputKit } from "nexusengine/domains/presentation/output";
+import { createWorldDomain as createCoreWorldDomain } from "nexusengine/domains/world";
 import { createCombatKit } from "../domains/combat/combat-kit.js";
 import { createHeroCombatKit } from "../domains/hero-combat/hero-combat-kit.js";
 import { createDefenseKit } from "../domains/defense/defense-kit.js";
@@ -37,6 +39,8 @@ import { ARCHETYPES, WORLD_SEED } from "../data/battlefield.js";
 import { WORLD_SCENES, sceneForTerritory } from "../data/world.js";
 import { createPlayerKit } from "../domains/player/player-kit.js";
 import { normalizePlayerObservation } from "../domains/player/player-observation.js";
+import { advanceRoomState } from "../domains/encounter/room-state.js";
+import { seedBattleState } from "../domains/shared/entity-factory.js";
 import {
   PRODUCTION_CONTENT_SCHEMA, CONTENT_TERRITORIES, ROOM_TYPES, ENEMY_FAMILIES,
   BOSS_PHASES, GEAR_ITEMS, QUESTS, CRAFTING_RECIPES, SANCTUM_ROOMS
@@ -52,6 +56,7 @@ function createBattleClashRootKit() {
     apiName: "battleClash",
     stability: "experimental",
     version: "0.1.0",
+    provides: ["n:game:battle-clash"],
     services: ["composition", "commands", "snapshot"],
     components: Components,
     resources: Resources,
@@ -165,6 +170,10 @@ export function createBattleClashGame(options = {}) {
       }),
       createCoreSpatialKit(),
       createCoreSimulationKit(),
+      createCoreWorldDomain({
+        foundation: false,
+        features: false
+      }),
       createCoreSceneKit({
         initialSceneId: ["sanctum", "overworld", "encounter"].includes(requestedInitialScene)
           || String(requestedInitialScene ?? "").startsWith("territory:")
@@ -175,13 +184,11 @@ export function createBattleClashGame(options = {}) {
       }),
       createCoreInputKit(),
       createCoreInteractionKit(),
+      createPresentationKit(),
+      createPresentationOutputKit(),
       createCoreGraphicsKit(),
       createCoreCameraKit(),
       createCoreUIKit(),
-      createCoreWorldDomain({
-        foundation: false,
-        features: false
-      }),
       createBattleClashRootKit(),
       createBattleWorldKit({
         progression: options.progression,
@@ -293,6 +300,9 @@ export function createBattleClashGame(options = {}) {
     const objective = structuredClone(
       engine.world.getResource(Resources.ObjectiveState)
     );
+    const room = structuredClone(
+      engine.world.getResource(Resources.RoomState)
+    );
     const loot = structuredClone(
       engine.world.getResource(Resources.LootState)
     );
@@ -340,6 +350,7 @@ export function createBattleClashGame(options = {}) {
       defense,
       ability,
       objective,
+      room,
       loot,
       session,
       account,
@@ -402,6 +413,7 @@ export function createBattleClashGame(options = {}) {
       defense: snapshot.defense,
       ability: snapshot.ability,
       objective: snapshot.objective,
+      room: snapshot.room,
       loot: snapshot.loot,
       account: snapshot.account,
       coreHealth: snapshot.coreHealth,
@@ -412,9 +424,46 @@ export function createBattleClashGame(options = {}) {
   }
 
   function getDigest() {
-    return engine.n.coreData.digest.digest(getDeterministicSnapshot(), {
+    return engine.n.data.digest.digest(getDeterministicSnapshot(), {
       game: "battle-clash"
     }).digest;
+  }
+
+  function advanceRoom() {
+    const current = engine.world.getResource(Resources.RoomState);
+    const raid = engine.world.getResource(Resources.RaidState);
+    const scene = engine.world.getResource(Resources.SceneState);
+    if (scene?.current !== "encounter" || raid?.phase !== "won") {
+      return { accepted: false, reason: "room-advance-requires-victory", state: structuredClone(current) };
+    }
+    const result = advanceRoomState(current);
+    if (!result.accepted) return result;
+    const worldState = engine.world.getResource(Resources.WorldState);
+    const territory = worldState?.territories?.[result.state.territoryId];
+    if (worldState && territory) {
+      const nextWorld = {
+        ...worldState,
+        revision: Number(worldState.revision ?? 0) + 1,
+        territories: {
+          ...worldState.territories,
+          [result.state.territoryId]: {
+            ...territory,
+            roomProgress: [...new Set([...(territory.roomProgress ?? []), result.completedRoomId])]
+          }
+        }
+      };
+      engine.world.setResource(Resources.WorldState, nextWorld);
+      engine.world.setResource(Resources.TerritoryState, structuredClone(nextWorld.territories[result.state.territoryId]));
+    }
+    seedBattleState(engine.world, {
+      encounterTerritoryId: result.state.territoryId,
+      roomId: result.state.roomId,
+      completedRoomIds: result.state.completedRoomIds,
+      encounterFrontDirection: engine.world.getResource(Resources.BattleMetadata)?.frontDirection ?? null,
+      progression: engine.world.getResource(Resources.ProgressionState)
+    });
+    engine.world.emit(Events.RoomChanged, structuredClone(result.state));
+    return { ...result, snapshot: getSnapshot() };
   }
 
   return {
@@ -423,6 +472,7 @@ export function createBattleClashGame(options = {}) {
     startRaid,
     useHeroAbility,
     reset,
+    advanceRoom,
     fortify,
     tick,
     stepSeconds,

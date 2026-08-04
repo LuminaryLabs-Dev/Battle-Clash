@@ -17,7 +17,8 @@ export function createPlayerKit() {
     apiName: "battleClashPlayer",
     stability: "experimental",
     version: "0.1.0",
-    requires: ["n:game:battle-clash", "n:core-data", "n:core-input"],
+    provides: ["n:game:battle-clash:player"],
+    requires: ["n:game:battle-clash", "n:runtime:data", "n:interaction:input"],
     services: ["observation", "memory", "decision", "episode", "learning"],
     createApi({ world }) {
       for (const [resource, value] of [

@@ -9,6 +9,10 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 ## Durable Architecture Decisions
 
 - NexusEngine is the deterministic Core runtime and is pinned as an external dependency.
+- The feature branch is compatible with NexusEngine 0.0.4 semantic paths (`n:world`,
+  `n:network`, `n:runtime:*`, `n:simulation`, `n:spatial`, `n:interaction:*`,
+  `n:presentation:*`, and `n:world:scene`); retired `n:core-*` aliases are not
+  part of the game contract.
 - ECS entities, components, resources, events, and ordered systems own gameplay truth.
 - Deep game domains compose NexusEngine Core domains and small atomic kits.
 - Core World owns world identity, partitioning, cells, surfaces, focus, and portable lifecycle state.
@@ -60,6 +64,10 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - Encounter objectives are an atomic `encounter:objectives` ECS kit. Territory
   kind selects relic, pressure, front, or stronghold objectives; combat records
   destroyed entity IDs and the objective kit resolves progress/completion.
+- Authored room chains are encounter-domain state: `RoomState` exposes the
+  current room, deterministic exits, objective kind, and completed room IDs.
+  A won room advances through the chain; the World kit claims a territory only
+  after its final room and persists `roomProgress` on that territory.
 - Territory descriptors seed renderer-neutral landmark entities for settlement,
   resource, and territory-kind sites. They use `TerritoryMarker` and
   `ResourceNode` components, have no combat health, and are visible only in the

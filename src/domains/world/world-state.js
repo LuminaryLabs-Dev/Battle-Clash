@@ -56,6 +56,7 @@ function territoryState(territory, discoveredIds, controlledIds) {
     landmarks: landmarksForTerritory(territory),
     landscape: landscapeForTerritory(territory.id, 0),
     landscapeRevision: 0,
+    roomProgress: [],
     supplyEfficiency: controlled ? 1 : 0,
     encounterEnemyCount: encounterEnemyCountFor(territory, territory.fronts),
     unlocks: territoryUnlocksFor(territory, controlled)

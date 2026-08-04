@@ -14,15 +14,16 @@ import {
 } from "../src/data/production-content.js";
 
 const expectedDomains = [
-  "n:core-camera", "n:core-data", "n:core-graphics", "n:core-input", "n:core-interaction",
-  "n:core-network", "n:core-persistence", "n:core-scene", "n:core-simulation", "n:core-spatial",
-  "n:core-ui", "n:game:battle-clash", "n:game:battle-clash:army", "n:game:battle-clash:combat",
+  "n:game:battle-clash", "n:game:battle-clash:army", "n:game:battle-clash:combat",
   "n:game:battle-clash:defense", "n:game:battle-clash:deployment", "n:game:battle-clash:economy",
   "n:game:battle-clash:encounter", "n:game:battle-clash:encounter:objectives", "n:game:battle-clash:flow",
   "n:game:battle-clash:frontier", "n:game:battle-clash:hero", "n:game:battle-clash:hero-combat",
   "n:game:battle-clash:navigation", "n:game:battle-clash:progression", "n:game:battle-clash:raid",
   "n:game:battle-clash:sanctum", "n:game:battle-clash:session", "n:game:battle-clash:targeting",
-  "n:game:battle-clash:world", "n:realtime", "n:sequence", "n:world", "n:game:battle-clash:player"
+  "n:game:battle-clash:world", "n:game:battle-clash:player", "n:interaction", "n:interaction:input",
+  "n:network", "n:presentation", "n:presentation:camera", "n:presentation:graphics", "n:presentation:output",
+  "n:presentation:ui", "n:runtime", "n:runtime:data", "n:runtime:persistence", "n:runtime:realtime",
+  "n:runtime:sequence", "n:simulation", "n:spatial", "n:world", "n:world:scene"
 ];
 
 const commandCases = [
@@ -62,11 +63,12 @@ const baseline = createBattleClashGame();
 const snapshot = baseline.getSnapshot();
 
 const domainNamespaces = {
-  "n:core-camera": "coreCamera", "n:core-data": "coreData", "n:core-graphics": "coreGraphics",
-  "n:core-input": "coreInput", "n:core-interaction": "coreInteraction", "n:core-network": "coreNetwork",
-  "n:core-persistence": "corePersistence", "n:core-scene": "coreScene", "n:core-simulation": "coreSimulation",
-  "n:core-spatial": "coreSpatial", "n:core-ui": "coreUI", "n:world": "coreWorld", "n:realtime": "realtime",
-  "n:sequence": "sequence", "n:game:battle-clash:army": "battleClashArmy", "n:game:battle-clash:combat": "battleClashRaid",
+  "n:interaction": "interaction", "n:interaction:input": "input", "n:network": "network",
+  "n:presentation": "presentation", "n:presentation:camera": "cameraFraming", "n:presentation:graphics": "graphics",
+  "n:presentation:output": "presentationOutput", "n:presentation:ui": "ui", "n:runtime": "runtime",
+  "n:runtime:data": "data", "n:runtime:persistence": "persistence", "n:runtime:realtime": "realtime",
+  "n:runtime:sequence": "sequence", "n:simulation": "simulation", "n:spatial": "spatial", "n:world": "world",
+  "n:world:scene": "scene", "n:game:battle-clash:army": "battleClashArmy", "n:game:battle-clash:combat": "battleClashRaid",
   "n:game:battle-clash:defense": "battleClashDefense", "n:game:battle-clash:deployment": "battleClashDeployment",
   "n:game:battle-clash:economy": "battleClashEconomy", "n:game:battle-clash:encounter": "battleClashEncounter",
   "n:game:battle-clash:encounter:objectives": "battleClashEncounterObjectives", "n:game:battle-clash:flow": "battleClashFlow",
@@ -83,8 +85,8 @@ for (const domain of expectedDomains) check("domain-behavior", domain, () => {
   const namespace = baseline.engine.n[domainNamespaces[domain]];
   requireValue(namespace, `namespace missing for ${domain}`);
   if (domain === "n:game:battle-clash:navigation") return requireValue(namespace.findPath({ x: 50, z: 50 }, { x: 51, z: 50 })?.status, "navigation probe unavailable");
-  if (domain === "n:realtime") return requireValue(namespace.getCurrentTickContext() !== undefined, "realtime context unavailable");
-  if (domain === "n:sequence") return requireValue(namespace.getRuntime() !== undefined, "sequence runtime unavailable");
+  if (domain === "n:runtime:realtime") return requireValue(namespace.getCurrentTickContext() !== undefined, "realtime context unavailable");
+  if (domain === "n:runtime:sequence") return requireValue(namespace.getRuntime() !== undefined, "sequence runtime unavailable");
   const read = namespace.getState ?? namespace.getSnapshot ?? namespace.getWorldState ?? namespace.getCurrentScene;
   requireValue(typeof read === "function", `read model missing for ${domain}`);
   requireValue(read.call(namespace) !== undefined, `read model returned undefined for ${domain}`);
@@ -212,10 +214,18 @@ check("event-behavior", "complete-event-catalog", () => {
   game.fortify();
   game.tick();
   game.stepSeconds(45);
+  while (game.getSnapshot().room?.hasNext) {
+    game.advanceRoom();
+    for (const [x, z] of pattern) { game.deployAt(x, z); game.tick(); }
+    game.startRaid();
+    game.tick();
+    game.useHeroAbility();
+    game.stepSeconds(45);
+  }
   const required = [
     "DeploymentAccepted", "DeploymentRejected", "TargetAcquired", "AttackResolved", "EntityDestroyed",
     "RaidStarted", "RaidCompleted", "RaidReset", "ProgressionAwarded", "LevelGained", "DefenseFortified",
-    "SessionChanged", "SceneChanged", "HeroMoved", "TerritoryDiscovered", "TerritoryEntered", "TerritoryClaimed",
+    "SessionChanged", "SceneChanged", "RoomChanged", "HeroMoved", "TerritoryDiscovered", "TerritoryEntered", "TerritoryClaimed",
     "EconomyTicked", "LandmarkInteracted", "LandscapeChanged", "ObjectiveProgressed", "ObjectiveCompleted",
     "AccountChanged", "AbilityUsed"
   ];

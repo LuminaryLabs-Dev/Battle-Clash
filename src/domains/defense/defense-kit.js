@@ -53,10 +53,11 @@ export function createDefenseKit() {
     apiName: "battleClashDefense",
     stability: "experimental",
     version: "0.1.0",
+    provides: ["n:game:battle-clash:defense"],
     requires: [
       "n:game:battle-clash",
       "n:game:battle-clash:combat",
-      "n:core-simulation"
+      "n:simulation"
     ],
     services: ["dungeon-ward", "defender-command"],
     systems: [

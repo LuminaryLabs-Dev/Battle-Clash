@@ -1,7 +1,7 @@
 import {
   createFlatWorldSurface,
   createUniformGridPartition
-} from "nexusengine/core-domains/core-world-domain";
+} from "nexusengine/domains/world";
 import { defineDomainServiceKit } from "nexusengine/domain-service-kit";
 import {
   BATTLEFIELD,
@@ -43,10 +43,11 @@ export function createBattleWorldKit(options = {}) {
     apiName: "battleClashWorld",
     stability: "experimental",
     version: "0.1.0",
+    provides: ["n:game:battle-clash:world"],
     requires: [
       "n:game:battle-clash",
       "n:world",
-      "n:core-spatial"
+      "n:spatial"
     ],
     services: [
       "battlefield",
@@ -78,7 +79,7 @@ export function createBattleWorldKit(options = {}) {
       ]
     },
     initWorld({ engine, world }) {
-      engine.n.coreWorld.registerWorld({
+      engine.n.world.registerWorld({
         id: WORLD_ID,
         seed: WORLD_SEED,
         partition: createUniformGridPartition({
@@ -91,10 +92,10 @@ export function createBattleWorldKit(options = {}) {
         }),
         providers: []
       });
-      engine.n.coreWorld.setFocus(WORLD_ID, {
+      engine.n.world.setFocus(WORLD_ID, {
         position: { x: 0, y: 0, z: 0 }
       });
-      engine.n.coreWorld.updateWorld(WORLD_ID);
+      engine.n.world.updateWorld(WORLD_ID);
       seedBattleState(world, {
         progression: options.progression,
         world: options.world
@@ -111,10 +112,10 @@ export function createBattleWorldKit(options = {}) {
         id: WORLD_ID,
         seed: WORLD_SEED,
         getSnapshot() {
-          return engine.n.coreWorld.snapshotWorld(WORLD_ID);
+          return engine.n.world.snapshotWorld(WORLD_ID);
         },
         getActiveCells() {
-          return engine.n.coreWorld.getActiveCells(WORLD_ID);
+          return engine.n.world.getActiveCells(WORLD_ID);
         },
         getWorldState() {
           return structuredClone(engine.world.getResource(Resources.WorldState));
@@ -167,7 +168,7 @@ export function createBattleWorldKit(options = {}) {
               }
             }
           };
-          const transition = engine.n.coreScene?.requestTransition({
+          const transition = engine.n.scene?.requestTransition({
             toSceneId: sceneForTerritory(territoryId),
             direct: true,
             transitionId: `territory:${current.revision + 1}:${territoryId}`,
@@ -299,7 +300,7 @@ export function createBattleWorldKit(options = {}) {
             : String(sceneId ?? "");
           const guard = sceneTransitionGuard(current, canonicalSceneId, payload);
           if (!guard.accepted) return guard;
-          const transition = engine.n.coreScene?.requestTransition({
+          const transition = engine.n.scene?.requestTransition({
             toSceneId: canonicalSceneId,
             direct: true,
             payload,
@@ -389,9 +390,23 @@ function territoryCompletionSystem(world) {
   const scene = world.getResource(Resources.SceneState);
   const current = world.getResource(Resources.WorldState);
   if (raid?.phase !== "won" || scene?.current !== "encounter" || !current) return;
+  const room = world.getResource(Resources.RoomState);
+  if (room?.hasNext) return;
   const territory = current.territories[current.currentTerritoryId];
   if (!territory || territory.ownerFaction === "player") return;
-  const result = claimTerritoryState(current, current.currentTerritoryId, "player");
+  const progressed = room?.roomId
+    ? {
+        ...current,
+        territories: {
+          ...current.territories,
+          [current.currentTerritoryId]: {
+            ...territory,
+            roomProgress: [...new Set([...(territory.roomProgress ?? []), room.roomId])]
+          }
+        }
+      }
+    : current;
+  const result = claimTerritoryState(progressed, current.currentTerritoryId, "player");
   if (!result.accepted) return;
   const next = {
     ...result.state,
@@ -483,7 +498,7 @@ function commitWorldState(engine, next, transition) {
     Resources.TerritoryState,
     structuredClone(committed.territories[committed.currentTerritoryId])
   );
-  const scene = engine.n.coreScene?.getCurrentScene?.();
+  const scene = engine.n.scene?.getCurrentScene?.();
   engine.world.setResource(Resources.SceneState, {
     current: scene?.id ?? committed.currentSceneId,
     previous: transition?.transition?.fromSceneId ?? null,

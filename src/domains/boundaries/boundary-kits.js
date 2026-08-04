@@ -10,7 +10,8 @@ function boundary({ id, domain, path, apiName, services, owns, read }) {
     apiName,
     stability: "experimental",
     version: "0.1.0",
-    requires: ["n:game:battle-clash", "n:world", "n:core-simulation"],
+    provides: [path],
+    requires: ["n:game:battle-clash", "n:world", "n:simulation"],
     services,
     createApi({ engine }) {
       return {

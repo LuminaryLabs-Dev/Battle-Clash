@@ -11,7 +11,7 @@ defend boundaries.
 
 ## Status
 
-Complete locally on `agent/immersive-world-ui` (not pushed to `main`). Home Base, overworld,
+Complete locally on `agent/domain-validator` (not pushed to `main`). Home Base, overworld,
 territory state, economy ticks, scene transitions, and NexusEngine-backed world,
 territory, and combat A* queries are wired and validated. Dynamic landscape
 mutation, territory-specific encounter composition, full world rendering,
@@ -22,6 +22,14 @@ serializable world contract. Final verification includes `npm run check`,
 `npm run build`, `npm run build:pages`, `git diff --check`, and a live browser
 run that deployed eight delvers, shattered the Heart, and rendered the victory
 receipt with zero console errors.
+
+### Current PR audit lane
+
+The active feature branch is compatible with NexusEngine 0.0.4 semantic domains
+and adds deterministic authored room chains. Current proof is 657/657 before
+room coverage and 661/661 after it, with Player harness browser proof green.
+Main remains protected; external Supabase, Rails runtime, OAuth, hosted
+PeerServer/TURN, and required PR review are still release gates.
 
 ## Acceptance Criteria
 

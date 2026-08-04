@@ -21,7 +21,7 @@ function lootFor(kind, index) {
  * Encounter objectives are data-derived from the territory descriptor and the
  * deterministic recipe, not from the renderer or a scene-specific button.
  */
-export function createObjectiveState(territoryId, recipes = []) {
+export function createObjectiveState(territoryId, recipes = [], roomState = null) {
   const territory = territoryById(territoryId);
   const kind = territory?.kind ?? "dungeon";
   const sentinels = guardIdsFor(recipes);
@@ -72,6 +72,9 @@ export function createObjectiveState(territoryId, recipes = []) {
   return {
     schema: "battle-clash.objective/1",
     ...descriptor,
+    roomId: roomState?.roomId ?? null,
+    roomKind: roomState?.kind ?? null,
+    roomObjective: roomState?.objective ?? null,
     lootTable: descriptor.targetIds.map((targetId, index) => ({
       targetId,
       resources: lootFor(descriptor.kind, index)

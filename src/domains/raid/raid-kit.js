@@ -93,10 +93,11 @@ export function createRaidLifecycleKit() {
     apiName: "battleClashRaid",
     stability: "experimental",
     version: "0.1.0",
+    provides: ["n:game:battle-clash:raid"],
     requires: [
       "n:game:battle-clash",
       "n:game:battle-clash:world",
-      "n:core-simulation"
+      "n:simulation"
     ],
     services: ["lifecycle", "victory", "reset"],
     systems: [
