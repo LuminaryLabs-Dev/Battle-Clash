@@ -6,6 +6,7 @@ import { Components, Events, Resources } from "../src/domains/shared/definitions
 import { createPeerMessage, normalizePeerCommand, parsePeerMessage } from "../src/network/peer-protocol.js";
 import { APPROVED_ASSETS, ASSET_CATALOG_SCHEMA, assetById, resolveRenderableAsset, validateAssetEntry } from "../src/assets/catalog.js";
 import { createReviewRun, promoteAfterConsecutivePasses, reviewPassAccepted } from "../src/assets/asset-review.js";
+import { createAuthenticatedHello, validateAuthenticatedHello, validateCommandEnvelope, createMatchReceipt, acceptMatchReceipt } from "../src/network/peer-room-contract.js";
 import {
   PRODUCTION_CONTENT_SCHEMA, CONTENT_TERRITORIES, ROOM_TYPES, ENEMY_FAMILIES,
   BOSS_PHASES, GEAR_ITEMS, QUESTS, CRAFTING_RECIPES, SANCTUM_ROOMS
@@ -140,6 +141,17 @@ check("content-behavior", "production-content-integrity", () => {
   requireValue(CRAFTING_RECIPES.every((recipe) => GEAR_ITEMS.some((item) => item.id === recipe.output) && Object.values(recipe.costs).every((cost) => cost > 0)), "crafting recipe references invalid gear or cost");
   requireValue(new Set(SANCTUM_ROOMS.map((room) => room.id)).size === SANCTUM_ROOMS.length && SANCTUM_ROOMS.every((room) => QUESTS.some((quest) => quest.id === room.unlock)), "Sanctum unlock graph incomplete");
   return { territories: CONTENT_TERRITORIES.length, rooms: roomIds.size, enemyFamilies: Object.keys(ENEMY_FAMILIES).length, bossPhases: BOSS_PHASES.length };
+});
+check("network-behavior", "authenticated-room-receipt-contract", () => {
+  const hello = createAuthenticatedHello({ roomId: "room-1", userId: "user-1", role: "attacker", profileRevision: 4 });
+  requireValue(validateAuthenticatedHello(hello, "room-1").accepted, "valid room hello rejected");
+  requireValue(!validateAuthenticatedHello({ ...hello, roomId: "room-2" }, "room-1").accepted, "foreign room hello accepted");
+  requireValue(validateCommandEnvelope({ roomId: "room-1", senderId: "user-1", authorityId: "host-1", sequence: 1, command: { kind: "deploy" } }).accepted, "valid command envelope rejected");
+  requireValue(!validateCommandEnvelope({ roomId: "room-1", senderId: "host-1", authorityId: "host-1", sequence: 1, command: { kind: "deploy" } }).accepted, "authority spoof accepted");
+  const receipt = createMatchReceipt({ roomId: "room-1", authorityId: "host-1", sequenceStart: 1, sequenceEnd: 12, result: "won", rewardIdempotencyKey: "reward-1" });
+  requireValue(acceptMatchReceipt(receipt, { roomId: "room-1", authorityId: "host-1" }).accepted, "valid match receipt rejected");
+  requireValue(!acceptMatchReceipt(receipt, { roomId: "room-1", authorityId: "host-1", lastAcceptedKey: "reward-1" }).accepted, "duplicate reward receipt accepted");
+  return { schema: hello.schema, receipt: receipt.schema };
 });
 for (const [name, resource] of Object.entries(Resources)) check("resource-behavior", name, () => {
   requireValue(baseline.engine.world.hasResource(resource), "resource is not registered");
