@@ -9,6 +9,7 @@
     "build": "vite build",
     "build:pages": "vite build --outDir docs",
     "check:domains": "node scripts/validate-domain-coverage.mjs",
+    "check:release": "node scripts/validate-release.mjs",
     "preview": "vite preview",
     "check": "node scripts/validate-simulation.mjs",
     "server": "node server/peer-server.mjs"

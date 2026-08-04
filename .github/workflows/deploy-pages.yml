@@ -40,8 +40,14 @@ jobs:
       - name: Validate semantic domain coverage
         run: npm run check:domains
 
+      - name: Validate release manifest
+        run: npm run check:release
+
       - name: Build production site
         run: npm run build
+
+      - name: Build Pages artifact
+        run: npm run build:pages
 
       - name: Verify Pages artifact
         run: test -f dist/index.html

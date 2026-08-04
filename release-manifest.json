@@ -1,0 +1,10 @@
+{
+  "schema": "battle-clash.release/1",
+  "project": "Battle Clash",
+  "runtime": "Three.js + NexusEngine ECS",
+  "requiredChecks": ["npm ci", "npm run check", "npm run check:domains", "npm run build", "npm run build:pages", "git diff --check"],
+  "deployment": { "provider": "github-pages", "sourceBranch": "main", "workflow": ".github/workflows/deploy-pages.yml" },
+  "online": { "identity": "supabase-auth", "transport": "peerjs", "durableApi": "rails" },
+  "assets": { "catalog": "src/assets/approved-manifest.json", "fallback": "cube" },
+  "secretsPolicy": "provider-encrypted-only"
+}
