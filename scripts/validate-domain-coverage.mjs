@@ -276,7 +276,12 @@ const report = {
   status: coveragePct >= 99 && failed.length === 0 ? "pass" : "fail"
 };
 
-await mkdir("artifacts/validation", { recursive: true });
-await writeFile("artifacts/validation/domain-coverage.json", `${JSON.stringify(report, null, 2)}\n`);
+try {
+  await mkdir("artifacts/validation", { recursive: true });
+  await writeFile("artifacts/validation/domain-coverage.json", `${JSON.stringify(report, null, 2)}\n`);
+} catch (error) {
+  if (error?.code !== "ENOSPC") throw error;
+  console.warn("validation report file skipped: workspace disk is full");
+}
 console.log(JSON.stringify(report, null, 2));
 if (report.status !== "pass") process.exitCode = 1;
