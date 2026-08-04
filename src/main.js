@@ -108,6 +108,7 @@ let auth;
 let accountSync;
 let accountState = structuredClone(SIGNED_OUT_ACCOUNT);
 let lastAccountSnapshotDigest = null;
+let submittedMatchReceiptIdentity = null;
 
 function showError(error) {
   elements.error.hidden = false;
@@ -468,6 +469,22 @@ function updateUi(snapshot) {
   if (snapshot.raid.phase !== previousPhase) {
     previousPhase = snapshot.raid.phase;
     announcePhase(snapshot);
+    if (["won", "lost"].includes(snapshot.raid.phase) && accountSync && accountState.status === "authenticated") {
+      const identity = `${snapshot.session.roomId ?? "solo"}:${snapshot.progression.runs}:${snapshot.raid.phase}`;
+      if (identity !== submittedMatchReceiptIdentity) {
+        submittedMatchReceiptIdentity = identity;
+        accountSync.pushMatchReceipt({
+          roomId: snapshot.session.roomId ?? "solo",
+          result: snapshot.raid.phase,
+          sequenceStart: 1,
+          sequenceEnd: Math.max(1, Number(snapshot.frame) || 1),
+          profileRevision: Number(snapshot.progression.runs) || 0
+        }).then((result) => updateAccountUi({
+          syncStatus: result.queued ? "queued" : result.conflict ? "conflict" : "synced",
+          pendingReceipts: accountSync.pending()
+        })).catch(() => updateAccountUi({ syncStatus: "queued", pendingReceipts: accountSync.pending() }));
+      }
+    }
   }
 
   elements.domain.textContent = snapshot.domains

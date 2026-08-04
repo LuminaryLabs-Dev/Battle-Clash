@@ -78,12 +78,20 @@ export function createAccountSync({ auth, getSnapshot, onSync, storage = window.
   }
 
   async function pushReceipt(kind, payload) {
-    const entry = { kind, payload, idempotencyKey: idempotencyKeyFactory(kind) };
+    return pushEntry("/api/v1/receipts", kind, payload);
+  }
+
+  async function pushMatchReceipt(payload) {
+    return pushEntry("/api/v1/match_receipts", "match.completed", payload);
+  }
+
+  async function pushEntry(path, kind, payload) {
+    const entry = { path, kind, payload, idempotencyKey: idempotencyKeyFactory(kind) };
     try {
-      const result = await request("/api/v1/receipts", {
+      const result = await request(path, {
         method: "POST",
         headers: { "Idempotency-Key": entry.idempotencyKey },
-        body: JSON.stringify({ kind, payload })
+        body: JSON.stringify(path === "/api/v1/match_receipts" ? payload : { kind, payload })
       });
       onSync?.({ status: "synced", result });
       return result;
@@ -106,10 +114,10 @@ export function createAccountSync({ auth, getSnapshot, onSync, storage = window.
     let flushed = 0;
     for (const entry of queue) {
       try {
-        await request("/api/v1/receipts", {
+        await request(entry.path ?? "/api/v1/receipts", {
           method: "POST",
           headers: { "Idempotency-Key": entry.idempotencyKey },
-          body: JSON.stringify({ kind: entry.kind, payload: entry.payload })
+          body: JSON.stringify(entry.path === "/api/v1/match_receipts" ? entry.payload : { kind: entry.kind, payload: entry.payload })
         });
         flushed += 1;
       } catch {
@@ -143,5 +151,5 @@ export function createAccountSync({ auth, getSnapshot, onSync, storage = window.
     return request("/api/v1/profiles/current", { method: "DELETE" });
   }
 
-  return Object.freeze({ pushReceipt, pushSnapshot, pullProfile, exportProfile, requestAccountDeletion, flushQueue, pending: () => readQueue().length });
+  return Object.freeze({ pushReceipt, pushMatchReceipt, pushSnapshot, pullProfile, exportProfile, requestAccountDeletion, flushQueue, pending: () => readQueue().length });
 }

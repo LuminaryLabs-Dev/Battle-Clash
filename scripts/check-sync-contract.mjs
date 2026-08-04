@@ -44,6 +44,10 @@ assert.deepEqual(flushed, { flushed: 1, remaining: 0 });
 assert.equal(sync.pending(), 0);
 assert.ok(requests >= 2, "transient server failures must retry");
 
+mode = "online";
+const match = await sync.pushMatchReceipt({ roomId: "room-1", result: "victory", sequenceStart: 1, sequenceEnd: 8 });
+assert.equal(match.accepted, true);
+
 mode = "conflict";
 const conflict = await sync.pushSnapshot();
 assert.equal(conflict.conflict, true);
