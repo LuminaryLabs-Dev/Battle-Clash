@@ -110,6 +110,46 @@ check("event-behavior", "world-event-emission", () => {
   const required = [Events.SceneChanged, Events.TerritoryDiscovered, Events.TerritoryEntered, Events.LandscapeChanged, Events.EconomyTicked];
   for (const event of required) requireValue(game.engine.world.readEvents(event).length > 0, `${event.name} was not emitted`);
 });
+check("event-behavior", "complete-event-catalog", () => {
+  const game = createBattleClashGame();
+  const emitted = new Set();
+  const originalEmit = game.engine.world.emit.bind(game.engine.world);
+  game.engine.world.emit = (event, payload) => {
+    emitted.add(Object.entries(Events).find(([, definition]) => definition === event)?.[0] ?? event?.name);
+    return originalEmit(event, payload);
+  };
+  const pattern = [[-10.5, -6], [-10.5, -2], [-10.5, 2], [-10.5, 6], [10.5, -6], [10.5, -2], [10.5, 2], [10.5, 6]];
+  game.updateSession({ message: "event-catalog" });
+  game.updateAccount({ syncStatus: "event-catalog" });
+  game.reset();
+  game.tick();
+  game.transitionToScene("overworld");
+  game.discoverTerritory("ash-crossing");
+  game.enterTerritory("ash-crossing");
+  game.moveHero({ x: 50, z: 50 });
+  game.tickEconomy(1);
+  game.changeLandscape({ blockedCells: [[1, 1]] });
+  game.interactLandmark("ash-crossing-settlement");
+  game.transitionToScene("encounter", { territoryId: "ash-crossing" });
+  game.deployAt(0, 0);
+  for (const [x, z] of pattern) { game.deployAt(x, z); game.tick(); }
+  game.startRaid();
+  game.tick();
+  game.useHeroAbility();
+  game.stepSeconds(3);
+  game.fortify();
+  game.tick();
+  game.stepSeconds(45);
+  const required = [
+    "DeploymentAccepted", "DeploymentRejected", "TargetAcquired", "AttackResolved", "EntityDestroyed",
+    "RaidStarted", "RaidCompleted", "RaidReset", "ProgressionAwarded", "LevelGained", "DefenseFortified",
+    "SessionChanged", "SceneChanged", "HeroMoved", "TerritoryDiscovered", "TerritoryEntered", "TerritoryClaimed",
+    "EconomyTicked", "LandmarkInteracted", "LandscapeChanged", "ObjectiveProgressed", "ObjectiveCompleted",
+    "AccountChanged", "AbilityUsed"
+  ];
+  for (const name of required) requireValue(emitted.has(name), `${name} was not emitted`);
+  return { events: required.length };
+});
 for (const [id, archetype] of Object.entries(ARCHETYPES)) check("archetype", id, () => {
   requireValue(archetype.id === id, "archetype id mismatch");
   requireValue(archetype.category && archetype.role && archetype.faction, "archetype semantic fields missing");
