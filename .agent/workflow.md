@@ -23,5 +23,6 @@
 | Validate projected camera framing at desktop, compact, and portrait sizes | Complete | Codex |
 | Prove pointer deployment, combat, win, loss, restart, and invoked menu | Complete | Codex |
 | Push and deploy immersive visual pass | Complete | Codex |
-| Add semantic domain/object coverage validator | In progress | Codex |
-| Connect BattleClash-Player validator gate | In progress | Codex |
+| Add semantic domain/object coverage validator | Complete locally | Codex |
+| Connect BattleClash-Player validator gate | Complete locally | Codex |
+| Push validator branches after review | Pending authorization | User |
