@@ -4,6 +4,8 @@ import { ARCHETYPES } from "../src/data/battlefield.js";
 import { TERRITORIES, WORLD_SCENES, sceneForTerritory } from "../src/data/world.js";
 import { Components, Events, Resources } from "../src/domains/shared/definitions.js";
 import { createPeerMessage, normalizePeerCommand, parsePeerMessage } from "../src/network/peer-protocol.js";
+import { assetById, validateAssetEntry } from "../src/assets/catalog.js";
+import { createReviewRun, promoteAfterConsecutivePasses, reviewPassAccepted } from "../src/assets/asset-review.js";
 
 const expectedDomains = [
   "n:core-camera", "n:core-data", "n:core-graphics", "n:core-input", "n:core-interaction",
@@ -84,6 +86,28 @@ for (const domain of expectedDomains) check("domain-behavior", domain, () => {
 for (const [name, component] of Object.entries(Components)) check("component", name, () => requireValue(component?.name, "component has no identity"));
 for (const [name, resource] of Object.entries(Resources)) check("resource", name, () => requireValue(resource?.name, "resource has no identity"));
 for (const [name, event] of Object.entries(Events)) check("event", name, () => requireValue(event?.name, "event has no identity"));
+check("asset-behavior", "quarantine-requires-metadata", () => {
+  const rejected = validateAssetEntry({ id: "quarantine", status: "quarantined" });
+  requireValue(!rejected.accepted && rejected.missing.length >= 1, "incomplete asset crossed catalog boundary");
+});
+check("asset-behavior", "approved-catalog-entry", () => {
+  const entry = { id: "objaverse_demo", objaverseUid: "demo", slug: "demo", sourceUrl: "https://example.invalid/demo", license: "CC-BY", sha256: "hash", path: "assets/demo.glb", status: "approved" };
+  requireValue(validateAssetEntry(entry).accepted, "complete approved asset rejected");
+  requireValue(assetById(entry.id, [entry]) === entry, "approved asset cannot be resolved");
+  requireValue(assetById(entry.id, [{ ...entry, status: "quarantined" }]) === null, "quarantined asset resolved at runtime");
+});
+check("asset-behavior", "three-pass-review-gate", () => {
+  const pass = (number) => {
+    const run = createReviewRun("objaverse_demo", number);
+    run.perspectives.forEach((item) => { item.decision = "pass"; });
+    run.contexts.forEach((item) => { item.decision = "pass"; });
+    run.humanDecision = "pass";
+    return run;
+  };
+  requireValue(reviewPassAccepted(pass(1)), "passing review rejected");
+  requireValue(promoteAfterConsecutivePasses([pass(1), pass(2), pass(3)]), "three consecutive passes did not promote");
+  requireValue(!promoteAfterConsecutivePasses([pass(1), pass(2)]), "incomplete review sequence promoted");
+});
 for (const [name, resource] of Object.entries(Resources)) check("resource-behavior", name, () => {
   requireValue(baseline.engine.world.hasResource(resource), "resource is not registered");
   requireValue(baseline.engine.world.getResource(resource) !== undefined, "resource has no initial state");
