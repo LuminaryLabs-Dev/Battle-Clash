@@ -396,6 +396,7 @@ export function createBattleClashGame(options = {}) {
       const current = engine.world.getResource(Resources.AccountState) ?? {};
       const next = { ...current, ...structuredClone(patch) };
       engine.world.setResource(Resources.AccountState, next);
+      engine.world.emit(Events.AccountChanged, structuredClone(next));
       return structuredClone(next);
     },
     getWorldState: () => engine.n.battleClashWorld.getWorldState(),

@@ -84,6 +84,32 @@ for (const domain of expectedDomains) check("domain-behavior", domain, () => {
 for (const [name, component] of Object.entries(Components)) check("component", name, () => requireValue(component?.name, "component has no identity"));
 for (const [name, resource] of Object.entries(Resources)) check("resource", name, () => requireValue(resource?.name, "resource has no identity"));
 for (const [name, event] of Object.entries(Events)) check("event", name, () => requireValue(event?.name, "event has no identity"));
+for (const [name, resource] of Object.entries(Resources)) check("resource-behavior", name, () => {
+  requireValue(baseline.engine.world.hasResource(resource), "resource is not registered");
+  requireValue(baseline.engine.world.getResource(resource) !== undefined, "resource has no initial state");
+});
+check("resource-behavior", "AccountState-owner-mutation", () => {
+  const game = createBattleClashGame();
+  const before = JSON.stringify(game.engine.world.getResource(Resources.AccountState));
+  game.updateAccount({ syncStatus: "validator" });
+  const after = JSON.stringify(game.engine.world.getResource(Resources.AccountState));
+  requireValue(before !== after, "account owner did not mutate AccountState");
+});
+check("event-behavior", "AccountChanged", () => {
+  const game = createBattleClashGame();
+  game.updateAccount({ syncStatus: "validator" });
+  requireValue(game.engine.world.readEvents(Events.AccountChanged).length > 0, "AccountChanged was not emitted");
+});
+check("event-behavior", "world-event-emission", () => {
+  const game = createBattleClashGame();
+  game.transitionToScene("overworld");
+  game.discoverTerritory("ash-crossing");
+  game.enterTerritory("ash-crossing");
+  game.changeLandscape({ blockedCells: [[1, 1]] });
+  game.tickEconomy(1);
+  const required = [Events.SceneChanged, Events.TerritoryDiscovered, Events.TerritoryEntered, Events.LandscapeChanged, Events.EconomyTicked];
+  for (const event of required) requireValue(game.engine.world.readEvents(event).length > 0, `${event.name} was not emitted`);
+});
 for (const [id, archetype] of Object.entries(ARCHETYPES)) check("archetype", id, () => {
   requireValue(archetype.id === id, "archetype id mismatch");
   requireValue(archetype.category && archetype.role && archetype.faction, "archetype semantic fields missing");
