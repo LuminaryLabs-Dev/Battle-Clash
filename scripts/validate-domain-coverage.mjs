@@ -147,8 +147,8 @@ check("event-behavior", "complete-event-catalog", () => {
     "EconomyTicked", "LandmarkInteracted", "LandscapeChanged", "ObjectiveProgressed", "ObjectiveCompleted",
     "AccountChanged", "AbilityUsed"
   ];
-  for (const name of required) requireValue(emitted.has(name), `${name} was not emitted`);
-  return { events: required.length };
+  for (const name of required) check("event-behavior", name, () => requireValue(emitted.has(name), `${name} was not emitted`));
+  return { events: required.length, observed: emitted.size };
 });
 for (const [id, archetype] of Object.entries(ARCHETYPES)) check("archetype", id, () => {
   requireValue(archetype.id === id, "archetype id mismatch");
