@@ -276,7 +276,7 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
   render entities, particles, and per-frame transforms. Offline receipts queue
   locally with idempotency keys until an authenticated API is available.
 - The backend contract is published privately as
-  `LuminaryLabs-Dev/LuminaryLabs-Backend` on `agent/online-foundation`; Rails 8
+  `LuminaryLabs-Dev/LuminaryLabs-Backend` on `agent/production-foundation`; Rails 8
   and Ruby 3.3 remain required provisioning gates for running it locally.
 - Objaverse ingestion is quarantine-first. Only approved catalog entries may
   reach the Three.js asset boundary, with cube fallback retained for missing or
@@ -284,7 +284,7 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - Hero combat is an ECS kit at `n:game:battle-clash:hero-combat`; its ability
   emits renderer-only effects and never becomes gameplay authority in Three.js.
 - `scripts/validate-domain-coverage.mjs` is the semantic validator gate. It
-  verifies 560 structural and behavioral checks across the 33-domain graph,
+  verifies 651 structural and behavioral checks across the 34-domain graph,
   ECS vocabulary, archetype fixtures, 169-territory world, scene registry,
   commands, determinism, and the complete Home Base-to-raid-to-Home Base flow.
 - `?solo=1` disables PeerJS discovery for deterministic browser-agent audits;
