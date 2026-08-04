@@ -25,4 +25,5 @@
 | Push and deploy immersive visual pass | Complete | Codex |
 | Add semantic domain/object coverage validator | Complete locally | Codex |
 | Connect BattleClash-Player validator gate | Complete locally | Codex |
+| Prove solo browser player flow | Complete locally | Codex |
 | Push validator branches after review | Pending authorization | User |

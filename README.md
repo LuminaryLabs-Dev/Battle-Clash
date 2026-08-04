@@ -70,6 +70,9 @@ npm run dev
 Open the printed `/Battle-Clash/` URL. Open it in a second browser session to
 exercise automatic attacker/defender matching.
 
+For deterministic browser-agent audits, append `?solo=1` to disable PeerJS
+discovery for that tab. This leaves normal multiplayer behavior unchanged.
+
 Validation:
 
 ```sh

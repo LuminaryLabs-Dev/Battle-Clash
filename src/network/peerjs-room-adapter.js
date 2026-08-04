@@ -113,6 +113,24 @@ export function createPeerJsRoomAdapter({
   let discovering = false;
   let roomIndex = 0;
 
+  function soloAuditRequested() {
+    return String(import.meta.env.VITE_BATTLE_CLASH_SOLO ?? "") === "true"
+      || new URLSearchParams(window.location.search).get("solo") === "1";
+  }
+
+  function enterSoloAudit() {
+    updateState({
+      status: "degraded",
+      mode: "solo",
+      role: "solo",
+      roomId: null,
+      peerId: null,
+      connectedPeerId: null,
+      authority: "local",
+      message: "Solo audit mode — PeerJS disabled for deterministic player validation"
+    });
+  }
+
   function updateState(patch) {
     state = { ...state, ...patch };
     onSessionChange?.(structuredClone(state));
@@ -402,7 +420,7 @@ export function createPeerJsRoomAdapter({
   }
 
   return {
-    start: () => discover(0),
+    start: () => (soloAuditRequested() ? enterSoloAudit() : discover(0)),
     getState: () => structuredClone(state),
     isRemoteAuthority: () =>
       state.status === "connected" && state.role === "attacker",

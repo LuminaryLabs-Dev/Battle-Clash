@@ -123,3 +123,13 @@
 - Added `scripts/validate-domain-coverage.mjs` with 498 semantic checks and a
   99% threshold. The current report passes at 100% and is consumed by the
   BattleClash-Player cross-repository gate.
+
+## 2026-08-04 04:05:00 EDT
+
+- Added explicit `?solo=1` PeerJS bypass for deterministic browser-agent
+  validation; normal room discovery remains the default.
+
+## 2026-08-04 04:20:00 EDT
+
+- Local browser proof with `?solo=1` reached Home Base → frontier → Ash
+  Crossing → encounter → victory → Dawnwatch Sanctum with zero console errors.
