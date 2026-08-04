@@ -113,7 +113,7 @@ NAT environments.
 ## Deployment
 
 The primary Pages release path is the artifact-based GitHub Actions workflow,
-which builds and publishes `dist/` on pushes to `main`. For a local static
+which builds and publishes the `docs/` Pages artifact on pushes to `main`. For a local static
 fallback, refresh the checked-in `/docs` artifact with:
 
 ```sh
