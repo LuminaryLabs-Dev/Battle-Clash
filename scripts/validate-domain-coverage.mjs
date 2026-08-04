@@ -21,7 +21,7 @@ const expectedDomains = [
   "n:game:battle-clash:frontier", "n:game:battle-clash:hero", "n:game:battle-clash:hero-combat",
   "n:game:battle-clash:navigation", "n:game:battle-clash:progression", "n:game:battle-clash:raid",
   "n:game:battle-clash:sanctum", "n:game:battle-clash:session", "n:game:battle-clash:targeting",
-  "n:game:battle-clash:world", "n:realtime", "n:sequence", "n:world"
+  "n:game:battle-clash:world", "n:realtime", "n:sequence", "n:world", "n:game:battle-clash:player"
 ];
 
 const commandCases = [
@@ -73,7 +73,7 @@ const domainNamespaces = {
   "n:game:battle-clash:hero-combat": "battleClashHero", "n:game:battle-clash:navigation": "battleClashNavigation",
   "n:game:battle-clash:progression": "battleClashProgression", "n:game:battle-clash:raid": "battleClashRaid",
   "n:game:battle-clash:sanctum": "battleClashSanctum", "n:game:battle-clash:session": "battleClashSession",
-  "n:game:battle-clash:targeting": "battleClashEncounter", "n:game:battle-clash:world": "battleClashWorld"
+  "n:game:battle-clash:targeting": "battleClashEncounter", "n:game:battle-clash:world": "battleClashWorld", "n:game:battle-clash:player": "battleClashPlayer"
 };
 
 for (const domain of expectedDomains) check("domain", domain, () => requireValue(snapshot.domains.includes(domain), "domain not installed"));
@@ -267,9 +267,25 @@ const apiMethods = [
   "updateAccount", "getWorldState", "getCurrentTerritory", "getHeroState", "getSanctumState", "selectArchetype",
   "discoverTerritory", "enterTerritory", "prepareTerritory", "claimTerritory", "moveHero", "healArmy", "recruitArmy",
   "upgradeSanctum", "tradeResources", "interactLandmark", "findHeroPath", "findWorldPath", "findCombatPath",
-  "tickEconomy", "changeLandscape", "transitionToScene", "canDeployAt", "getSnapshot", "getDeterministicSnapshot", "getDigest"
+  "tickEconomy", "changeLandscape", "transitionToScene", "canDeployAt", "getSnapshot", "getDeterministicSnapshot", "getDigest",
+  "getPlayerState", "startPlayerEpisode", "recordPlayerObservation", "retrievePlayerMemory", "recordPlayerDecision",
+  "recordPlayerActionResult", "recordPlayerOutcome", "completePlayerEpisode", "promotePlayerSkill"
 ];
 for (const method of apiMethods) check("api", method, () => requireValue(typeof baseline[method] === "function", "missing composition API method"));
+check("player-behavior", "observation-decision-outcome-lifecycle", () => {
+  const game = createBattleClashGame();
+  requireValue(game.getPlayerState().status === "idle", "player domain did not initialize idle");
+  game.startPlayerEpisode({ episodeId: "validator-episode", goal: "return home", mode: "ecs" });
+  const observation = game.recordPlayerObservation({ observationId: "obs-1", scene: "sanctum", phase: "idle", availableActions: ["open_frontier"] });
+  requireValue(observation.state.status === "deciding", "observation did not advance player state");
+  game.retrievePlayerMemory([{ id: "skill.open-frontier", score: 1 }]);
+  game.recordPlayerDecision({ decisionId: "decision-1", observationId: "obs-1", selectedAction: { kind: "open_frontier" } });
+  requireValue(game.recordPlayerActionResult({ accepted: true, action: { kind: "open_frontier" } }).accepted, "player action result rejected");
+  game.recordPlayerOutcome({ outcomeId: "outcome-1", result: "success", reward: 0.2 });
+  const completed = game.completePlayerEpisode("complete", { result: "returned-home" });
+  requireValue(completed.episode.status === "complete", "player episode did not complete");
+  return { status: completed.state.status, episode: completed.episode.episodeId };
+});
 
 for (const [kind, command] of commandCases) check("command", kind, () => {
   const normalized = normalizePeerCommand(command);

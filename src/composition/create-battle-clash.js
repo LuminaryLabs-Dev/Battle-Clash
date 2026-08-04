@@ -35,6 +35,7 @@ import {
 } from "../domains/boundaries/boundary-kits.js";
 import { ARCHETYPES, WORLD_SEED } from "../data/battlefield.js";
 import { WORLD_SCENES, sceneForTerritory } from "../data/world.js";
+import { createPlayerKit } from "../domains/player/player-kit.js";
 import {
   PRODUCTION_CONTENT_SCHEMA, CONTENT_TERRITORIES, ROOM_TYPES, ENEMY_FAMILIES,
   BOSS_PHASES, GEAR_ITEMS, QUESTS, CRAFTING_RECIPES, SANCTUM_ROOMS
@@ -201,7 +202,8 @@ export function createBattleClashGame(options = {}) {
       createEncounterKit(),
       createDefenseKit(),
       createProgressionKit(),
-      createSessionKit()
+      createSessionKit(),
+      createPlayerKit()
     ]
   });
 
@@ -317,6 +319,12 @@ export function createBattleClashGame(options = {}) {
     const landscape = structuredClone(
       engine.world.getResource(Resources.LandscapeState)
     );
+    const player = structuredClone(engine.world.getResource(Resources.PlayerState));
+    const playerObservation = structuredClone(engine.world.getResource(Resources.PlayerObservation));
+    const playerMemory = structuredClone(engine.world.getResource(Resources.PlayerMemory));
+    const playerDecision = structuredClone(engine.world.getResource(Resources.PlayerDecision));
+    const playerEpisode = structuredClone(engine.world.getResource(Resources.PlayerEpisode));
+    const playerLearningSignal = structuredClone(engine.world.getResource(Resources.PlayerLearningSignal));
     const activeCells = engine.n.battleClashWorld.getActiveCells();
     const core = entities.find((entity) => entity.role === "core") ?? null;
 
@@ -346,6 +354,12 @@ export function createBattleClashGame(options = {}) {
       economy,
       territory,
       landscape,
+      player,
+      playerObservation,
+      playerMemory,
+      playerDecision,
+      playerEpisode,
+      playerLearningSignal,
       productionContent: {
         schema: PRODUCTION_CONTENT_SCHEMA,
         territories: CONTENT_TERRITORIES,
@@ -378,6 +392,12 @@ export function createBattleClashGame(options = {}) {
       territory: snapshot.territory,
       landscape: snapshot.landscape,
       productionContent: snapshot.productionContent,
+      player: snapshot.player,
+      playerObservation: snapshot.playerObservation,
+      playerMemory: snapshot.playerMemory,
+      playerDecision: snapshot.playerDecision,
+      playerEpisode: snapshot.playerEpisode,
+      playerLearningSignal: snapshot.playerLearningSignal,
       defense: snapshot.defense,
       ability: snapshot.ability,
       objective: snapshot.objective,
@@ -474,6 +494,15 @@ export function createBattleClashGame(options = {}) {
     canDeployAt: (x, z) => engine.n.battleClashDeployment.canDeployAt(x, z),
     getSnapshot,
     getDeterministicSnapshot,
-    getDigest
+    getDigest,
+    getPlayerState: () => engine.n.battleClashPlayer.getState(),
+    startPlayerEpisode: (request) => engine.n.battleClashPlayer.startEpisode(request),
+    recordPlayerObservation: (observation) => engine.n.battleClashPlayer.recordObservation(observation),
+    retrievePlayerMemory: (memories) => engine.n.battleClashPlayer.retrieveMemory(memories),
+    recordPlayerDecision: (decision) => engine.n.battleClashPlayer.recordDecision(decision),
+    recordPlayerActionResult: (result) => engine.n.battleClashPlayer.recordActionResult(result),
+    recordPlayerOutcome: (outcome) => engine.n.battleClashPlayer.recordOutcome(outcome),
+    completePlayerEpisode: (status, result) => engine.n.battleClashPlayer.completeEpisode(status, result),
+    promotePlayerSkill: (skill) => engine.n.battleClashPlayer.promoteSkill(skill)
   };
 }
