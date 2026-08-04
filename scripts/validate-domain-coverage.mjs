@@ -4,7 +4,7 @@ import { ARCHETYPES } from "../src/data/battlefield.js";
 import { TERRITORIES, WORLD_SCENES, sceneForTerritory } from "../src/data/world.js";
 import { Components, Events, Resources } from "../src/domains/shared/definitions.js";
 import { createPeerMessage, normalizePeerCommand, parsePeerMessage } from "../src/network/peer-protocol.js";
-import { assetById, validateAssetEntry } from "../src/assets/catalog.js";
+import { assetById, resolveRenderableAsset, validateAssetEntry } from "../src/assets/catalog.js";
 import { createReviewRun, promoteAfterConsecutivePasses, reviewPassAccepted } from "../src/assets/asset-review.js";
 
 const expectedDomains = [
@@ -95,6 +95,8 @@ check("asset-behavior", "approved-catalog-entry", () => {
   requireValue(validateAssetEntry(entry).accepted, "complete approved asset rejected");
   requireValue(assetById(entry.id, [entry]) === entry, "approved asset cannot be resolved");
   requireValue(assetById(entry.id, [{ ...entry, status: "quarantined" }]) === null, "quarantined asset resolved at runtime");
+  requireValue(resolveRenderableAsset(entry.id, [entry]).kind === "gltf", "approved asset did not produce GLB descriptor");
+  requireValue(resolveRenderableAsset("missing", [entry]).kind === "cube-fallback", "missing asset did not produce cube fallback");
 });
 check("asset-behavior", "three-pass-review-gate", () => {
   const pass = (number) => {
