@@ -10,6 +10,7 @@ export function validateAuthenticatedHello(hello, expectedRoomId, options = {}) 
     && hello.roomId === expectedRoomId
     && Boolean(hello.userId)
     && ["attacker", "defender"].includes(hello.role)
+    && (!options.expectedRole || hello.role === options.expectedRole)
     && (!options.expectedUserId || hello.userId === options.expectedUserId)
     && (!options.requireReconnectToken || Boolean(hello.reconnectToken));
   return { accepted, reason: accepted ? null : "invalid-room-hello" };

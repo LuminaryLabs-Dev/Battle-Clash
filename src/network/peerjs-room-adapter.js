@@ -6,6 +6,10 @@ import {
   normalizePeerCommand,
   parsePeerMessage
 } from "./peer-protocol.js";
+import {
+  createAuthenticatedHello,
+  validateAuthenticatedHello
+} from "./peer-room-contract.js";
 
 const OPEN_TIMEOUT_MS = 6500;
 const SNAPSHOT_CHUNK_SIZE = 3000;
@@ -89,6 +93,7 @@ function isUnavailableId(error) {
 
 export function createPeerJsRoomAdapter({
   getProfile,
+  getIdentity,
   getAuthoritativeSnapshot,
   onCommand,
   onRemoteProfile,
@@ -112,6 +117,31 @@ export function createPeerJsRoomAdapter({
   let destroyed = false;
   let discovering = false;
   let roomIndex = 0;
+
+  function reconnectToken() {
+    const key = "battle-clash-reconnect-token";
+    try {
+      const existing = window.sessionStorage.getItem(key);
+      if (existing) return existing;
+      const next = globalThis.crypto?.randomUUID?.() ?? `reconnect-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      window.sessionStorage.setItem(key, next);
+      return next;
+    } catch {
+      return null;
+    }
+  }
+
+  function roomHello(roomId, role) {
+    const identity = getIdentity?.() ?? {};
+    if (!identity.userId) return null;
+    return createAuthenticatedHello({
+      roomId,
+      userId: identity.userId,
+      role,
+      profileRevision: identity.profileRevision ?? 0,
+      reconnectToken: reconnectToken()
+    });
+  }
 
   function soloAuditRequested() {
     return String(import.meta.env.VITE_BATTLE_CLASH_SOLO ?? "") === "true"
@@ -239,6 +269,16 @@ export function createPeerJsRoomAdapter({
       }
 
       if (message.kind === "hello" && role === "defender") {
+        const authenticatedHello = message.payload?.roomHello;
+        if (authenticatedHello) {
+          const validation = validateAuthenticatedHello(authenticatedHello, state.roomId, { expectedRole: "attacker", requireReconnectToken: true });
+          if (!validation.accepted) {
+            send("room-full", { reason: validation.reason });
+            connection.close();
+            return;
+          }
+          updateState({ authenticated: true, remoteUserId: authenticatedHello.userId, reconnectToken: authenticatedHello.reconnectToken });
+        }
         onRemoteProfile?.(message.payload.profile ?? {});
         send("snapshot", {
           snapshot: getAuthoritativeSnapshot()
@@ -335,10 +375,12 @@ export function createPeerJsRoomAdapter({
       peerId: peer.id,
       connectedPeerId: nextConnection.peer,
       authority: "remote",
-      message: "Matched — attack commands route to the defender host"
+      message: "Matched — attack commands route to the defender host",
+      authenticated: Boolean(roomHello(nextRoomId, "attacker"))
     });
     send("hello", {
-      profile: structuredClone(getProfile?.() ?? {})
+      profile: structuredClone(getProfile?.() ?? {}),
+      roomHello: roomHello(nextRoomId, "attacker")
     });
   }
 

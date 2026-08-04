@@ -994,6 +994,10 @@ try {
 
   network = createPeerJsRoomAdapter({
     getProfile: () => currentSnapshot().progression,
+    getIdentity: () => ({
+      userId: accountState.status === "authenticated" ? accountState.userId : null,
+      profileRevision: currentSnapshot().progression.runs
+    }),
     getAuthoritativeSnapshot: () => createPeerSnapshot(game.getSnapshot()),
     onCommand(command) {
       applyLocalCommand(command, { remote: true });

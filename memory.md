@@ -289,6 +289,9 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
   commands, determinism, and the complete Home Base-to-raid-to-Home Base flow.
 - `?solo=1` disables PeerJS discovery for deterministic browser-agent audits;
   normal multiplayer room discovery remains the default behavior.
+- Authenticated PeerJS rooms now carry a versioned room hello with the account
+  UUID, role, profile revision, and browser reconnect token; signed-out peers
+  retain the explicit solo/degraded fallback.
 
 ## Repository And Release
 
