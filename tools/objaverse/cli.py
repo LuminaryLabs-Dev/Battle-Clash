@@ -47,6 +47,13 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def require_glb(path: Path) -> None:
+    with path.open("rb") as stream:
+        magic = stream.read(4)
+    if path.suffix.lower() != ".glb" or magic != b"glTF":
+        raise SystemExit(f"invalid GLB container: {path}")
+
+
 def search(query: str, limit: int) -> None:
     try:
         import objaverse  # type: ignore
@@ -117,11 +124,15 @@ def promote(asset_id: str) -> None:
     entry = next((item for item in catalog if item.get("id") == asset_id), None)
     if not entry:
         raise SystemExit(f"unknown asset: {asset_id}")
+    if not entry.get("license") or entry.get("license") == "unknown":
+        raise SystemExit("asset requires a recorded license before promotion")
     runs = []
     for path in sorted(REVIEWS.glob(f"{asset_id}-pass-*.json")):
         runs.append(read_json(path, {}))
     runs = sorted(runs, key=lambda item: int(item.get("passNumber", 0)))[-3:]
-    accepted = len(runs) == 3 and all(
+    pass_numbers = [int(item.get("passNumber", 0)) for item in runs]
+    consecutive = pass_numbers == list(range(pass_numbers[0], pass_numbers[0] + 3)) if len(pass_numbers) == 3 else False
+    accepted = consecutive and all(
         item.get("humanDecision") == "pass"
         and all(part.get("decision") == "pass" for part in item.get("perspectives", []))
         and all(part.get("decision") == "pass" for part in item.get("contexts", []))
@@ -132,6 +143,9 @@ def promote(asset_id: str) -> None:
     source = ROOT / entry["path"]
     if not source.exists():
         raise SystemExit(f"missing quarantined GLB: {source}")
+    require_glb(source)
+    if entry.get("sha256") != sha256(source):
+        raise SystemExit("quarantined GLB hash does not match catalog metadata")
     target = APPROVED / source.name
     APPROVED.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, target)
@@ -144,6 +158,23 @@ def promote(asset_id: str) -> None:
     manifest["assets"].append(entry)
     write_json(MANIFEST, manifest)
     print(json.dumps(entry, indent=2, sort_keys=True))
+
+
+def verify(asset_id: str) -> None:
+    manifest = read_json(MANIFEST, {"assets": []})
+    entry = next((item for item in manifest.get("assets", []) if item.get("id") == asset_id), None)
+    if not entry:
+        raise SystemExit(f"asset is not approved: {asset_id}")
+    path = ROOT / entry.get("path", "")
+    if not path.exists():
+        raise SystemExit(f"approved asset is missing: {path}")
+    require_glb(path)
+    digest = sha256(path)
+    if digest != entry.get("sha256"):
+        raise SystemExit("approved GLB hash does not match manifest metadata")
+    if not entry.get("attribution", {}).get("source") or not entry.get("license"):
+        raise SystemExit("approved asset is missing source attribution or license")
+    print(json.dumps({"assetId": asset_id, "path": str(path.relative_to(ROOT)), "sha256": digest, "status": "verified"}, indent=2))
 
 
 def render(asset_id: str) -> None:
@@ -171,6 +202,8 @@ def main() -> None:
     promote_parser.add_argument("asset_id")
     render_parser = sub.add_parser("render")
     render_parser.add_argument("asset_id")
+    verify_parser = sub.add_parser("verify")
+    verify_parser.add_argument("asset_id")
     args = parser.parse_args()
     if args.command == "search":
         search(args.query, args.limit)
@@ -182,6 +215,8 @@ def main() -> None:
         promote(args.asset_id)
     elif args.command == "render":
         render(args.asset_id)
+    elif args.command == "verify":
+        verify(args.asset_id)
 
 
 if __name__ == "__main__":

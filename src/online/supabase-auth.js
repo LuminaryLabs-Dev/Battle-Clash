@@ -1,9 +1,10 @@
 const AUTH_STORAGE_KEY = "battle-clash.auth.v1";
 
 function config() {
+  const env = import.meta.env ?? {};
   return {
-    url: String(import.meta.env.VITE_SUPABASE_URL ?? "").replace(/\/$/, ""),
-    anonKey: String(import.meta.env.VITE_SUPABASE_ANON_KEY ?? "")
+    url: String(env.VITE_SUPABASE_URL ?? "").replace(/\/$/, ""),
+    anonKey: String(env.VITE_SUPABASE_ANON_KEY ?? "")
   };
 }
 
@@ -33,10 +34,19 @@ function sessionFromRedirect(location = window.location) {
   } : null;
 }
 
-async function request(path, options = {}) {
-  const { url, anonKey } = config();
+export function buildProviderAuthorizeUrl(provider = "google", redirectTo = window.location.href, authConfig = config()) {
+  const { url, anonKey } = authConfig;
   if (!url || !anonKey) throw new Error("Supabase Auth is not configured");
-  const response = await fetch(`${url}/auth/v1/${path}`, {
+  const target = new URL(`${url}/auth/v1/authorize`);
+  target.searchParams.set("provider", provider);
+  target.searchParams.set("redirect_to", redirectTo);
+  return target.toString();
+}
+
+async function request(path, options = {}, fetchImpl = globalThis.fetch, authConfig = config()) {
+  const { url, anonKey } = authConfig;
+  if (!url || !anonKey) throw new Error("Supabase Auth is not configured");
+  const response = await fetchImpl(`${url}/auth/v1/${path}`, {
     ...options,
     headers: {
       apikey: anonKey,
@@ -49,10 +59,10 @@ async function request(path, options = {}) {
   return body;
 }
 
-export function createSupabaseAuth({ storage = window.localStorage, onChange } = {}) {
-  let session = sessionFromRedirect() ?? storedSession(storage);
+export function createSupabaseAuth({ storage = window.localStorage, onChange, fetchImpl = globalThis.fetch, location = window.location, authConfig = config() } = {}) {
+  let session = sessionFromRedirect(location) ?? storedSession(storage);
   if (session) saveSession(session, storage);
-  if (sessionFromRedirect()?.access_token && typeof window !== "undefined" && window.history?.replaceState) {
+  if (session?.access_token && sessionFromRedirect(location)?.access_token && typeof window !== "undefined" && window.history?.replaceState) {
     window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
   }
 
@@ -76,7 +86,7 @@ export function createSupabaseAuth({ storage = window.localStorage, onChange } =
     session = await request("token?grant_type=password", {
       method: "POST",
       body: JSON.stringify({ email, password })
-    });
+    }, fetchImpl, authConfig);
     saveSession(session, storage);
     publish();
     return session.user;
@@ -86,7 +96,7 @@ export function createSupabaseAuth({ storage = window.localStorage, onChange } =
     const result = await request("signup", {
       method: "POST",
       body: JSON.stringify({ email, password })
-    });
+    }, fetchImpl, authConfig);
     if (result.access_token) {
       session = result;
       saveSession(session, storage);
@@ -100,19 +110,16 @@ export function createSupabaseAuth({ storage = window.localStorage, onChange } =
     session = await request("token?grant_type=refresh_token", {
       method: "POST",
       body: JSON.stringify({ refresh_token: session.refresh_token })
-    });
+    }, fetchImpl, authConfig);
     saveSession(session, storage);
     publish();
     return session.user ?? null;
   }
 
-  function signInWithProvider(provider = "google", redirectTo = window.location.href) {
-    const { url, anonKey } = config();
-    if (!url || !anonKey) throw new Error("Supabase Auth is not configured");
-    const target = new URL(`${url}/auth/v1/authorize`);
-    target.searchParams.set("provider", provider);
-    target.searchParams.set("redirect_to", redirectTo);
-    window.location.assign(target.toString());
+  function signInWithProvider(provider = "google", redirectTo = location.href) {
+    const target = buildProviderAuthorizeUrl(provider, redirectTo, authConfig);
+    if (typeof window !== "undefined" && window.location) window.location.assign(target);
+    return target;
   }
 
   async function signOut() {
@@ -120,7 +127,7 @@ export function createSupabaseAuth({ storage = window.localStorage, onChange } =
       await request("logout", {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}` }
-      }).catch(() => undefined);
+      }, fetchImpl, authConfig).catch(() => undefined);
     }
     session = null;
     saveSession(null, storage);
