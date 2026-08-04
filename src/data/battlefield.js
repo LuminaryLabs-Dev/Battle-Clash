@@ -21,6 +21,19 @@ export const PROGRESSION = Object.freeze({
 });
 
 export const ARCHETYPES = Object.freeze({
+  hero: Object.freeze({
+    id: "hero",
+    category: "troop",
+    role: "hero",
+    faction: "player",
+    health: 260,
+    size: [1.05, 1.45, 1.05],
+    color: "#fbbf24",
+    emissive: "#b45309",
+    speed: 4.2,
+    attack: Object.freeze({ damage: 58, range: 1.25, cooldown: 0.72 }),
+    ability: Object.freeze({ id: "arc-burst", damage: 92, cooldown: 8 })
+  }),
   delver: Object.freeze({
     id: "delver",
     category: "troop",
@@ -32,6 +45,30 @@ export const ARCHETYPES = Object.freeze({
     emissive: "#123f92",
     speed: 3.7,
     attack: Object.freeze({ damage: 32, range: 1.05, cooldown: 0.62 })
+  }),
+  lancer: Object.freeze({
+    id: "lancer",
+    category: "troop",
+    role: "lancer",
+    faction: "player",
+    health: 155,
+    size: [1, 1.05, 1],
+    color: "#22c55e",
+    emissive: "#14532d",
+    speed: 3.15,
+    attack: Object.freeze({ damage: 46, range: 1.15, cooldown: 0.78 })
+  }),
+  arcanist: Object.freeze({
+    id: "arcanist",
+    category: "troop",
+    role: "arcanist",
+    faction: "player",
+    health: 88,
+    size: [0.84, 1.15, 0.84],
+    color: "#38bdf8",
+    emissive: "#0c4a6e",
+    speed: 2.8,
+    attack: Object.freeze({ damage: 25, range: 5.8, cooldown: 0.52 })
   }),
   heart: Object.freeze({
     id: "heart",
@@ -55,6 +92,54 @@ export const ARCHETYPES = Object.freeze({
     emissive: "#7f1d1d",
     targetBias: -1.2,
     attack: Object.freeze({ damage: 14, range: 7.1, cooldown: 0.86 })
+  }),
+  scout: Object.freeze({
+    id: "scout",
+    category: "building",
+    role: "defense",
+    faction: "enemy",
+    health: 120,
+    size: [1.35, 2.2, 1.35],
+    color: "#f97316",
+    emissive: "#7c2d12",
+    targetBias: -0.5,
+    attack: Object.freeze({ damage: 10, range: 8.4, cooldown: 0.58 })
+  }),
+  bastion: Object.freeze({
+    id: "bastion",
+    category: "building",
+    role: "defense",
+    faction: "enemy",
+    health: 280,
+    size: [2.25, 3.2, 2.25],
+    color: "#64748b",
+    emissive: "#1e293b",
+    targetBias: -1.8,
+    attack: Object.freeze({ damage: 20, range: 6.2, cooldown: 1.08 })
+  }),
+  elite: Object.freeze({
+    id: "elite",
+    category: "building",
+    role: "defense",
+    faction: "enemy",
+    health: 360,
+    size: [2.45, 3.5, 2.45],
+    color: "#facc15",
+    emissive: "#854d0e",
+    targetBias: -2.1,
+    attack: Object.freeze({ damage: 28, range: 7.6, cooldown: 0.94 })
+  }),
+  boss: Object.freeze({
+    id: "boss",
+    category: "building",
+    role: "defense",
+    faction: "enemy",
+    health: 480,
+    size: [2.8, 3.8, 2.8],
+    color: "#be123c",
+    emissive: "#881337",
+    targetBias: -2.4,
+    attack: Object.freeze({ damage: 24, range: 8.2, cooldown: 1.1 })
   }),
   relic: Object.freeze({
     id: "relic",

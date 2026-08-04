@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A NexusEngine ECS village-battle greybox rendered with Three.js.",
+  "description": "A NexusEngine ECS dungeon-battle RPG greybox rendered with Three.js.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

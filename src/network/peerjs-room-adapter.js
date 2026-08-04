@@ -2,11 +2,13 @@ import { Peer } from "peerjs";
 import { ROOM_DIRECTORY, ROOM_IDS } from "../data/network.js";
 import {
   createPeerMessage,
+  isPeerMessageFresh,
   normalizePeerCommand,
   parsePeerMessage
 } from "./peer-protocol.js";
 
 const OPEN_TIMEOUT_MS = 6500;
+const SNAPSHOT_CHUNK_SIZE = 3000;
 
 function providerOptions() {
   const host = String(import.meta.env.VITE_PEER_HOST ?? "").trim();
@@ -118,14 +120,35 @@ export function createPeerJsRoomAdapter({
 
   function send(kind, payload = {}) {
     if (!connection?.open) return false;
-    sequence += 1;
-    connection.send(
-      createPeerMessage(kind, payload, {
-        roomId: state.roomId,
-        senderId: peer?.id,
-        sequence
-      })
-    );
+    if (kind !== "snapshot") {
+      sequence += 1;
+      connection.send(
+        createPeerMessage(kind, payload, {
+          roomId: state.roomId,
+          senderId: peer?.id,
+          sequence
+        })
+      );
+      return true;
+    }
+    const serialized = JSON.stringify(payload.snapshot ?? {});
+    const total = Math.max(1, Math.ceil(serialized.length / SNAPSHOT_CHUNK_SIZE));
+    const snapshotId = `${state.roomId}:${sequence + 1}`;
+    for (let index = 0; index < total; index += 1) {
+      sequence += 1;
+      connection.send(
+        createPeerMessage("snapshot-chunk", {
+          snapshotId,
+          index,
+          total,
+          data: serialized.slice(index * SNAPSHOT_CHUNK_SIZE, (index + 1) * SNAPSHOT_CHUNK_SIZE)
+        }, {
+          roomId: state.roomId,
+          senderId: peer?.id,
+          sequence
+        })
+      );
+    }
     return true;
   }
 
@@ -146,9 +169,42 @@ export function createPeerJsRoomAdapter({
 
   function bindConnection(nextConnection, role) {
     connection = nextConnection;
+    let lastIncomingSequence = 0;
+    let incomingSenderId = null;
+    const pendingSnapshots = new Map();
     connection.on("data", (raw) => {
-      const message = parsePeerMessage(raw);
+      let message = parsePeerMessage(raw);
       if (!message) return;
+      if (!isPeerMessageFresh(message, state.roomId, lastIncomingSequence, incomingSenderId)) return;
+      incomingSenderId ??= message.senderId ?? null;
+      const sequenceNumber = Math.max(0, Number(message.sequence) || 0);
+      lastIncomingSequence = sequenceNumber;
+
+      if (message.kind === "snapshot-chunk") {
+        const chunk = message.payload;
+        if (
+          typeof chunk.snapshotId !== "string" ||
+          !Number.isInteger(chunk.index) ||
+          !Number.isInteger(chunk.total) ||
+          chunk.index < 0 ||
+          chunk.index >= chunk.total ||
+          typeof chunk.data !== "string"
+        ) return;
+        const entry = pendingSnapshots.get(chunk.snapshotId) ?? {
+          total: chunk.total,
+          chunks: new Array(chunk.total)
+        };
+        if (entry.total !== chunk.total) return;
+        entry.chunks[chunk.index] = chunk.data;
+        pendingSnapshots.set(chunk.snapshotId, entry);
+        if (entry.chunks.filter((part) => typeof part === "string").length !== entry.total) return;
+        pendingSnapshots.delete(chunk.snapshotId);
+        try {
+          message = { ...message, kind: "snapshot", payload: { snapshot: JSON.parse(entry.chunks.join("")) } };
+        } catch {
+          return;
+        }
+      }
 
       if (message.kind === "room-full" && role === "attacker") {
         const nextIndex = (roomIndex + 1) % ROOM_IDS.length;
@@ -198,11 +254,11 @@ export function createPeerJsRoomAdapter({
       });
       scheduleRediscovery(roomIndex);
     });
-    connection.on("error", () => {
+    connection.on("error", (error) => {
       if (destroyed || connection !== nextConnection) return;
       updateState({
         status: "degraded",
-        message: "Peer path degraded — solo play remains active"
+        message: `Peer path degraded — solo play remains active (${error?.type ?? "connection-error"})`
       });
     });
   }

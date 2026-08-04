@@ -1,14 +1,18 @@
 # Battle Clash
 
-Battle Clash is an original browser dungeon-battle greybox. Level a blue cube
-delver party, auto-match into an attack/defend room, and shatter or protect the
-purple Dungeon Heart.
+Battle Clash is an original browser frontier-RPG greybox. Lead a hero from a
+Home Base through connected 100x100 territories, resolve directional fronts
+with A*, grow the army and economy, and shatter or protect a territory's
+Dungeon Heart.
 
 Play: <https://luminarylabs-dev.github.io/Battle-Clash/>
 
 ## First Playable
 
 - Bird's-eye Three.js dungeon made from readable colored cubes.
+- World-first active play with tiny masked interaction sigils instead of a dashboard.
+- Rounded cube silhouettes, layered lighting, deployment runes, attached damage
+  feedback, projectile trails, terminal shockwaves, and responsive camera framing.
 - Deterministic NexusEngine ECS movement, targeting, combat, destruction, and results.
 - Nexus Core World uniform-grid world state.
 - PeerJS automatic room election and discovery with defender-host authority.
@@ -16,6 +20,20 @@ Play: <https://luminarylabs-dev.github.io/Battle-Clash/>
 - One defender fortification ward per run.
 - Persistent XP, levels, wins, runs, perk points, and level-based party power.
 - Fully playable solo fallback when no peer is available.
+- Home Base, overworld, territory, and encounter scenes with persistent world state.
+- Deterministic landscape hazards and blocked cells that reroute A* movement.
+- Territory claims update supply routes, unlocks, economy efficiency, and future
+  encounter composition.
+- The overworld graph colors supplied, contested, and isolated routes from the
+  authoritative world snapshot.
+- Visible territory nodes can be selected directly to follow the connected
+  discovery and entry flow.
+- Territory scenes show directional front markers sourced from faction pressure
+  data before the player enters combat.
+- Twelve authored territories now form the mid-scale connected world proof;
+  world A* routes precede territory-grid A* movement.
+- Economy storage, army upkeep, Sanctum recruitment/healing/upgrades, and
+  resource trading are persistent simulation state.
 
 ## Architecture
 
@@ -28,7 +46,8 @@ Browser
 │  ├─ deterministic room discovery
 │  └─ transports commands and snapshots only
 └─ Battle Clash composition
-   ├─ world, raid, deployment, navigation, targeting, combat
+   ├─ flow, world, frontier, hero, army, economy
+   ├─ encounter, sanctum, raid, deployment, navigation, targeting, combat
    ├─ defense, progression, and session domains
    └─ NexusEngine Core
       ├─ World
@@ -58,6 +77,13 @@ npm run check
 npm run build
 ```
 
+Controls:
+
+- Click a glowing perimeter rune to deploy a delver.
+- `1` toggles deployment focus and `Space` begins the run.
+- `F` invokes the defender ward when it becomes available.
+- `Escape` opens the system menu; reset and diagnostics stay inside it.
+
 ## Signaling Server
 
 The Pages build uses the free PeerServer Cloud by default. For a self-hosted
@@ -83,16 +109,32 @@ NAT environments.
 
 ## Deployment
 
-The active Pages source is the prebuilt `/docs` folder on `main`, so a verified
-static build can publish even when private-repository Actions runners are
-unavailable. Refresh it with:
+The primary Pages release path is the artifact-based GitHub Actions workflow,
+which builds and publishes `dist/` on pushes to `main`. For a local static
+fallback, refresh the checked-in `/docs` artifact with:
 
 ```sh
 npm run build:pages
 ```
 
-The artifact-based `.github/workflows/deploy-pages.yml` remains available as a
-manual release path when organization Actions billing is healthy. The GitHub
+The `.github/workflows/deploy-pages.yml` runs the deterministic simulation check
+and deploys automatically when `main` receives a push; manual dispatch remains
+available. Configure repository Pages to use GitHub Actions. The GitHub
 repository remains private while the Pages game is public.
 
 See [MASTER_PLAN.md](MASTER_PLAN.md) for the domain and product roadmap.
+
+## Online and asset boundaries
+
+The companion Rails API skeleton lives locally at
+`/Users/crimsonwheeler/Documents/GitHub/LuminaryLabs-Backend`. It owns
+Supabase-authenticated identity, durable profile snapshots, idempotent receipts,
+sync cursors, and approved asset metadata. The browser remains playable while
+signed out and queues receipts locally until an authenticated backend is
+configured. Copy `.env.example` to a local environment file to configure the
+Supabase URL, anon key, and Rails API URL; never commit credentials.
+
+Objaverse tooling is quarantine-first under `tools/objaverse/`. Only entries in
+`src/assets/approved-manifest.json` may cross the runtime asset boundary. The
+Three.js host falls back to the existing cube descriptors when a catalog entry
+is missing or over budget.

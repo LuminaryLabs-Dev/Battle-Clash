@@ -16,7 +16,12 @@ export const Components = Object.freeze({
   Footprint: defineComponent("battle-clash.footprint"),
   Troop: defineComponent("battle-clash.troop"),
   Building: defineComponent("battle-clash.building"),
-  Defense: defineComponent("battle-clash.defense")
+  Defense: defineComponent("battle-clash.defense"),
+  Hero: defineComponent("battle-clash.hero"),
+  HeroCombat: defineComponent("battle-clash.hero-combat"),
+  TerritoryMarker: defineComponent("battle-clash.territory-marker"),
+  FrontMarker: defineComponent("battle-clash.front-marker"),
+  ResourceNode: defineComponent("battle-clash.resource-node")
 });
 
 export const Resources = Object.freeze({
@@ -27,7 +32,19 @@ export const Resources = Object.freeze({
   BattleMetadata: defineResource("battle-clash.metadata"),
   ProgressionState: defineResource("battle-clash.progression-state"),
   DefenseState: defineResource("battle-clash.defense-state"),
-  SessionState: defineResource("battle-clash.session-state")
+  SessionState: defineResource("battle-clash.session-state"),
+  SceneState: defineResource("battle-clash.scene-state"),
+  WorldState: defineResource("battle-clash.world-state"),
+  HeroState: defineResource("battle-clash.hero-state"),
+  TerritoryState: defineResource("battle-clash.territory-state"),
+  ArmyState: defineResource("battle-clash.army-state"),
+  EconomyState: defineResource("battle-clash.economy-state"),
+  LandscapeState: defineResource("battle-clash.landscape-state"),
+  SanctumState: defineResource("battle-clash.sanctum-state"),
+  ObjectiveState: defineResource("battle-clash.objective-state"),
+  LootState: defineResource("battle-clash.loot-state"),
+  AccountState: defineResource("battle-clash.account-state"),
+  AbilityState: defineResource("battle-clash.ability-state")
 });
 
 export const Events = Object.freeze({
@@ -42,5 +59,18 @@ export const Events = Object.freeze({
   ProgressionAwarded: defineEvent("battle-clash.progression.awarded"),
   LevelGained: defineEvent("battle-clash.progression.level-gained"),
   DefenseFortified: defineEvent("battle-clash.defense.fortified"),
-  SessionChanged: defineEvent("battle-clash.session.changed")
+  SessionChanged: defineEvent("battle-clash.session.changed"),
+  SceneChanged: defineEvent("battle-clash.scene.changed"),
+  HeroMoved: defineEvent("battle-clash.hero.moved"),
+  TerritoryDiscovered: defineEvent("battle-clash.territory.discovered"),
+  TerritoryEntered: defineEvent("battle-clash.territory.entered"),
+  TerritoryClaimed: defineEvent("battle-clash.territory.claimed"),
+  FrontChanged: defineEvent("battle-clash.front.changed"),
+  EconomyTicked: defineEvent("battle-clash.economy.ticked"),
+  LandmarkInteracted: defineEvent("battle-clash.landmark.interacted"),
+  LandscapeChanged: defineEvent("battle-clash.landscape.changed"),
+  ObjectiveProgressed: defineEvent("battle-clash.objective.progressed"),
+  ObjectiveCompleted: defineEvent("battle-clash.objective.completed"),
+  AccountChanged: defineEvent("battle-clash.account.changed"),
+  AbilityUsed: defineEvent("battle-clash.ability.used")
 });

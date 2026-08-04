@@ -21,98 +21,265 @@
         aria-label="Battle Clash dungeon. Deploy blue delvers on the glowing perimeter, then attack the purple Dungeon Heart."
       ></canvas>
 
-      <header class="hero-panel" aria-label="Battle Clash objective">
-        <div class="brand-row">
-          <span class="brand-mark" aria-hidden="true">BC</span>
+      <p id="objective" class="sr-only" aria-live="polite">
+        Deploy your delver party, then shatter the Dungeon Heart.
+      </p>
+
+      <aside class="edge-hud" aria-label="Battle controls">
+        <button
+          id="menuToggleButton"
+          class="hud-icon hud-icon--quiet menu-toggle"
+          type="button"
+          aria-label="Open system menu"
+          aria-controls="systemMenu"
+          aria-expanded="false"
+          data-tooltip="System"
+        >
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M7 9h18M7 16h18M7 23h18" />
+          </svg>
+        </button>
+
+        <div
+          id="partySigil"
+          class="world-sigil party-sigil"
+          role="status"
+          aria-label="Eight delvers ready"
+          data-tooltip="Delver party"
+        >
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="m16 5 8 6v10l-8 6-8-6V11l8-6Z" />
+            <path d="m16 10 4 3v6l-4 3-4-3v-6l4-3Z" />
+          </svg>
+          <strong id="raiderValue" class="sigil-count">0+8</strong>
+        </div>
+
+        <div
+          id="heartSigil"
+          class="world-sigil heart-sigil"
+          role="status"
+          aria-label="Dungeon Heart at one hundred percent"
+          data-tooltip="Dungeon Heart"
+        >
+          <span class="heart-sigil__ring" aria-hidden="true"></span>
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="m16 3 10 9-4 14H10L6 12l10-9Z" />
+            <path d="m16 8 5 6-2 7h-6l-2-7 5-6Z" />
+          </svg>
+          <strong id="coreValue" class="sigil-value">100</strong>
+        </div>
+
+        <div id="raidClock" class="raid-clock" hidden aria-label="Raid time remaining">
+          <i aria-hidden="true"></i>
+          <span id="timeValue">45</span>
+        </div>
+
+        <section class="action-rail" aria-label="Context actions">
+          <button
+            id="deployModeButton"
+            class="hud-icon hud-icon--delver is-selected"
+            type="button"
+            aria-label="Toggle delver deployment"
+            aria-pressed="true"
+            data-tooltip="Deploy · 1"
+          >
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path d="m16 5 7 5v9l-7 5-7-5v-9l7-5Z" />
+              <path d="M5 25h22M8 21l-3 4 3 4M24 21l3 4-3 4" />
+            </svg>
+          </button>
+          <button
+            id="startRaidButton"
+            class="hud-icon hud-icon--primary"
+            type="button"
+            aria-label="Begin dungeon run"
+            data-tooltip="Begin run · Space"
+          >
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path d="m11 7 14 9-14 9V7Z" />
+            </svg>
+          </button>
+          <button
+            id="fortifyButton"
+            class="hud-icon hud-icon--ward"
+            type="button"
+            hidden
+            aria-label="Fortify Dungeon Heart"
+            data-tooltip="Fortify · F"
+          >
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path d="M16 4 26 8v7c0 7-4 11-10 14C10 26 6 22 6 15V8l10-4Z" />
+              <path d="M11 16h10M16 11v10" />
+            </svg>
+          </button>
+          <button
+            id="heroAbilityButton"
+            class="hud-icon hud-icon--hero"
+            type="button"
+            hidden
+            aria-label="Use Ember arc burst"
+            data-tooltip="Arc burst · Q"
+          >
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path d="m17 3-9 14h7l-1 12 10-16h-7l0-10Z" />
+            </svg>
+          </button>
+        </section>
+
+        <div id="fieldPrompt" class="context-cue" hidden aria-live="polite">
+          The perimeter is open.
+        </div>
+
+        <section id="resultPanel" class="result-whisper" hidden aria-live="assertive">
           <div>
-            <p class="eyebrow">NEXUSENGINE DUNGEON RUN</p>
-            <h1>Battle Clash</h1>
+            <p id="resultEyebrow">VAULT BROKEN</p>
+            <h2 id="resultTitle">Heart shattered</h2>
+            <p id="resultCopy">Reward secured.</p>
           </div>
-        </div>
-        <p id="objective" class="objective" aria-live="polite">
-          Deploy your delver party, then shatter the Dungeon Heart.
-        </p>
-        <div class="progression-strip" aria-label="Delver progression">
-          <span id="networkBadge" class="network-badge">MATCHMAKING</span>
-          <div class="xp-track" aria-hidden="true"><i id="xpFill"></i></div>
-          <span id="xpValue">0 / 100 XP</span>
-        </div>
-      </header>
+          <button
+            id="playAgainButton"
+            class="hud-icon hud-icon--primary"
+            type="button"
+            aria-label="Begin next run"
+            data-tooltip="Next run"
+          >
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path d="M7 16h18M19 9l7 7-7 7" />
+            </svg>
+          </button>
+          <button
+            id="returnAfterRaidButton"
+            class="hud-icon hud-icon--quiet"
+            type="button"
+            aria-label="Return to Dawnwatch Sanctum"
+            data-tooltip="Return home"
+          >
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path d="m6 15 10-9 10 9v11H6V15Z" />
+              <path d="M12 26v-7h8v7M4 15h24" />
+            </svg>
+          </button>
+        </section>
 
-      <section class="status-panel" aria-label="Raid status">
-        <div>
-          <span class="status-label">RAID</span>
-          <strong id="phaseValue">DEPLOY</strong>
-        </div>
-        <div>
-          <span class="status-label">TIME</span>
-          <strong id="timeValue">45.0</strong>
-        </div>
-        <div>
-          <span class="status-label">DELVERS</span>
-          <strong id="raiderValue">8</strong>
-        </div>
-        <div>
-          <span class="status-label">HEART</span>
-          <strong id="coreValue">100%</strong>
-        </div>
-        <div>
-          <span class="status-label">ROLE</span>
-          <strong id="roleValue">SOLO</strong>
-        </div>
-        <div>
-          <span class="status-label">LEVEL</span>
-          <strong id="levelValue">1</strong>
+        <section id="worldPanel" class="world-panel" hidden aria-label="Frontier state">
+          <div class="world-panel__eyebrow">FRONTIER CHRONICLE</div>
+          <h2 id="worldSceneTitle">Dawnwatch Sanctum</h2>
+          <p id="worldTerritoryTitle" class="world-panel__territory">Home base</p>
+          <div class="world-panel__readout">
+            <span id="worldOwner">PLAYER CONTROL</span>
+            <span id="worldMapNodes">1 / 6 DISCOVERED</span>
+          </div>
+          <p id="worldFronts" class="world-panel__fronts">NO ACTIVE FRONT</p>
+          <p id="worldHeroReadout" class="world-panel__hero">EMBER · LV 1 · SCOUT R2</p>
+          <p id="worldResources" class="world-panel__resources">G 120 · F 80 · I 35 · A 0</p>
+          <div class="world-panel__actions">
+            <button id="enterFrontierButton" class="world-action" type="button">Open frontier</button>
+            <button id="healArmyButton" class="world-action" type="button" hidden>Heal army</button>
+            <button id="recruitArmyButton" class="world-action" type="button" hidden>Recruit</button>
+            <button id="upgradeSanctumButton" class="world-action world-action--primary" type="button" hidden>Upgrade sanctum</button>
+            <button id="tradeResourcesButton" class="world-action" type="button" hidden>Trade 5 iron</button>
+            <button id="discoverNextButton" class="world-action" type="button" hidden>Discover next</button>
+            <button id="claimTerritoryButton" class="world-action" type="button" hidden>Claim territory</button>
+            <button id="enterEncounterButton" class="world-action world-action--primary" type="button" hidden>Enter front</button>
+            <button id="returnSanctumButton" class="world-action" type="button" hidden>Return home</button>
+          </div>
+        </section>
+      </aside>
+
+      <section
+        id="systemMenu"
+        class="system-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="systemMenuTitle"
+        hidden
+      >
+        <div class="system-menu__scrim" data-menu-close></div>
+        <div class="system-menu__panel">
+          <header class="system-menu__header">
+            <div>
+              <p>OBSIDIAN VAULT</p>
+              <h1 id="systemMenuTitle">Battle Clash</h1>
+            </div>
+            <button
+              id="menuCloseButton"
+              class="hud-icon hud-icon--quiet"
+              type="button"
+              aria-label="Close system menu"
+              data-tooltip="Close · Esc"
+            >
+              <svg viewBox="0 0 32 32" aria-hidden="true">
+                <path d="M8 8l16 16M24 8 8 24" />
+              </svg>
+            </button>
+          </header>
+
+          <div class="menu-readout" aria-label="Run status">
+            <div><span>RUN</span><strong id="phaseValue">DEPLOY</strong></div>
+            <div><span>ROLE</span><strong id="roleValue">SOLO</strong></div>
+            <div><span>LEVEL</span><strong id="levelValue">1</strong></div>
+          </div>
+
+          <div class="menu-progression" aria-label="Delver progression">
+            <div>
+              <span id="networkBadge" class="network-badge">MATCHMAKING</span>
+              <span id="xpValue">0 / 100 XP</span>
+            </div>
+            <div class="xp-track" aria-hidden="true"><i id="xpFill"></i></div>
+          </div>
+
+          <details class="advanced-panel account-panel">
+            <summary> Luminary account</summary>
+            <div class="advanced-content account-content">
+              <p id="accountStatus" class="account-status">Offline profile · local saves active</p>
+              <label class="account-field">
+                <span>Email</span>
+                <input id="accountEmail" type="email" autocomplete="email" placeholder="delver@luminarylabs.dev" />
+              </label>
+              <label class="account-field">
+                <span>Password</span>
+                <input id="accountPassword" type="password" autocomplete="current-password" placeholder="Supabase password" />
+              </label>
+              <div class="account-actions">
+                <button id="accountSignInButton" class="menu-action" type="button">Sign in</button>
+                <button id="accountSignUpButton" class="menu-action" type="button">Create account</button>
+                <button id="accountSyncButton" class="menu-action" type="button" disabled>Sync profile</button>
+                <button id="accountSignOutButton" class="menu-action" type="button" hidden>Sign out</button>
+              </div>
+            </div>
+          </details>
+
+          <button id="resetButton" class="menu-action" type="button">
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path d="M24 10V4m0 0h-6m6 0-4 4a10 10 0 1 0 2 13" />
+            </svg>
+            Reset current run
+            <kbd>R</kbd>
+          </button>
+
+          <details class="advanced-panel">
+            <summary>Army loadout</summary>
+            <div class="advanced-content loadout-actions">
+              <p id="loadoutReadout">Select an unlocked troop before deploying.</p>
+              <button id="selectDelverButton" class="menu-action" type="button">Delver · balanced</button>
+              <button id="selectLancerButton" class="menu-action" type="button" disabled>Lancer · heavy</button>
+              <button id="selectArcanistButton" class="menu-action" type="button" disabled>Arcanist · ranged</button>
+            </div>
+          </details>
+
+          <details class="advanced-panel">
+            <summary>Diagnostics</summary>
+            <div class="advanced-content">
+              <p><strong>Domain graph</strong></p>
+              <code id="domainValue">Loading Nexus domains…</code>
+              <p><strong>Live state</strong></p>
+              <code id="diagnosticValue">Entities 0 · Cells 0 · Tick 0</code>
+              <p><strong>Peer room</strong></p>
+              <code id="networkValue">PeerJS auto-discovery starting…</code>
+            </div>
+          </details>
         </div>
       </section>
-
-      <section class="hero-controls" aria-label="Hero controls">
-        <button id="deployModeButton" class="hero-button hero-button--selected" type="button" aria-pressed="true">
-          <span class="button-key">1</span>
-          <span><small>SELECT</small> BLUE DELVER</span>
-        </button>
-        <button id="startRaidButton" class="hero-button hero-button--primary" type="button">
-          <span class="button-key">SPACE</span>
-          <span><small>WHEN READY</small> START RAID</span>
-        </button>
-        <button id="resetButton" class="hero-button" type="button">
-          <span class="button-key">R</span>
-          <span><small>TRY AGAIN</small> RESET</span>
-        </button>
-        <button id="fortifyButton" class="hero-button hero-button--ward" type="button" hidden>
-          <span class="button-key">F</span>
-          <span><small>DEFENDER</small> FORTIFY HEART</span>
-        </button>
-      </section>
-
-      <div id="fieldPrompt" class="field-prompt" aria-live="polite">
-        Click a glowing blue edge tile to deploy a delver.
-      </div>
-
-      <section id="resultPanel" class="result-panel" hidden aria-live="assertive">
-        <p id="resultEyebrow" class="eyebrow">RAID COMPLETE</p>
-        <h2 id="resultTitle">Dungeon Heart shattered</h2>
-        <p id="resultCopy">Your delvers cleared the Obsidian Vault.</p>
-        <button id="playAgainButton" class="hero-button hero-button--primary" type="button">NEXT RUN</button>
-      </section>
-
-      <details class="advanced-panel">
-        <summary>Advanced</summary>
-        <div class="advanced-content">
-          <p><strong>Domain graph</strong></p>
-          <code id="domainValue">Loading Nexus domains…</code>
-          <p><strong>Live state</strong></p>
-          <code id="diagnosticValue">Entities 0 · Cells 0 · Tick 0</code>
-          <p><strong>Peer room</strong></p>
-          <code id="networkValue">PeerJS auto-discovery starting…</code>
-          <p class="legend">
-            <span><i class="swatch swatch--blue"></i> Delver</span>
-            <span><i class="swatch swatch--red"></i> Sentinel</span>
-            <span><i class="swatch swatch--purple"></i> Heart</span>
-            <span><i class="swatch swatch--orange"></i> Relic</span>
-          </p>
-        </div>
-      </details>
 
       <section id="errorPanel" class="error-panel" hidden role="alert"></section>
     </main>

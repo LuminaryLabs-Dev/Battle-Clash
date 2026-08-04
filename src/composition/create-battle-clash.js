@@ -4,15 +4,19 @@ import { createCoreCameraKit } from "nexusengine/core-kits/core-camera-kit";
 import { createCoreDataKit } from "nexusengine/core-kits/core-data-kit";
 import { createCoreGraphicsKit } from "nexusengine/core-kits/core-graphics-kit";
 import { createCoreInputKit } from "nexusengine/core-kits/core-input-kit";
+import { createCoreInteractionKit } from "nexusengine/core-kits/core-interaction-kit";
 import { createCoreNetworkKit } from "nexusengine/core-kits/core-network-kit";
 import { createCorePersistenceKit } from "nexusengine/core-kits/core-persistence-kit";
 import { createCoreSimulationKit } from "nexusengine/core-kits/core-simulation-kit";
+import { createCoreSceneKit } from "nexusengine/core-kits/core-scene-kit";
 import { createCoreSpatialKit } from "nexusengine/core-kits/core-spatial-kit";
 import { createCoreUIKit } from "nexusengine/core-kits/core-ui-kit";
 import { createCoreWorldDomain } from "nexusengine/core-domains/core-world-domain";
 import { createCombatKit } from "../domains/combat/combat-kit.js";
+import { createHeroCombatKit } from "../domains/hero-combat/hero-combat-kit.js";
 import { createDefenseKit } from "../domains/defense/defense-kit.js";
 import { createDeploymentKit } from "../domains/deployment/deployment-kit.js";
+import { createEncounterKit } from "../domains/encounter/encounter-kit.js";
 import { createNavigationKit } from "../domains/navigation/navigation-kit.js";
 import { createProgressionKit } from "../domains/progression/progression-kit.js";
 import { createRaidLifecycleKit } from "../domains/raid/raid-kit.js";
@@ -20,7 +24,17 @@ import { createSessionKit } from "../domains/session/session-kit.js";
 import { Components, Events, Resources } from "../domains/shared/definitions.js";
 import { createTargetingKit } from "../domains/targeting/targeting-kit.js";
 import { createBattleWorldKit } from "../domains/world/world-kit.js";
-import { WORLD_SEED } from "../data/battlefield.js";
+import {
+  createArmyBoundaryKit,
+  createEconomyBoundaryKit,
+  createEncounterBoundaryKit,
+  createFlowBoundaryKit,
+  createFrontierBoundaryKit,
+  createHeroBoundaryKit,
+  createSanctumBoundaryKit
+} from "../domains/boundaries/boundary-kits.js";
+import { ARCHETYPES, WORLD_SEED } from "../data/battlefield.js";
+import { WORLD_SCENES, sceneForTerritory } from "../data/world.js";
 
 export const FIXED_DELTA = 1 / 30;
 
@@ -57,6 +71,18 @@ function entitySnapshot(world, entity) {
   const targeting = world.hasComponent(entity, Components.Targeting)
     ? world.getComponent(entity, Components.Targeting)
     : null;
+  const territoryMarker = world.hasComponent(entity, Components.TerritoryMarker)
+    ? world.getComponent(entity, Components.TerritoryMarker)
+    : null;
+  const resourceNode = world.hasComponent(entity, Components.ResourceNode)
+    ? world.getComponent(entity, Components.ResourceNode)
+    : null;
+  const hero = world.hasComponent(entity, Components.Hero)
+    ? world.getComponent(entity, Components.Hero)
+    : null;
+  const frontMarker = world.hasComponent(entity, Components.FrontMarker)
+    ? world.getComponent(entity, Components.FrontMarker)
+    : null;
 
   return {
     id: identity.id,
@@ -77,11 +103,18 @@ function entitySnapshot(world, entity) {
         }
       : null,
     movement: movement ? { state: movement.state } : null,
-    targetId: targeting?.targetId ?? null
+    targetId: targeting?.targetId ?? null,
+    territoryMarker: territoryMarker ? structuredClone(territoryMarker) : null,
+    resourceNode: resourceNode ? structuredClone(resourceNode) : null,
+    hero: hero ? structuredClone(hero) : null,
+    frontMarker: frontMarker ? structuredClone(frontMarker) : null
   };
 }
 
 export function createBattleClashGame(options = {}) {
+  const requestedInitialScene = options.world?.currentSceneId === "territory"
+    ? sceneForTerritory(options.world?.currentTerritoryId ?? "dawnwatch-sanctum")
+    : options.world?.currentSceneId;
   const engine = createEngine({
     tick: { maxDelta: FIXED_DELTA },
     kits: [
@@ -126,7 +159,16 @@ export function createBattleClashGame(options = {}) {
       }),
       createCoreSpatialKit(),
       createCoreSimulationKit(),
+      createCoreSceneKit({
+        initialSceneId: ["sanctum", "overworld", "encounter"].includes(requestedInitialScene)
+          || String(requestedInitialScene ?? "").startsWith("territory:")
+          ? requestedInitialScene
+          : "sanctum",
+        allowDirectTransitions: true,
+        scenes: WORLD_SCENES
+      }),
       createCoreInputKit(),
+      createCoreInteractionKit(),
       createCoreGraphicsKit(),
       createCoreCameraKit(),
       createCoreUIKit(),
@@ -136,13 +178,23 @@ export function createBattleClashGame(options = {}) {
       }),
       createBattleClashRootKit(),
       createBattleWorldKit({
-        progression: options.progression
+        progression: options.progression,
+        world: options.world
       }),
+      createFlowBoundaryKit(),
+      createFrontierBoundaryKit(),
+      createHeroBoundaryKit(),
+      createArmyBoundaryKit(),
+      createEconomyBoundaryKit(),
+      createEncounterBoundaryKit(),
+      createSanctumBoundaryKit(),
       createRaidLifecycleKit(),
       createDeploymentKit(),
       createTargetingKit(),
       createNavigationKit(),
       createCombatKit(),
+      createHeroCombatKit(),
+      createEncounterKit(),
       createDefenseKit(),
       createProgressionKit(),
       createSessionKit()
@@ -168,12 +220,30 @@ export function createBattleClashGame(options = {}) {
     updateCommands({ start: true });
   }
 
+  function useHeroAbility() {
+    updateCommands({ heroAbility: { id: "arc-burst" } });
+    return getSnapshot();
+  }
+
   function reset() {
     updateCommands({ reset: true });
   }
 
   function fortify() {
     updateCommands({ fortify: true });
+  }
+
+  function selectArchetype(archetypeId, { allowLocked = false } = {}) {
+    const id = String(archetypeId ?? "delver");
+    const deployment = engine.world.getResource(Resources.DeploymentState);
+    const army = engine.world.getResource(Resources.ArmyState);
+    if (ARCHETYPES[id]?.category !== "troop") return { accepted: false, reason: "unknown-archetype", state: structuredClone(deployment) };
+    if (!allowLocked && !(army.unlockedArchetypes ?? ["delver"]).includes(id)) {
+      return { accepted: false, reason: "archetype-locked", state: structuredClone(deployment) };
+    }
+    const next = { ...deployment, selectedArchetype: id };
+    engine.world.setResource(Resources.DeploymentState, next);
+    return { accepted: true, state: structuredClone(next) };
   }
 
   function tick(steps = 1) {
@@ -204,11 +274,44 @@ export function createBattleClashGame(options = {}) {
     const progression = structuredClone(
       engine.world.getResource(Resources.ProgressionState)
     );
+    const battleMetadata = structuredClone(
+      engine.world.getResource(Resources.BattleMetadata)
+    );
     const defense = structuredClone(
       engine.world.getResource(Resources.DefenseState)
     );
+    const ability = structuredClone(
+      engine.world.getResource(Resources.AbilityState)
+    );
+    const objective = structuredClone(
+      engine.world.getResource(Resources.ObjectiveState)
+    );
+    const loot = structuredClone(
+      engine.world.getResource(Resources.LootState)
+    );
     const session = structuredClone(
       engine.world.getResource(Resources.SessionState)
+    );
+    const account = structuredClone(
+      engine.world.getResource(Resources.AccountState)
+    );
+    const scene = structuredClone(
+      engine.world.getResource(Resources.SceneState)
+    );
+    const worldState = structuredClone(
+      engine.world.getResource(Resources.WorldState)
+    );
+    const hero = structuredClone(engine.world.getResource(Resources.HeroState));
+    const army = structuredClone(engine.world.getResource(Resources.ArmyState));
+    const sanctum = structuredClone(engine.world.getResource(Resources.SanctumState));
+    const economy = structuredClone(
+      engine.world.getResource(Resources.EconomyState)
+    );
+    const territory = structuredClone(
+      engine.world.getResource(Resources.TerritoryState)
+    );
+    const landscape = structuredClone(
+      engine.world.getResource(Resources.LandscapeState)
     );
     const activeCells = engine.n.battleClashWorld.getActiveCells();
     const core = entities.find((entity) => entity.role === "core") ?? null;
@@ -220,12 +323,25 @@ export function createBattleClashGame(options = {}) {
       raid,
       deployment,
       progression,
+      battleMetadata,
       defense,
+      ability,
+      objective,
+      loot,
       session,
+      account,
       coreHealth: core?.health ?? { current: 0, maximum: 520 },
       activeCellCount: activeCells.length,
       entities,
       effects,
+      scene,
+      world: worldState,
+      hero,
+      army,
+      sanctum,
+      economy,
+      territory,
+      landscape,
       domains: engine.n.paths().map((entry) => entry.path)
     };
   }
@@ -237,7 +353,20 @@ export function createBattleClashGame(options = {}) {
       raid: snapshot.raid,
       deployment: snapshot.deployment,
       progression: snapshot.progression,
+      battleMetadata: snapshot.battleMetadata,
+      scene: snapshot.scene,
+      world: snapshot.world,
+      hero: snapshot.hero,
+      army: snapshot.army,
+      sanctum: snapshot.sanctum,
+      economy: snapshot.economy,
+      territory: snapshot.territory,
+      landscape: snapshot.landscape,
       defense: snapshot.defense,
+      ability: snapshot.ability,
+      objective: snapshot.objective,
+      loot: snapshot.loot,
+      account: snapshot.account,
       coreHealth: snapshot.coreHealth,
       activeCellCount: snapshot.activeCellCount,
       entities: snapshot.entities,
@@ -255,6 +384,7 @@ export function createBattleClashGame(options = {}) {
     engine,
     deployAt,
     startRaid,
+    useHeroAbility,
     reset,
     fortify,
     tick,
@@ -262,6 +392,68 @@ export function createBattleClashGame(options = {}) {
     setProgression: (profile) =>
       engine.n.battleClashProgression.setProfile(profile),
     updateSession: (patch) => engine.n.battleClashSession.update(patch),
+    updateAccount: (patch) => {
+      const current = engine.world.getResource(Resources.AccountState) ?? {};
+      const next = { ...current, ...structuredClone(patch) };
+      engine.world.setResource(Resources.AccountState, next);
+      return structuredClone(next);
+    },
+    getWorldState: () => engine.n.battleClashWorld.getWorldState(),
+    getCurrentTerritory: () => engine.n.battleClashWorld.getCurrentTerritory(),
+    getHeroState: () => engine.n.battleClashWorld.getHeroState(),
+    getSanctumState: () => engine.n.battleClashWorld.getSanctumState(),
+    selectArchetype,
+    discoverTerritory: (territoryId) =>
+      engine.n.battleClashWorld.discoverTerritory(territoryId),
+    enterTerritory: (territoryId) =>
+      engine.n.battleClashWorld.enterTerritory(territoryId),
+    prepareTerritory(territoryId) {
+      const targetId = String(territoryId ?? "");
+      const current = engine.n.battleClashWorld.getWorldState();
+      if (current.currentTerritoryId === targetId) {
+        return { accepted: true, duplicate: true, route: { status: "resolved", points: [targetId], pathLength: 0 } };
+      }
+      if (["encounter", "territory"].includes(current.currentSceneId) && current.currentSceneId === "encounter") {
+        const raid = engine.world.getResource(Resources.RaidState);
+        if (!["won", "lost"].includes(raid?.phase)) {
+          return { accepted: false, reason: "raid-in-progress" };
+        }
+      }
+      const route = engine.n.battleClashNavigation.findWorldPath(
+        current.currentTerritoryId,
+        targetId
+      );
+      if (route?.status !== "resolved") {
+        return { accepted: false, reason: "world-route-unresolved", route: structuredClone(route) };
+      }
+      let entered = null;
+      for (const nextTerritoryId of (route.points ?? []).slice(1)) {
+        const snapshot = engine.n.battleClashWorld.getWorldState();
+        if (!snapshot.discoveredTerritoryIds.includes(nextTerritoryId)) {
+          const discovered = engine.n.battleClashWorld.discoverTerritory(nextTerritoryId);
+          if (!discovered.accepted && !discovered.duplicate) return discovered;
+        }
+        entered = engine.n.battleClashWorld.enterTerritory(nextTerritoryId);
+        if (!entered.accepted) return entered;
+      }
+      return { ...(entered ?? { accepted: false, reason: "empty-world-route" }), route: structuredClone(route) };
+    },
+    claimTerritory: (territoryId, faction = "player") =>
+      engine.n.battleClashWorld.claimTerritory(territoryId, faction),
+    moveHero: (position) => engine.n.battleClashWorld.moveHero(position),
+    healArmy: () => engine.n.battleClashWorld.healArmy(),
+    recruitArmy: (request = {}) => engine.n.battleClashWorld.recruitArmy(request),
+    upgradeSanctum: () => engine.n.battleClashWorld.upgradeSanctum(),
+    tradeResources: (request) => engine.n.battleClashWorld.tradeResources(request),
+    interactLandmark: (landmarkId) => engine.n.battleClashWorld.interactLandmark(landmarkId),
+    findHeroPath: (start, goal) => engine.n.battleClashNavigation.findPath(start, goal),
+    findWorldPath: (startId, goalId) => engine.n.battleClashNavigation.findWorldPath(startId, goalId),
+    findCombatPath: () => engine.n.battleClashNavigation.findCombatPath(),
+    tickEconomy: (deltaSeconds) =>
+      engine.n.battleClashWorld.tickEconomy(deltaSeconds),
+    changeLandscape: (patch) => engine.n.battleClashWorld.changeLandscape(patch),
+    transitionToScene: (sceneId, payload = {}) =>
+      engine.n.battleClashWorld.transitionScene(sceneId, payload),
     canDeployAt: (x, z) => engine.n.battleClashDeployment.canDeployAt(x, z),
     getSnapshot,
     getDeterministicSnapshot,

@@ -13,5 +13,7 @@ Read in this order:
 9. `feedback.md`
 10. `change-log.md`
 
-The first playable is implemented and locally proven. The active release lane
-is `main` push, GitHub Pages completion, and live public browser proof.
+The first playable remains released on `main`. The immersive world-UI pass is
+locally proven on `agent/immersive-world-ui` and has not been pushed or deployed.
+Its next release lane is explicit authorization, refreshed `/docs`, branch
+publication, default-branch integration, Pages completion, and live browser proof.

@@ -18,3 +18,8 @@
 | Push implementation to main | Complete | Codex |
 | Recover Pages through main/docs after Actions billing rejection | Complete | Codex |
 | Verify Pages deployment and public game | Complete | Codex |
+| Replace persistent dashboard UI with interaction-specific masked sigils | Complete | Codex |
+| Move deployment, damage, pressure, and terminal feedback into the world | Complete | Codex |
+| Validate projected camera framing at desktop, compact, and portrait sizes | Complete | Codex |
+| Prove pointer deployment, combat, win, loss, restart, and invoked menu | Complete | Codex |
+| Push and deploy immersive visual pass | Awaiting authorization | User |

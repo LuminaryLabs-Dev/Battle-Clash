@@ -13,6 +13,11 @@
   Clash-specific village identity.
 - Use automatic attack/defend rooms, defender-host authority, and solo fallback.
 - Keep the repository private while publishing the playable Pages artifact.
+- Make the battlefield, not the HUD, dominate active play.
+- Remove persistent cards and status dashboards from active play.
+- Use only tiny interaction-specific masked icons at the screen edges.
+- Express state through world lighting, material damage, runes, projectiles,
+  attached meters, camera response, and completion transformations.
 
 ## Packet Links
 

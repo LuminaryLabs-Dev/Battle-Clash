@@ -16,6 +16,11 @@
 - Multiplayer failure degrades to a complete solo run.
 - Progression persists in the browser and scales newly deployed delvers by level.
 - Three.js is a presentation/input host only.
+- Active play is world-first, with no persistent cards or dashboard rows.
+- Tiny masked edge sigils may communicate party, Heart, and currently available
+  interactions; other state belongs in the world or the invoked system menu.
+- Responsive camera framing must fit projected room bounds across desktop,
+  compact landscape, and portrait viewports.
 - Pages publishes verified `/docs` output from `main`; the custom `dist/`
   artifact workflow is manual while organization Actions billing is unavailable.
 

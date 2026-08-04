@@ -53,3 +53,67 @@
   persistent XP, and zero browser console errors.
 - Proved two separate public browser sessions auto-matched into room 0 as
   authoritative defender and remote attacker.
+
+## 2026-07-30 15:01:25 EDT
+
+- Created local branch `agent/immersive-world-ui`; no push or deployment occurred.
+- Removed the persistent objective card, six-cell status dashboard, control row,
+  active diagnostics, and centered result modal from the player view.
+- Added tiny masked edge sigils for the party, Heart, current interaction,
+  raid pressure, and an invoked angular system menu.
+- Upgraded the Three.js greybox with rounded cube silhouettes, layered caps and
+  crests, contact shadows, deployment runes, projectile trails, attached damage
+  meters, richer lighting, void dressing, and win/loss world shockwaves.
+- Replaced fixed camera zoom with projected-bounds orthographic framing across
+  desktop, compact landscape, and portrait viewports.
+- Preserved the deterministic digest `82162b1ebe00c55b` and passed the production build.
+- Proved real-pointer deployment, combat start, win, loss, Next Run recovery,
+  Escape menu access, zero browser errors/warnings, and screenshot readability.
+
+## 2026-08-03 16:40:00 EDT
+
+- Extended the local branch into the persistent frontier slice: authored six
+  connected territories on 100x100 grids with Home Base, overworld, territory,
+  and encounter scene descriptors.
+- Added ECS-owned World, Scene, Hero, Territory, Army, Economy, and Landscape
+  resources plus discover, enter, claim, economy-tick, and scene-transition APIs.
+- Added compact in-world frontier controls and readouts for Home Base, discovery,
+  claiming, entering fronts, and returning home.
+- Added NexusEngine A* grid path queries through the navigation domain and
+  validated deterministic simulation, browser scene traversal, and production build.
+- Kept all changes local on `agent/immersive-world-ui`; no push or deployment.
+
+## 2026-08-03 16:50:00 EDT
+
+- Added deterministic landscape generation and persistent blocked-cell/hazard
+  mutation for each territory, with A* rerouting checks.
+- Added scene-aware Three.js presentation: Home Base sanctum, connected
+  overworld nodes/routes, territory obstacle cubes, and a hero marker.
+- Territory clicks now resolve NexusEngine A* paths before moving the hero.
+- Encounter transitions seed deterministic territory-specific defender counts
+  and scenario metadata.
+- Added explicit flow, frontier, hero, army, economy, encounter, and sanctum
+  deep-domain boundary kits plus a Core Interaction kit.
+- Added separate local persistence for the world profile.
+- Revalidated `npm run check`, `npm run build`, browser traversal, A* movement,
+  dynamic landscape mutation, and encounter composition with no browser errors.
+
+## 2026-08-03 17:05:00 EDT
+
+- Added persistent SanctumState and Home Base actions for army healing,
+  recruitment, and Sanctum upgrades with economy costs and unlocks.
+- Added 8–12 defender composition targets for territory encounters and a
+  deterministic Blackglass Warden boss archetype for the stronghold route.
+- Fixed Sanctum return/startup normalization so the Home Base scene always owns
+  the Dawnwatch territory and its economy controls.
+- Added validation for Sanctum progression, stronghold boss seeding, and the
+  persisted Home Base state; kept all work local with no push/deploy.
+
+## 2026-08-03 17:20:00 EDT
+
+- Added economy storage caps, army food/gold upkeep, and Sanctum iron-to-gold
+  trading with PeerJS command normalization.
+- Expanded the authored world proof from 6 to 12 connected territories with
+  additional fronts, strongholds, dungeons, wilds, and resource profiles.
+- Added NexusEngine world-graph A* alongside territory-grid A* and validated a
+  Dawnwatch-to-Blackglass route.

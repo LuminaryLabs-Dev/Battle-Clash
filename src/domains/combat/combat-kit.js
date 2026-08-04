@@ -96,6 +96,7 @@ function combatSystem(world) {
 function destructionSystem(world) {
   const raid = world.getResource(Resources.RaidState);
   let destroyed = raid.destroyed;
+  const destroyedEntityIds = new Set(raid.destroyedEntityIds ?? []);
   for (const entity of world.query(Components.Identity, Components.Health)) {
     const health = world.getComponent(entity, Components.Health);
     if (health.current > 0) continue;
@@ -105,13 +106,20 @@ function destructionSystem(world) {
       category: identity.category,
       role: identity.role
     });
+    destroyedEntityIds.add(identity.id);
     if (identity.category === "building") destroyed += 1;
     world.removeEntity(entity);
   }
   if (destroyed !== raid.destroyed) {
     world.setResource(Resources.RaidState, {
       ...world.getResource(Resources.RaidState),
-      destroyed
+      destroyed,
+      destroyedEntityIds: [...destroyedEntityIds]
+    });
+  } else if (destroyedEntityIds.size !== (raid.destroyedEntityIds ?? []).length) {
+    world.setResource(Resources.RaidState, {
+      ...world.getResource(Resources.RaidState),
+      destroyedEntityIds: [...destroyedEntityIds]
     });
   }
 }
