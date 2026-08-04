@@ -137,6 +137,11 @@ signed out and queues receipts locally until an authenticated backend is
 configured. Copy `.env.example` to a local environment file to configure the
 Supabase URL, anon key, and Rails API URL; never commit credentials.
 
+Supabase Auth supports email/password through the in-game account boundary and
+Google OAuth through `signInWithProvider("google")`. Configure the Supabase
+redirect URL to the Pages origin before enabling the OAuth control; passwords
+never pass through Battle Clash or Rails.
+
 Objaverse tooling is quarantine-first under `tools/objaverse/`. Only entries in
 `src/assets/approved-manifest.json` may cross the runtime asset boundary. The
 Three.js host falls back to the existing cube descriptors when a catalog entry

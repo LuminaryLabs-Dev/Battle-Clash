@@ -79,6 +79,15 @@ export function createSupabaseAuth({ storage = window.localStorage, onChange } =
     return result.user ?? null;
   }
 
+  function signInWithProvider(provider = "google", redirectTo = window.location.href) {
+    const { url, anonKey } = config();
+    if (!url || !anonKey) throw new Error("Supabase Auth is not configured");
+    const target = new URL(`${url}/auth/v1/authorize`);
+    target.searchParams.set("provider", provider);
+    target.searchParams.set("redirect_to", redirectTo);
+    window.location.assign(target.toString());
+  }
+
   async function signOut() {
     if (session?.access_token) {
       await request("logout", {
@@ -100,5 +109,5 @@ export function createSupabaseAuth({ storage = window.localStorage, onChange } =
   }
 
   publish();
-  return Object.freeze({ signIn, signUp, signOut, getSession, getAccessToken });
+  return Object.freeze({ signIn, signUp, signInWithProvider, signOut, getSession, getAccessToken });
 }
