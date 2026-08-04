@@ -53,7 +53,34 @@ function requireValue(value, message) {
 const baseline = createBattleClashGame();
 const snapshot = baseline.getSnapshot();
 
+const domainNamespaces = {
+  "n:core-camera": "coreCamera", "n:core-data": "coreData", "n:core-graphics": "coreGraphics",
+  "n:core-input": "coreInput", "n:core-interaction": "coreInteraction", "n:core-network": "coreNetwork",
+  "n:core-persistence": "corePersistence", "n:core-scene": "coreScene", "n:core-simulation": "coreSimulation",
+  "n:core-spatial": "coreSpatial", "n:core-ui": "coreUI", "n:world": "coreWorld", "n:realtime": "realtime",
+  "n:sequence": "sequence", "n:game:battle-clash:army": "battleClashArmy", "n:game:battle-clash:combat": "battleClashRaid",
+  "n:game:battle-clash:defense": "battleClashDefense", "n:game:battle-clash:deployment": "battleClashDeployment",
+  "n:game:battle-clash:economy": "battleClashEconomy", "n:game:battle-clash:encounter": "battleClashEncounter",
+  "n:game:battle-clash:encounter:objectives": "battleClashEncounterObjectives", "n:game:battle-clash:flow": "battleClashFlow",
+  "n:game:battle-clash:frontier": "battleClashFrontier", "n:game:battle-clash:hero": "battleClashHero",
+  "n:game:battle-clash:hero-combat": "battleClashHero", "n:game:battle-clash:navigation": "battleClashNavigation",
+  "n:game:battle-clash:progression": "battleClashProgression", "n:game:battle-clash:raid": "battleClashRaid",
+  "n:game:battle-clash:sanctum": "battleClashSanctum", "n:game:battle-clash:session": "battleClashSession",
+  "n:game:battle-clash:targeting": "battleClashEncounter", "n:game:battle-clash:world": "battleClashWorld"
+};
+
 for (const domain of expectedDomains) check("domain", domain, () => requireValue(snapshot.domains.includes(domain), "domain not installed"));
+for (const domain of expectedDomains) check("domain-behavior", domain, () => {
+  if (domain === "n:game:battle-clash") return requireValue(snapshot.schema === "battle-clash.snapshot/1", "composition snapshot unavailable");
+  const namespace = baseline.engine.n[domainNamespaces[domain]];
+  requireValue(namespace, `namespace missing for ${domain}`);
+  if (domain === "n:game:battle-clash:navigation") return requireValue(namespace.findPath({ x: 50, z: 50 }, { x: 51, z: 50 })?.status, "navigation probe unavailable");
+  if (domain === "n:realtime") return requireValue(namespace.getCurrentTickContext() !== undefined, "realtime context unavailable");
+  if (domain === "n:sequence") return requireValue(namespace.getRuntime() !== undefined, "sequence runtime unavailable");
+  const read = namespace.getState ?? namespace.getSnapshot ?? namespace.getWorldState ?? namespace.getCurrentScene;
+  requireValue(typeof read === "function", `read model missing for ${domain}`);
+  requireValue(read.call(namespace) !== undefined, `read model returned undefined for ${domain}`);
+});
 for (const [name, component] of Object.entries(Components)) check("component", name, () => requireValue(component?.name, "component has no identity"));
 for (const [name, resource] of Object.entries(Resources)) check("resource", name, () => requireValue(resource?.name, "resource has no identity"));
 for (const [name, event] of Object.entries(Events)) check("event", name, () => requireValue(event?.name, "event has no identity"));
@@ -61,6 +88,32 @@ for (const [id, archetype] of Object.entries(ARCHETYPES)) check("archetype", id,
   requireValue(archetype.id === id, "archetype id mismatch");
   requireValue(archetype.category && archetype.role && archetype.faction, "archetype semantic fields missing");
 });
+const territoryFixture = createBattleClashGame();
+territoryFixture.prepareTerritory("ash-crossing");
+territoryFixture.tick();
+const encounterFixture = createBattleClashGame();
+encounterFixture.prepareTerritory("blackglass-rise");
+encounterFixture.transitionToScene("encounter", { territoryId: "blackglass-rise" });
+encounterFixture.tick();
+const scoutFixture = createBattleClashGame();
+scoutFixture.prepareTerritory("ash-crossing");
+scoutFixture.transitionToScene("encounter", { territoryId: "ash-crossing" });
+scoutFixture.tick();
+const fixtureEntityArchetypes = new Set([
+  ...territoryFixture.getSnapshot().entities.map((entity) => entity.archetypeId),
+  ...encounterFixture.getSnapshot().entities.map((entity) => entity.archetypeId),
+  ...scoutFixture.getSnapshot().entities.map((entity) => entity.archetypeId)
+]);
+for (const id of ["delver", "lancer", "arcanist"]) {
+  const loadout = createBattleClashGame({ progression: { level: 5, xp: 0, xpToNext: 332 } });
+  requireValue(loadout.selectArchetype(id, { allowLocked: true }).accepted, `loadout rejected ${id}`);
+  loadout.deployAt(-10.5, 0);
+  loadout.tick();
+  for (const entity of loadout.getSnapshot().entities) fixtureEntityArchetypes.add(entity.archetypeId);
+}
+for (const id of Object.keys(ARCHETYPES)) check("archetype-behavior", id, () => requireValue(fixtureEntityArchetypes.has(id), "archetype never materialized in a fixture"));
+const componentFixtures = [baseline, territoryFixture, encounterFixture];
+for (const [name, component] of Object.entries(Components)) check("component-behavior", name, () => requireValue(componentFixtures.some((game) => game.engine.world.query(component).length > 0), "component never materialized in fixtures"));
 for (const territory of TERRITORIES) check("territory", territory.id, () => {
   const descriptor = snapshot.world?.territories?.[territory.id];
   requireValue(descriptor?.sceneId === sceneForTerritory(territory.id), "scene identity mismatch");
@@ -128,7 +181,7 @@ const report = {
     return [category, { passed: items.filter((item) => item.status === "pass").length, total: items.length }];
   })),
   evidence: { seed: snapshot.world?.schema ?? "unknown", domains: snapshot.domains.length, territories: TERRITORIES.length, scenes: WORLD_SCENES.length },
-  status: coveragePct >= 99 ? "pass" : "fail"
+  status: coveragePct >= 99 && failed.length === 0 ? "pass" : "fail"
 };
 
 await mkdir("artifacts/validation", { recursive: true });
