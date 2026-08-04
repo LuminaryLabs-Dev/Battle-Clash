@@ -1,7 +1,8 @@
 const DEFAULT_BACKEND_URL = "http://127.0.0.1:3000";
 
 function backendUrl() {
-  return String(import.meta.env.VITE_BATTLE_CLASH_BACKEND_URL ?? DEFAULT_BACKEND_URL).replace(/\/$/, "");
+  const env = import.meta.env ?? {};
+  return String(env.VITE_BATTLE_CLASH_BACKEND_URL ?? DEFAULT_BACKEND_URL).replace(/\/$/, "");
 }
 
 function idempotencyKey(kind) {
@@ -32,7 +33,7 @@ export function durableProfileSnapshot(snapshot = {}) {
   };
 }
 
-export function createAccountSync({ auth, getSnapshot, onSync, storage = window.localStorage } = {}) {
+export function createAccountSync({ auth, getSnapshot, onSync, storage = window.localStorage, fetchImpl = globalThis.fetch, backendBaseUrl = backendUrl(), idempotencyKeyFactory = idempotencyKey, retryAttempts = 3, retryDelayMs = 100 } = {}) {
   const queueKey = "battle-clash.sync-queue.v1";
 
   function readQueue() {
@@ -40,32 +41,44 @@ export function createAccountSync({ auth, getSnapshot, onSync, storage = window.
   }
 
   function writeQueue(queue) {
-    storage.setItem(queueKey, JSON.stringify(queue.slice(-100)));
+    const unique = [...new Map(queue.map((entry) => [entry.idempotencyKey, entry])).values()];
+    storage.setItem(queueKey, JSON.stringify(unique.slice(-100)));
   }
 
   async function request(path, options = {}) {
     const token = auth?.getAccessToken?.();
     if (!token) throw new Error("account-not-authenticated");
-    const response = await fetch(`${backendUrl()}${path}`, {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        ...(options.headers ?? {})
+    let attempt = 0;
+    while (true) {
+      try {
+        const response = await fetchImpl(`${backendBaseUrl}${path}`, {
+          ...options,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            ...(options.headers ?? {})
+          }
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const error = new Error(body.error ?? `backend-${response.status}`);
+          error.status = response.status;
+          error.body = body;
+          if (response.status >= 500 && attempt < retryAttempts) throw error;
+          throw error;
+        }
+        return body;
+      } catch (error) {
+        if (error.status !== undefined && error.status < 500) throw error;
+        if (attempt >= retryAttempts) throw error;
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs * (2 ** attempt)));
+        attempt += 1;
       }
-    });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const error = new Error(body.error ?? `backend-${response.status}`);
-      error.status = response.status;
-      error.body = body;
-      throw error;
     }
-    return body;
   }
 
   async function pushReceipt(kind, payload) {
-    const entry = { kind, payload, idempotencyKey: idempotencyKey(kind) };
+    const entry = { kind, payload, idempotencyKey: idempotencyKeyFactory(kind) };
     try {
       const result = await request("/api/v1/receipts", {
         method: "POST",
@@ -75,6 +88,10 @@ export function createAccountSync({ auth, getSnapshot, onSync, storage = window.
       onSync?.({ status: "synced", result });
       return result;
     } catch (error) {
+      if (error.status === 409) {
+        onSync?.({ status: "conflict", error: error.message, body: error.body });
+        return { queued: false, conflict: true, body: error.body };
+      }
       const queue = readQueue();
       writeQueue([...queue, entry]);
       onSync?.({ status: "queued", error: error.message });

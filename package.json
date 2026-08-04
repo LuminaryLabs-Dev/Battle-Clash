@@ -12,7 +12,8 @@
     "check:release": "node scripts/validate-release.mjs",
     "check:pages-artifact": "node scripts/validate-pages-artifact.mjs",
     "check:auth": "node scripts/check-auth-contract.mjs",
-    "check:all": "npm run check:domains && npm run check && npm run check:auth && npm run check:release && npm run build && npm run check:pages-artifact",
+    "check:sync": "node scripts/check-sync-contract.mjs",
+    "check:all": "npm run check:domains && npm run check && npm run check:auth && npm run check:sync && npm run check:release && npm run build && npm run check:pages-artifact",
     "preview": "vite preview",
     "check": "node scripts/validate-simulation.mjs",
     "server": "node server/peer-server.mjs"
