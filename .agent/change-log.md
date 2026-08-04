@@ -133,3 +133,6 @@
 
 - Local browser proof with `?solo=1` reached Home Base → frontier → Ash
   Crossing → encounter → victory → Dawnwatch Sanctum with zero console errors.
+- 2026-08-04: Expanded semantic validation to 612 checks, including per-event
+  behavior, resource ownership, asset manifest integrity, GLB descriptors, and
+  cube fallback resolution. Battle-Clash and BattleClash-Player gates pass.
