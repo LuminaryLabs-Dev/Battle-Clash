@@ -90,6 +90,7 @@ export const ARCHETYPES = Object.freeze({
     size: [1.8, 3, 1.8],
     color: "#ef4444",
     emissive: "#7f1d1d",
+    assetId: "objaverse-fc1339e225b7408caec82681be2746c5",
     targetBias: -1.2,
     attack: Object.freeze({ damage: 14, range: 7.1, cooldown: 0.86 })
   }),

@@ -1,4 +1,210 @@
 {
-  "schema": "battle-clash.asset-catalog/1",
-  "assets": []
+  "assets": [
+    {
+      "attribution": {
+        "creator": "Roman Berezyak",
+        "source": "https://sketchfab.com/3d-models/fc1339e225b7408caec82681be2746c5"
+      },
+      "id": "objaverse-fc1339e225b7408caec82681be2746c5",
+      "license": "by",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "metadata": {
+        "animationCount": 0,
+        "archives": {
+          "glb": {
+            "faceCount": 4672,
+            "size": 16604432,
+            "textureCount": 3,
+            "textureMaxResolution": 4096,
+            "type": "glb",
+            "vertexCount": 5018
+          },
+          "gltf": {
+            "faceCount": 4672,
+            "size": 16343494,
+            "textureCount": 3,
+            "textureMaxResolution": 4096,
+            "type": "gltf",
+            "vertexCount": 5018
+          },
+          "source": {
+            "faceCount": null,
+            "size": 114692325,
+            "textureCount": null,
+            "textureMaxResolution": null,
+            "type": "source",
+            "vertexCount": null
+          },
+          "usdz": {
+            "faceCount": null,
+            "size": 1083902,
+            "textureCount": null,
+            "textureMaxResolution": null,
+            "type": "usdz",
+            "vertexCount": null
+          }
+        },
+        "categories": [
+          {
+            "name": "weapons-military"
+          }
+        ],
+        "commentCount": 0,
+        "createdAt": "2022-04-26T11:59:36.595883",
+        "description": "Medieval Punishment.<b>\nIncluding FBX and OBJ format<b>\n  Low Poly - Game Ready<b>\nTexture map size - 4096x4096<b>\n Created in Maya 2021<b>",
+        "embedUrl": "https://sketchfab.com/models/fc1339e225b7408caec82681be2746c5/embed",
+        "faceCount": 4672,
+        "isAgeRestricted": false,
+        "isDownloadable": true,
+        "license": "by",
+        "likeCount": 20,
+        "name": "Medieval Punishment",
+        "publishedAt": "2022-04-26T12:35:25.173656",
+        "staffpickedAt": null,
+        "tags": [
+          {
+            "name": "medieval",
+            "slug": "medieval",
+            "uri": "https://api.sketchfab.com/v3/tags/medieval"
+          },
+          {
+            "name": "torture",
+            "slug": "torture",
+            "uri": "https://api.sketchfab.com/v3/tags/torture"
+          },
+          {
+            "name": "handcuffs",
+            "slug": "handcuffs",
+            "uri": "https://api.sketchfab.com/v3/tags/handcuffs"
+          },
+          {
+            "name": "lowpoly",
+            "slug": "lowpoly",
+            "uri": "https://api.sketchfab.com/v3/tags/lowpoly"
+          },
+          {
+            "name": "gameready",
+            "slug": "gameready",
+            "uri": "https://api.sketchfab.com/v3/tags/gameready"
+          },
+          {
+            "name": "medieval-decor",
+            "slug": "medieval-decor",
+            "uri": "https://api.sketchfab.com/v3/tags/medieval-decor"
+          }
+        ],
+        "thumbnails": {
+          "images": [
+            {
+              "height": 1080,
+              "size": 63224,
+              "uid": "a8aab6180d6b428aa7fd57c3899f63cf",
+              "url": "https://media.sketchfab.com/models/fc1339e225b7408caec82681be2746c5/thumbnails/3d782079906d4063b484edc4319162b5/a08d94cf56944160ac8aa192951be54e.jpeg",
+              "width": 1920
+            },
+            {
+              "height": 576,
+              "size": 20349,
+              "uid": "a13ade5d5b444e95946748bd9568d919",
+              "url": "https://media.sketchfab.com/models/fc1339e225b7408caec82681be2746c5/thumbnails/3d782079906d4063b484edc4319162b5/dc8840aa41764184a4fbc05778bf6f15.jpeg",
+              "width": 1024
+            },
+            {
+              "height": 405,
+              "size": 11829,
+              "uid": "06c9d4b5fff844d4a2eec2c22205d12f",
+              "url": "https://media.sketchfab.com/models/fc1339e225b7408caec82681be2746c5/thumbnails/3d782079906d4063b484edc4319162b5/4a20d669e6714bb89c2724ab743a6ef1.jpeg",
+              "width": 720
+            },
+            {
+              "height": 144,
+              "size": 2683,
+              "uid": "6e43b7d0aede414398351ad29043af5f",
+              "url": "https://media.sketchfab.com/models/fc1339e225b7408caec82681be2746c5/thumbnails/3d782079906d4063b484edc4319162b5/8c4267c4d77949a4a069ed5f5f10df1b.jpeg",
+              "width": 256
+            },
+            {
+              "height": 36,
+              "size": 886,
+              "uid": "d2f00c4b3f874d1f9c2817f0ac15b8fb",
+              "url": "https://media.sketchfab.com/models/fc1339e225b7408caec82681be2746c5/thumbnails/3d782079906d4063b484edc4319162b5/4489056519e148daa827d6b7efba255b.jpeg",
+              "width": 64
+            }
+          ]
+        },
+        "uid": "fc1339e225b7408caec82681be2746c5",
+        "uri": "https://api.sketchfab.com/v3/models/fc1339e225b7408caec82681be2746c5",
+        "user": {
+          "account": "basic",
+          "avatar": {
+            "images": [
+              {
+                "height": 32,
+                "size": 829,
+                "url": "https://media.sketchfab.com/avatars/1743c51d718641349f32f0a5f422263f/8d3e860939b2492caddba87e3e10d42c.jpeg",
+                "width": 32
+              },
+              {
+                "height": 48,
+                "size": 1005,
+                "url": "https://media.sketchfab.com/avatars/1743c51d718641349f32f0a5f422263f/e65d52056539456a8d0064e0408e08e6.jpeg",
+                "width": 48
+              },
+              {
+                "height": 90,
+                "size": 1640,
+                "url": "https://media.sketchfab.com/avatars/1743c51d718641349f32f0a5f422263f/e7d71627b1114be296325baeb970d0a5.jpeg",
+                "width": 90
+              },
+              {
+                "height": 100,
+                "size": 1814,
+                "url": "https://media.sketchfab.com/avatars/1743c51d718641349f32f0a5f422263f/0d40f0841a354523a7983456bf367833.jpeg",
+                "width": 100
+              }
+            ],
+            "uri": "https://api.sketchfab.com/v3/avatars/1743c51d718641349f32f0a5f422263f"
+          },
+          "displayName": "Roman Berezyak",
+          "profileUrl": "https://sketchfab.com/yamagsummi",
+          "uid": "04866825a32841d3848b1ac328cfe4d4",
+          "uri": "https://api.sketchfab.com/v3/users/04866825a32841d3848b1ac328cfe4d4",
+          "username": "yamagsummi"
+        },
+        "vertexCount": 2592,
+        "viewCount": 231,
+        "viewerUrl": "https://sketchfab.com/3d-models/fc1339e225b7408caec82681be2746c5"
+      },
+      "normalization": {
+        "method": "trimesh-scene-transform",
+        "pivot": "ground-centered",
+        "scale": 1.6620452083149866,
+        "sourceBounds": [
+          [
+            -0.622891993283116,
+            6.657064957297162e-09,
+            -0.5562948207442588
+          ],
+          [
+            0.624342860674728,
+            1.504170884496512,
+            0.5562948207442588
+          ]
+        ],
+        "sourceExtents": [
+          1.247234853957844,
+          1.5041708778394471,
+          1.1125896414885177
+        ],
+        "targetHeight": 2.5
+      },
+      "objaverseUid": "fc1339e225b7408caec82681be2746c5",
+      "path": "assets/objaverse/approved/objaverse_fc1339e225b7408caec82681be2746c5.glb",
+      "sha256": "e4839bb24fdfddae799499d8fdf42b85d3cbcf60c09c0bfc4c5946bc92dad1fa",
+      "slug": "medieval-punishment",
+      "sourceUrl": "https://sketchfab.com/3d-models/fc1339e225b7408caec82681be2746c5",
+      "status": "approved"
+    }
+  ],
+  "schema": "battle-clash.asset-catalog/1"
 }

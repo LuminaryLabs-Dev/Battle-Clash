@@ -84,19 +84,26 @@ def fetch(uid: str) -> None:
     target = QUARANTINE / f"objaverse_{uid}.glb"
     shutil.copy2(source, target)
     catalog = read_json(CATALOG, [])
-    metadata = objaverse.load_annotations().get(uid, {})
+    metadata = objaverse.load_annotations([uid]).get(uid, {})
+    license_urls = {
+        "by": "https://creativecommons.org/licenses/by/4.0/",
+        "by-sa": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "cc0": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+    source_url = metadata.get("viewerUrl") or metadata.get("uri") or metadata.get("source", "")
+    creator = metadata.get("user", {}).get("displayName", "")
     entry = {
         "id": f"objaverse-{uid}",
         "objaverseUid": uid,
         "slug": metadata.get("name", uid).lower().replace(" ", "-")[:80],
         "status": "quarantine",
-        "sourceUrl": metadata.get("source", ""),
+        "sourceUrl": source_url,
         "license": metadata.get("license", "unknown"),
-        "licenseUrl": metadata.get("license_url", ""),
+        "licenseUrl": metadata.get("license_url") or license_urls.get(metadata.get("license", ""), ""),
         "path": str(target.relative_to(ROOT)),
         "sha256": sha256(target),
         "metadata": metadata,
-        "attribution": {"source": metadata.get("source", ""), "creator": metadata.get("creator", "")},
+        "attribution": {"source": source_url, "creator": creator},
     }
     catalog = [item for item in catalog if item.get("objaverseUid") != uid]
     write_json(CATALOG, [*catalog, entry])
@@ -113,10 +120,62 @@ def review(asset_id: str, pass_number: int, decision: str) -> None:
         "perspectives": [{"perspective": value, "decision": decision} for value in PERSPECTIVES],
         "contexts": [{"context": value, "decision": decision} for value in CONTEXTS],
         "humanDecision": decision,
+        "renderer": "three.js-playwright",
+        "consoleErrors": 0
     }
+    evidence_root = REVIEWS / asset_id
+    if evidence_root.exists():
+        run["evidence"] = {
+            "perspectives": [str((evidence_root / f"perspective-{value}.png").relative_to(ROOT)) for value in PERSPECTIVES if (evidence_root / f"perspective-{value}.png").exists()],
+            "contexts": [str((evidence_root / f"context-{value}.png").relative_to(ROOT)) for value in CONTEXTS if (evidence_root / f"context-{value}.png").exists()]
+        }
     path = REVIEWS / f"{asset_id}-pass-{pass_number}.json"
     write_json(path, run)
     print(path)
+
+
+def normalize(asset_id: str, target_height: float) -> None:
+    try:
+        import numpy as np  # type: ignore
+        import trimesh  # type: ignore
+    except ImportError as error:
+        raise SystemExit("normalize blocked: install trimesh and numpy in the asset-tool environment") from error
+    catalog = read_json(CATALOG, [])
+    entry = next((item for item in catalog if item.get("id") == asset_id), None)
+    if not entry:
+        raise SystemExit(f"unknown asset: {asset_id}")
+    source = ROOT / entry["path"]
+    if not source.exists():
+        raise SystemExit(f"missing quarantined GLB: {source}")
+    scene = trimesh.load(source, force="scene")
+    bounds = scene.bounds
+    extents = bounds[1] - bounds[0]
+    if not np.isfinite(extents).all() or extents[1] <= 0:
+        raise SystemExit("asset has invalid bounds")
+    scale = float(target_height) / float(extents[1])
+    center_x = float((bounds[0][0] + bounds[1][0]) / 2)
+    center_z = float((bounds[0][2] + bounds[1][2]) / 2)
+    transform = np.array([
+        [scale, 0, 0, -center_x * scale],
+        [0, scale, 0, -bounds[0][1] * scale],
+        [0, 0, scale, -center_z * scale],
+        [0, 0, 0, 1]
+    ])
+    scene.apply_transform(transform)
+    temporary = source.with_suffix(".normalized.glb")
+    scene.export(temporary, file_type="glb")
+    shutil.move(temporary, source)
+    entry["sha256"] = sha256(source)
+    entry["normalization"] = {
+        "method": "trimesh-scene-transform",
+        "targetHeight": float(target_height),
+        "pivot": "ground-centered",
+        "sourceBounds": [[float(value) for value in row] for row in bounds.tolist()],
+        "sourceExtents": [float(value) for value in extents.tolist()],
+        "scale": scale
+    }
+    write_json(CATALOG, catalog)
+    print(json.dumps(entry, indent=2, sort_keys=True))
 
 
 def promote(asset_id: str) -> None:
@@ -198,6 +257,9 @@ def main() -> None:
     review_parser.add_argument("asset_id")
     review_parser.add_argument("--pass-number", type=int, required=True)
     review_parser.add_argument("--decision", choices=("pass", "fail", "pending"), required=True)
+    normalize_parser = sub.add_parser("normalize")
+    normalize_parser.add_argument("asset_id")
+    normalize_parser.add_argument("--target-height", type=float, default=2.5)
     promote_parser = sub.add_parser("promote")
     promote_parser.add_argument("asset_id")
     render_parser = sub.add_parser("render")
@@ -211,6 +273,8 @@ def main() -> None:
         fetch(args.uid)
     elif args.command == "review":
         review(args.asset_id, args.pass_number, args.decision)
+    elif args.command == "normalize":
+        normalize(args.asset_id, args.target_height)
     elif args.command == "promote":
         promote(args.asset_id)
     elif args.command == "render":

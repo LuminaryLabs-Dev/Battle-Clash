@@ -6,8 +6,8 @@
   "description": "A NexusEngine ECS dungeon-battle RPG greybox rendered with Three.js.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:pages": "vite build --outDir docs",
+    "build": "node scripts/prepare-approved-assets.mjs && vite build",
+    "build:pages": "node scripts/prepare-approved-assets.mjs && vite build --outDir docs",
     "check:domains": "node scripts/validate-domain-coverage.mjs",
     "check:release": "node scripts/validate-release.mjs",
     "check:pages-artifact": "node scripts/validate-pages-artifact.mjs",

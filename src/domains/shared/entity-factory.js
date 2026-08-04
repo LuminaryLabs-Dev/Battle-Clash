@@ -51,7 +51,8 @@ export function spawnFromArchetype(world, {
     shape: "box",
     color: archetype.color,
     emissive: archetype.emissive,
-    size: [sizeX, sizeY, sizeZ]
+    size: [sizeX, sizeY, sizeZ],
+    ...(archetype.assetId ? { assetId: archetype.assetId } : {})
   });
   set(world, entity, Components.Footprint, {
     radius: Math.max(sizeX, sizeZ) / 2,

@@ -1,0 +1,58 @@
+{
+  "assetId": "objaverse-fc1339e225b7408caec82681be2746c5",
+  "consoleErrors": 0,
+  "contexts": [
+    {
+      "context": "sanctum",
+      "decision": "pass"
+    },
+    {
+      "context": "territory",
+      "decision": "pass"
+    },
+    {
+      "context": "combat",
+      "decision": "pass"
+    }
+  ],
+  "evidence": {
+    "contexts": [
+      "assets/objaverse/reviews/objaverse-fc1339e225b7408caec82681be2746c5/context-sanctum.png",
+      "assets/objaverse/reviews/objaverse-fc1339e225b7408caec82681be2746c5/context-territory.png",
+      "assets/objaverse/reviews/objaverse-fc1339e225b7408caec82681be2746c5/context-combat.png"
+    ],
+    "perspectives": [
+      "assets/objaverse/reviews/objaverse-fc1339e225b7408caec82681be2746c5/perspective-front.png",
+      "assets/objaverse/reviews/objaverse-fc1339e225b7408caec82681be2746c5/perspective-rear.png",
+      "assets/objaverse/reviews/objaverse-fc1339e225b7408caec82681be2746c5/perspective-side.png",
+      "assets/objaverse/reviews/objaverse-fc1339e225b7408caec82681be2746c5/perspective-three-quarter.png",
+      "assets/objaverse/reviews/objaverse-fc1339e225b7408caec82681be2746c5/perspective-top.png"
+    ]
+  },
+  "humanDecision": "pass",
+  "passNumber": 1,
+  "perspectives": [
+    {
+      "decision": "pass",
+      "perspective": "front"
+    },
+    {
+      "decision": "pass",
+      "perspective": "rear"
+    },
+    {
+      "decision": "pass",
+      "perspective": "side"
+    },
+    {
+      "decision": "pass",
+      "perspective": "three-quarter"
+    },
+    {
+      "decision": "pass",
+      "perspective": "top"
+    }
+  ],
+  "renderer": "three.js-playwright",
+  "schema": "battle-clash.asset-review/1"
+}
