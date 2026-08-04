@@ -282,21 +282,17 @@ export function createPeerJsRoomAdapter({
 
       if (message.kind === "hello" && role === "defender") {
         const authenticatedHello = message.payload?.roomHello;
-        if (authenticatedHello) {
-          const validation = validateAuthenticatedHello(authenticatedHello, state.roomId, { expectedRole: "attacker", requireReconnectToken: true });
-          if (!validation.accepted) {
-            send("room-full", { reason: validation.reason });
-            connection.close();
-            return;
-          }
-          updateState({ authenticated: true, remoteUserId: authenticatedHello.userId, reconnectToken: authenticatedHello.reconnectToken });
-          send("hello", {
-            profile: structuredClone(getProfile?.() ?? {}),
-            roomHello: roomHello(state.roomId, "defender")
-          });
-        } else {
-          updateState({ authenticated: false });
+        const validation = validateAuthenticatedHello(authenticatedHello, state.roomId, { expectedRole: "attacker", requireReconnectToken: true });
+        if (!validation.accepted) {
+          send("room-full", { reason: validation.reason });
+          connection.close();
+          return;
         }
+        updateState({ authenticated: true, remoteUserId: authenticatedHello.userId, reconnectToken: authenticatedHello.reconnectToken });
+        send("hello", {
+          profile: structuredClone(getProfile?.() ?? {}),
+          roomHello: roomHello(state.roomId, "defender")
+        });
         onRemoteProfile?.(message.payload.profile ?? {});
         send("snapshot", {
           snapshot: getAuthoritativeSnapshot()
@@ -321,14 +317,12 @@ export function createPeerJsRoomAdapter({
 
       if (message.kind === "hello" && role === "attacker") {
         const authenticatedHello = message.payload?.roomHello;
-        if (authenticatedHello) {
-          const validation = validateAuthenticatedHello(authenticatedHello, state.roomId, { expectedRole: "defender", requireReconnectToken: true });
-          if (!validation.accepted) {
-            connection.close();
-            return;
-          }
-          updateState({ authenticated: true, remoteUserId: authenticatedHello.userId, reconnectToken: authenticatedHello.reconnectToken });
+        const validation = validateAuthenticatedHello(authenticatedHello, state.roomId, { expectedRole: "defender", requireReconnectToken: true });
+        if (!validation.accepted) {
+          connection.close();
+          return;
         }
+        updateState({ authenticated: true, remoteUserId: authenticatedHello.userId, reconnectToken: authenticatedHello.reconnectToken });
         return;
       }
 
@@ -503,7 +497,7 @@ export function createPeerJsRoomAdapter({
   }
 
   return {
-    start: () => (soloAuditRequested() ? enterSoloAudit() : discover(0)),
+    start: () => (soloAuditRequested() || !getIdentity?.()?.userId ? enterSoloAudit() : discover(0)),
     getState: () => structuredClone(state),
     getReceiptContext() {
       const identity = getIdentity?.() ?? {};

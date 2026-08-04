@@ -148,7 +148,7 @@ check("content-behavior", "production-content-integrity", () => {
   return { territories: CONTENT_TERRITORIES.length, rooms: roomIds.size, enemyFamilies: Object.keys(ENEMY_FAMILIES).length, bossPhases: BOSS_PHASES.length };
 });
 check("network-behavior", "authenticated-room-receipt-contract", () => {
-  const hello = createAuthenticatedHello({ roomId: "room-1", userId: "user-1", role: "attacker", profileRevision: 4 });
+  const hello = createAuthenticatedHello({ roomId: "room-1", userId: "123e4567-e89b-12d3-a456-426614174000", role: "attacker", profileRevision: 4 });
   requireValue(validateAuthenticatedHello(hello, "room-1").accepted, "valid room hello rejected");
   requireValue(!validateAuthenticatedHello({ ...hello, roomId: "room-2" }, "room-1").accepted, "foreign room hello accepted");
   requireValue(validateCommandEnvelope({ roomId: "room-1", senderId: "user-1", authorityId: "host-1", sequence: 1, command: { kind: "deploy" } }).accepted, "valid command envelope rejected");

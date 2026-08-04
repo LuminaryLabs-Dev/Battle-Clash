@@ -11,8 +11,10 @@ const auth = { getAccessToken: () => "access-token" };
 const states = [];
 let mode = "offline";
 let requests = 0;
+const requestLog = [];
 const fetchImpl = async (url, options) => {
   requests += 1;
+  requestLog.push({ url, options });
   if (mode === "offline") throw new Error("offline");
   if (mode === "retry" && requests === 1) return response({ error: "temporary" }, 503);
   if (mode === "conflict") return response({ error: "revision-conflict", profile: { revision: 4 } }, 409);
@@ -53,4 +55,14 @@ const conflict = await sync.pushSnapshot();
 assert.equal(conflict.conflict, true);
 assert.equal(conflict.queued, false, "revision conflicts must not be retried from the offline queue");
 assert.equal(states.at(-1).status, "conflict");
+const snapshotRequest = requestLog.at(-1);
+assert.match(snapshotRequest.url, /\/api\/v1\/profiles\/snapshots$/);
+assert.equal(JSON.parse(snapshotRequest.options.body).revision, 0);
+assert.ok(JSON.parse(snapshotRequest.options.body).snapshot);
+assert.ok(snapshotRequest.options.headers["Idempotency-Key"]);
+
+mode = "online";
+const deletion = await sync.requestAccountDeletion();
+assert.equal(deletion.accepted, true);
+assert.ok(requestLog.at(-1).options.headers["Idempotency-Key"]);
 console.log("Sync contract: PASS (offline queue, idempotency, retry/backoff, conflict preservation)");

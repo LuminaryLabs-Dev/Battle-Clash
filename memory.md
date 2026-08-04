@@ -282,7 +282,9 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
   policy and receipt layer, while PeerJS remains the live room transport.
 - Durable profile sync uses `battle-clash.profile-snapshot/1` and excludes ECS
   render entities, particles, and per-frame transforms. Offline receipts queue
-  locally with idempotency keys until an authenticated API is available.
+  locally with idempotency keys until an authenticated API is available. Profile
+  snapshots use the server revision endpoint; rejected revisions are preserved
+  in a bounded local conflict log and deletion requests are idempotent.
 - The backend contract is published privately as
   `LuminaryLabs-Dev/LuminaryLabs-Backend` on `agent/production-foundation`; Rails 8
   and Ruby 3.3 remain required provisioning gates for running it locally.
@@ -292,7 +294,7 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - Hero combat is an ECS kit at `n:game:battle-clash:hero-combat`; its ability
   emits renderer-only effects and never becomes gameplay authority in Three.js.
 - `scripts/validate-domain-coverage.mjs` is the semantic validator gate. It
-  verifies 651 structural and behavioral checks across the 34-domain graph,
+  verifies 661 structural and behavioral checks across the 37-domain graph,
   ECS vocabulary, archetype fixtures, 169-territory world, scene registry,
   commands, determinism, and the complete Home Base-to-raid-to-Home Base flow.
 - `?solo=1` disables PeerJS discovery for deterministic browser-agent audits;
