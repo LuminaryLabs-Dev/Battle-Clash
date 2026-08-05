@@ -13,7 +13,10 @@ Read in this order:
 9. `feedback.md`
 10. `change-log.md`
 
-The first playable remains released on `main`. The immersive world-UI pass is
-locally proven on `agent/immersive-world-ui` and has not been pushed or deployed.
-Its next release lane is explicit authorization, refreshed `/docs`, branch
-publication, default-branch integration, Pages completion, and live browser proof.
+The feature work is currently split across protected PRs:
+`agent/domain-validator` for Battle-Clash, `agent/player-harness` for the
+Player harness, and `agent/production-foundation` for the Rails backend. Their
+required checks are green, but each PR still needs one approving review before
+the default branch can advance. The public Pages URL remains the older `main`
+artifact until that protected merge and deployment occur. Supabase/OAuth,
+production Rails, and hosted PeerServer/TURN remain provider gates.

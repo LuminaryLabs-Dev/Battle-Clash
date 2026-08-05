@@ -25,5 +25,11 @@
 | Push and deploy immersive visual pass | Complete | Codex |
 | Add semantic domain/object coverage validator | Complete locally | Codex |
 | Connect BattleClash-Player validator gate | Complete locally | Codex |
-| Prove solo browser player flow | Complete locally | Codex |
-| Push validator branches after review | Pending authorization | User |
+| Prove solo browser player flow | Complete locally and in Player CI | Codex |
+| Add approved Objaverse GLB, hash, attribution, review, and cube fallback | Complete locally and in CI | Codex |
+| Add Supabase auth adapter, account controls, profile sync, export, and deletion | Complete on feature branch; provider configuration pending | Codex |
+| Add authenticated PeerJS room, reconnect, sequence, authority, and receipt contracts | Complete locally and in CI; hosted PeerServer/TURN pending | Codex |
+| Add Rails snapshots, RLS migration, idempotent receipts, and replay protection | Complete on feature branch and Rails CI | Codex |
+| Review feature branches and merge through protected PRs | Blocked on required approving review | User/reviewer |
+| Configure Supabase, OAuth, Rails production, PeerServer/TURN, and secrets | Pending provider setup | User/provider |
+| Redeploy Pages from updated default branch and run deployed-browser proof | Pending protected merge and deployment | Codex |
