@@ -492,10 +492,12 @@ export function createBattleClashGame(options = {}) {
       return structuredClone(next);
     },
     getWorldState: () => engine.n.battleClashWorld.getWorldState(),
+    setWorldProfile: (profile) => engine.n.battleClashWorld.setProfile(profile),
     getCurrentTerritory: () => engine.n.battleClashWorld.getCurrentTerritory(),
     getHeroState: () => engine.n.battleClashWorld.getHeroState(),
     getSanctumState: () => engine.n.battleClashWorld.getSanctumState(),
     getContentState: () => engine.n.battleClashContent.getState(),
+    setContentProfile: (profile) => engine.n.battleClashContent.setProfile(profile),
     craftGear: (itemId) => engine.n.battleClashContent.craft(itemId),
     equipGear: (itemId) => engine.n.battleClashContent.equip(itemId),
     selectArchetype,

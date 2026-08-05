@@ -10,7 +10,6 @@ import { Events, Resources } from "../shared/definitions.js";
 
 const CONTENT_SCHEMA = "battle-clash.content/1";
 const clone = (value) => structuredClone(value);
-const RESOURCE_KEYS = ["gold", "food", "iron", "arcane"];
 
 function questStateFromProfile(profile = {}) {
   return Object.fromEntries(QUESTS.map((quest) => {
@@ -137,6 +136,11 @@ export function createContentKit({ profile = {} } = {}) {
       }
       return {
         getState: () => clone(currentContent(world)),
+        setProfile(profile = {}) {
+          const next = createDefaultContentState(profile);
+          world.setResource(Resources.ContentState, next);
+          return clone(next);
+        },
         craft(itemId) {
           const item = validateItem(itemId);
           const recipe = CRAFTING_RECIPES.find((candidate) => candidate.output === item?.id);

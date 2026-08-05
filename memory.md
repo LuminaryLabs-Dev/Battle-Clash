@@ -294,7 +294,7 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - Hero combat is an ECS kit at `n:game:battle-clash:hero-combat`; its ability
   emits renderer-only effects and never becomes gameplay authority in Three.js.
 - `scripts/validate-domain-coverage.mjs` is the semantic validator gate. It
-  verifies 673 structural and behavioral checks across the 38-domain graph,
+  verifies 675 structural and behavioral checks across the 38-domain graph,
   ECS vocabulary, archetype fixtures, 169-territory world, scene registry,
   commands, determinism, and the complete Home Base-to-raid-to-Home Base flow.
 - `?solo=1` disables PeerJS discovery for deterministic browser-agent audits;

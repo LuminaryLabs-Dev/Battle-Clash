@@ -23,7 +23,12 @@ import {
   upgradeSanctum as upgradeSanctumState,
   tickEconomy as tickEconomyState
 } from "./world-state.js";
-import { activeRegionIds, landscapeForTerritory } from "./world-state.js";
+import {
+  activeRegionIds,
+  factionStrategy,
+  factionSummary,
+  landscapeForTerritory
+} from "./world-state.js";
 import {
   clearHeroEntity,
   seedBattleState,
@@ -128,6 +133,42 @@ export function createBattleWorldKit(options = {}) {
         },
         getSanctumState() {
           return structuredClone(engine.world.getResource(Resources.SanctumState));
+        },
+        setProfile(profile = {}) {
+          const current = engine.world.getResource(Resources.WorldState);
+          const currentScene = engine.world.getResource(Resources.SceneState)?.current ?? current.currentSceneId;
+          const nextTerritories = profile.territories
+            ? structuredClone(profile.territories)
+            : structuredClone(current.territories);
+          const nextTerritoryId = nextTerritories[profile.currentTerritoryId]
+            ? profile.currentTerritoryId
+            : current.currentTerritoryId;
+          const nextHero = {
+            ...current.hero,
+            ...(profile.hero ? structuredClone(profile.hero) : {}),
+            territoryId: nextTerritoryId
+          };
+          const next = {
+            ...current,
+            ...structuredClone(profile),
+            currentSceneId: currentScene,
+            currentTerritoryId: nextTerritoryId,
+            territories: nextTerritories,
+            hero: nextHero,
+            army: profile.army ? structuredClone(profile.army) : structuredClone(current.army),
+            economy: profile.economy ? structuredClone(profile.economy) : structuredClone(current.economy),
+            sanctum: profile.sanctum ? structuredClone(profile.sanctum) : structuredClone(current.sanctum)
+          };
+          next.activeRegionIds = activeRegionIds(next.territories, next.currentTerritoryId, next.hero.discoveryRadius);
+          next.factions = factionSummary(next.territories);
+          next.factionStrategy = factionStrategy(next.territories, next.activeRegionIds);
+          next.frontier = {
+            ...current.frontier,
+            ...(profile.frontier ? structuredClone(profile.frontier) : {}),
+            simulatedTerritoryCount: next.activeRegionIds.length
+          };
+          commitWorldState(engine, next, null);
+          return structuredClone(next);
         },
         discoverTerritory(territoryId) {
           const current = engine.world.getResource(Resources.WorldState);

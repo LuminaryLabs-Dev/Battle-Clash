@@ -117,8 +117,9 @@ let menuOpen = false;
 let auth;
 let accountSync;
 let accountState = structuredClone(SIGNED_OUT_ACCOUNT);
-let lastAccountSnapshotDigest = null;
 let submittedMatchReceiptIdentity = null;
+let accountHydrationUserId = null;
+let accountHydrationPromise = null;
 
 function showError(error) {
   elements.error.hidden = false;
@@ -169,6 +170,40 @@ async function syncAccount() {
   const result = await accountSync.pushSnapshot();
   updateAccountUi({ syncStatus: result.queued ? "queued" : "synced", pendingReceipts: accountSync.pending() });
   showCue(result.queued ? "Profile queued for sync." : "Profile synced to Luminary.", 1800);
+}
+
+function applyRemoteProfile(result) {
+  const profile = result?.profile ?? result ?? {};
+  const snapshot = profile?.snapshot;
+  if (!snapshot || typeof snapshot !== "object") return false;
+  if (snapshot.progression) game.setProgression(snapshot.progression);
+  if (snapshot.world) game.setWorldProfile?.(snapshot.world);
+  if (snapshot.content) game.setContentProfile?.(snapshot.content);
+  renderNow();
+  return true;
+}
+
+async function hydrateAccountProfile(userId) {
+  if (!accountSync || accountState.status !== "authenticated" || !userId) return null;
+  if (accountHydrationUserId === userId) return accountHydrationPromise;
+  accountHydrationUserId = userId;
+  accountHydrationPromise = (async () => {
+    await accountSync.flushQueue();
+    const localPush = await accountSync.pushSnapshot();
+    if (localPush.conflict) {
+      const remote = await accountSync.pullProfile();
+      applyRemoteProfile(remote);
+    }
+    updateAccountUi({
+      syncStatus: localPush.queued ? "queued" : localPush.conflict ? "conflict" : "synced",
+      pendingReceipts: accountSync.pending()
+    });
+    return localPush;
+  })().catch((error) => {
+    updateAccountUi({ syncStatus: "queued", pendingReceipts: accountSync.pending() });
+    return { queued: true, error: error.message };
+  });
+  return accountHydrationPromise;
 }
 
 function isConnectedRole(snapshot, role) {
@@ -977,6 +1012,12 @@ try {
   auth = createSupabaseAuth({
     onChange(next) {
       updateAccountUi(accountStateFromAuth(next, next.status === "authenticated" ? "idle" : "offline"));
+      if (next.status === "authenticated") {
+        void hydrateAccountProfile(next.userId);
+      } else {
+        accountHydrationUserId = null;
+        accountHydrationPromise = null;
+      }
       if (host) renderNow();
     }
   });
@@ -1330,6 +1371,9 @@ try {
     },
     findWorldPath(startId, goalId) {
       return game.findWorldPath(startId, goalId);
+    },
+    getAssetDiagnostics() {
+      return host.getAssetDiagnostics?.() ?? { requested: [], loaded: [], failed: [] };
     },
     selectArchetype(archetype) {
       dispatchCommand({ kind: "select-archetype", archetype });

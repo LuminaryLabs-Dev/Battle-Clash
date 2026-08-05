@@ -1163,8 +1163,27 @@ export function createThreeHost({
     renderer.render(scene, camera);
   }
 
+  function getAssetDiagnostics() {
+    const requested = [];
+    const loaded = [];
+    const failed = [];
+    for (const view of entityViews.values()) {
+      const assetId = view.userData.assetId;
+      if (!assetId) continue;
+      if (view.userData.assetRequested) requested.push(assetId);
+      if (view.userData.assetRoot) loaded.push(assetId);
+      if (view.userData.assetFailed) failed.push(assetId);
+    }
+    return {
+      requested: [...new Set(requested)].sort(),
+      loaded: [...new Set(loaded)].sort(),
+      failed: [...new Set(failed)].sort()
+    };
+  }
+
   return {
     render,
+    getAssetDiagnostics,
     setDeployMode(value) {
       deployMode = Boolean(value);
       if (!deployMode) {
