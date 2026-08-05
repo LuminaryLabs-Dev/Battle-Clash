@@ -136,3 +136,13 @@
 - 2026-08-04: Expanded semantic validation to 612 checks, including per-event
   behavior, resource ownership, asset manifest integrity, GLB descriptors, and
   cube fallback resolution. Battle-Clash and BattleClash-Player gates pass.
+
+## 2026-08-04 21:10:00 EDT
+
+- Audited the online PR surface and exposed the existing Supabase/Rails account
+  contracts in the folded system menu: Google sign-in, profile export, and
+  idempotent profile deletion now have player-facing controls.
+- Profile export uses a browser download boundary; deletion clears only Battle
+  Clash local profile/queue keys after the server tombstone succeeds.
+- Added HTML markers to the auth contract and preserved 675/675 semantic proof,
+  production build, Pages artifact, and responsive zero-error browser proof.

@@ -35,3 +35,6 @@
   territories, scenes, composition APIs, peer commands, deterministic replay,
   and the full Home Base → frontier → territory → encounter → raid → Home Base
   flow. Coverage is a gate, not a claim about untested external services.
+- Account identity and data rights stay behind the invoked system menu: email /
+  password and Google share Supabase Auth, Rails owns export/deletion, and only
+  Battle Clash's local profile and sync queue are cleared after deletion.
