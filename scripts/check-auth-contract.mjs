@@ -15,7 +15,8 @@ const storage = {
   removeItem: (key) => values.delete(key)
 };
 const calls = [];
-const user = { id: "user-shared-uuid", email: "player@example.test" };
+const user = { id: "123e4567-e89b-12d3-a456-426614174000", email: "player@example.test" };
+assert.match(user.id, /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
 const session = { access_token: "access-1", refresh_token: "refresh-1", user };
 const refreshed = { access_token: "access-2", refresh_token: "refresh-2", user };
 const fetchImpl = async (url, options = {}) => {
