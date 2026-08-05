@@ -108,10 +108,11 @@ export function createProgressionKit() {
     apiName: "battleClashProgression",
     stability: "experimental",
     version: "0.1.0",
+    provides: ["n:game:battle-clash:progression"],
     requires: [
       "n:game:battle-clash",
-      "n:core-data",
-      "n:core-persistence"
+      "n:runtime:data",
+      "n:runtime:persistence"
     ],
     services: ["profile", "xp-awards", "level-thresholds", "power-scaling"],
     systems: [

@@ -11,7 +11,9 @@ import {
   loadProgressionProfile,
   loadWorldProfile,
   saveWorldProfile,
-  saveProgressionProfile
+  saveProgressionProfile,
+  loadContentProfile,
+  saveContentProfile
 } from "./persistence/profile-storage.js";
 import { createSupabaseAuth } from "./online/supabase-auth.js";
 import { createAccountSync } from "./online/account-sync.js";
@@ -33,8 +35,11 @@ const elements = {
   accountPassword: document.querySelector("#accountPassword"),
   accountSignIn: document.querySelector("#accountSignInButton"),
   accountSignUp: document.querySelector("#accountSignUpButton"),
+  accountGoogle: document.querySelector("#accountGoogleButton"),
   accountSync: document.querySelector("#accountSyncButton"),
   accountSignOut: document.querySelector("#accountSignOutButton"),
+  accountExport: document.querySelector("#accountExportButton"),
+  accountDelete: document.querySelector("#accountDeleteButton"),
   networkBadge: document.querySelector("#networkBadge"),
   partySigil: document.querySelector("#partySigil"),
   heartSigil: document.querySelector("#heartSigil"),
@@ -54,6 +59,12 @@ const elements = {
   selectDelver: document.querySelector("#selectDelverButton"),
   selectLancer: document.querySelector("#selectLancerButton"),
   selectArcanist: document.querySelector("#selectArcanistButton"),
+  contentPanel: document.querySelector("#contentPanel"),
+  contentReadout: document.querySelector("#contentReadout"),
+  craftEmberWard: document.querySelector("#craftEmberWardButton"),
+  craftScoutLens: document.querySelector("#craftScoutLensButton"),
+  craftGlassbreaker: document.querySelector("#craftGlassbreakerButton"),
+  equipLastGear: document.querySelector("#equipLastGearButton"),
   fieldPrompt: document.querySelector("#fieldPrompt"),
   resultPanel: document.querySelector("#resultPanel"),
   resultEyebrow: document.querySelector("#resultEyebrow"),
@@ -101,13 +112,17 @@ let savedProgression = "";
 let savedWorld = "";
 let personalProfile = loadProgressionProfile();
 let personalWorld = loadWorldProfile();
+let savedContent = "";
+let personalContent = loadContentProfile();
 let previousPhase = null;
 let cueTimeout = null;
 let menuOpen = false;
 let auth;
 let accountSync;
 let accountState = structuredClone(SIGNED_OUT_ACCOUNT);
-let lastAccountSnapshotDigest = null;
+let submittedMatchReceiptIdentity = null;
+let accountHydrationUserId = null;
+let accountHydrationPromise = null;
 
 function showError(error) {
   elements.error.hidden = false;
@@ -127,6 +142,28 @@ function updateAccountUi(next = accountState) {
     elements.accountSignOut.hidden = accountState.status !== "authenticated";
     elements.accountSignIn.hidden = accountState.status === "authenticated";
     elements.accountSignUp.hidden = accountState.status === "authenticated";
+    elements.accountGoogle.hidden = accountState.status === "authenticated";
+    elements.accountExport.hidden = accountState.status !== "authenticated";
+    elements.accountDelete.hidden = accountState.status !== "authenticated";
+  }
+}
+
+function updateContentUi(snapshot) {
+  const content = snapshot.content ?? {};
+  const inventory = content.inventory ?? [];
+  const equipped = Object.values(content.equipped ?? {}).filter(Boolean);
+  const rooms = (content.sanctumRooms ?? []).filter((room) => room.status === "unlocked").map((room) => room.kind);
+  if (elements.contentReadout) {
+    elements.contentReadout.textContent = `${inventory.length ? inventory.join(" · ") : "No gear recovered"}${equipped.length ? ` · Equipped: ${equipped.join(" · ")}` : ""}${rooms.length ? ` · Rooms: ${rooms.join(" · ")}` : ""}`;
+  }
+  const sanctum = snapshot.scene?.current === "sanctum";
+  for (const button of [elements.craftEmberWard, elements.craftScoutLens, elements.craftGlassbreaker, elements.equipLastGear]) {
+    if (button) button.disabled = !sanctum;
+  }
+  const lastGear = content.lastLoot?.itemId ?? inventory.at(-1) ?? null;
+  if (elements.equipLastGear) {
+    elements.equipLastGear.disabled = !sanctum || !lastGear || inventory.length === 0;
+    elements.equipLastGear.dataset.itemId = lastGear ?? "";
   }
 }
 
@@ -139,6 +176,77 @@ async function syncAccount() {
   const result = await accountSync.pushSnapshot();
   updateAccountUi({ syncStatus: result.queued ? "queued" : "synced", pendingReceipts: accountSync.pending() });
   showCue(result.queued ? "Profile queued for sync." : "Profile synced to Luminary.", 1800);
+}
+
+async function exportAccountProfile() {
+  if (!accountSync || accountState.status !== "authenticated") {
+    showCue("Sign in to export the Luminary profile.", 1800);
+    return;
+  }
+  const payload = await accountSync.exportProfile();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `battle-clash-profile-${accountState.userId ?? "export"}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  showCue("Profile export downloaded.", 1800);
+}
+
+async function deleteAccountProfile() {
+  if (!accountSync || accountState.status !== "authenticated") {
+    showCue("Sign in to manage the Luminary profile.", 1800);
+    return;
+  }
+  if (!window.confirm("Delete this Luminary profile? This cannot be undone.")) return;
+  await accountSync.requestAccountDeletion();
+  for (const key of [
+    "battle-clash.profile.v1",
+    "battle-clash.world-profile.v1",
+    "battle-clash.content-profile.v1",
+    "battle-clash.sync-queue.v1",
+    "battle-clash.sync-conflicts.v1"
+  ]) window.localStorage.removeItem(key);
+  await auth.signOut();
+  showCue("Profile deleted. Returning to offline play.", 2200);
+  window.setTimeout(() => window.location.reload(), 450);
+}
+
+function applyRemoteProfile(result) {
+  const profile = result?.profile ?? result ?? {};
+  const snapshot = profile?.snapshot;
+  if (!snapshot || typeof snapshot !== "object") return false;
+  if (snapshot.progression) game.setProgression(snapshot.progression);
+  if (snapshot.world) game.setWorldProfile?.(snapshot.world);
+  if (snapshot.content) game.setContentProfile?.(snapshot.content);
+  renderNow();
+  return true;
+}
+
+async function hydrateAccountProfile(userId) {
+  if (!accountSync || accountState.status !== "authenticated" || !userId) return null;
+  if (accountHydrationUserId === userId) return accountHydrationPromise;
+  accountHydrationUserId = userId;
+  accountHydrationPromise = (async () => {
+    await accountSync.flushQueue();
+    const localPush = await accountSync.pushSnapshot();
+    if (localPush.conflict) {
+      const remote = await accountSync.pullProfile();
+      applyRemoteProfile(remote);
+    }
+    updateAccountUi({
+      syncStatus: localPush.queued ? "queued" : localPush.conflict ? "conflict" : "synced",
+      pendingReceipts: accountSync.pending()
+    });
+    return localPush;
+  })().catch((error) => {
+    updateAccountUi({ syncStatus: "queued", pendingReceipts: accountSync.pending() });
+    return { queued: true, error: error.message };
+  });
+  return accountHydrationPromise;
 }
 
 function isConnectedRole(snapshot, role) {
@@ -160,8 +268,11 @@ function objectiveFor(snapshot) {
   }
   if (snapshot.scene?.current === "encounter" && snapshot.objective) {
     const objective = snapshot.objective;
-    if (objective.completed) return `${objective.title} complete. Finish the assault on the Dungeon Heart.`;
-    return `${objective.title}: ${objective.description} (${objective.progress}/${objective.required})`;
+    const room = snapshot.room?.roomId
+      ? `Room ${Number(snapshot.room.index ?? 0) + 1}/${snapshot.room.total} · ${snapshot.room.kind}`
+      : null;
+    if (objective.completed) return `${room ? `${room} · ` : ""}${objective.title} complete. Finish the assault on the Dungeon Heart.`;
+    return `${room ? `${room} · ` : ""}${objective.title}: ${objective.description} (${objective.progress}/${objective.required})`;
   }
   if (isConnectedRole(snapshot, "defender")) {
     return snapshot.raid.phase === "active"
@@ -332,6 +443,13 @@ function updateWorldUi(snapshot) {
 
 function updateUi(snapshot) {
   latestSnapshot = snapshot;
+  updateContentUi(snapshot);
+  const serializedContent = JSON.stringify(snapshot.content ?? null);
+  if (snapshot.session?.status !== "connected" && serializedContent !== savedContent) {
+    saveContentProfile(snapshot.content);
+    personalContent = structuredClone(snapshot.content ?? {});
+    savedContent = serializedContent;
+  }
   const loadoutSnapshot = isConnectedRole(snapshot, "attacker") ? game.getSnapshot() : snapshot;
   const unlocked = new Set(loadoutSnapshot.army?.unlockedArchetypes ?? ["delver"]);
   const selected = loadoutSnapshot.deployment?.selectedArchetype ?? "delver";
@@ -452,6 +570,9 @@ function updateUi(snapshot) {
   elements.returnAfterRaid.hidden = !terminal;
   if (terminal) {
     const won = snapshot.raid.phase === "won";
+    const nextRoom = won && snapshot.room?.hasNext && !defender;
+    elements.playAgain.setAttribute("aria-label", nextRoom ? "Enter next room" : "Begin next run");
+    elements.playAgain.dataset.tooltip = nextRoom ? "Next room" : "Next run";
     elements.resultEyebrow.textContent = won
       ? "VAULT BROKEN"
       : "RUN ENDED";
@@ -462,19 +583,46 @@ function updateUi(snapshot) {
       ? won
         ? "The attacking party broke through."
         : "The delvers were stopped."
-      : `+${snapshot.progression.lastReward} XP · Level ${snapshot.progression.level}`;
+      : `+${snapshot.progression.lastReward} XP · Level ${snapshot.progression.level}${nextRoom ? " · Next room ready" : ""}`;
   }
 
   if (snapshot.raid.phase !== previousPhase) {
     previousPhase = snapshot.raid.phase;
     announcePhase(snapshot);
+    if (["won", "lost"].includes(snapshot.raid.phase) && accountSync && accountState.status === "authenticated") {
+      const receiptContext = network?.getReceiptContext?.() ?? {
+        roomId: snapshot.session.roomId ?? "solo",
+        authorityId: accountState.userId ?? "local",
+        sequenceEnd: Number(snapshot.frame) || 1,
+        authenticated: true
+      };
+      if (receiptContext.roomId === "solo" || receiptContext.authenticated) {
+        const rewardIdempotencyKey = `battle-clash:${receiptContext.roomId}:${snapshot.progression.runs}:${snapshot.raid.phase}`;
+        const identity = `${receiptContext.roomId}:${rewardIdempotencyKey}`;
+        if (identity !== submittedMatchReceiptIdentity) {
+          submittedMatchReceiptIdentity = identity;
+          accountSync.pushMatchReceipt({
+            roomId: receiptContext.roomId,
+            authorityId: receiptContext.authorityId,
+            result: snapshot.raid.phase,
+            sequenceStart: 1,
+            sequenceEnd: Math.max(receiptContext.sequenceEnd, Number(snapshot.frame) || 1),
+          profileRevision: Number(snapshot.world?.revision) || 0,
+            rewardIdempotencyKey
+          }).then((result) => updateAccountUi({
+            syncStatus: result.queued ? "queued" : result.conflict ? "conflict" : "synced",
+            pendingReceipts: accountSync.pending()
+          })).catch(() => updateAccountUi({ syncStatus: "queued", pendingReceipts: accountSync.pending() }));
+        }
+      }
+    }
   }
 
   elements.domain.textContent = snapshot.domains
     .filter(
       (domainPath) =>
         domainPath.includes("battle-clash") ||
-        ["n:world", "n:core-network", "n:core-persistence"].includes(domainPath)
+        ["n:world", "n:network", "n:runtime:persistence"].includes(domainPath)
     )
     .join(" → ");
   elements.diagnostics.textContent =
@@ -566,6 +714,7 @@ function createPeerSnapshot(snapshot) {
     army: snapshot.army,
     sanctum: snapshot.sanctum,
     loot: snapshot.loot,
+    content: snapshot.content,
     effects: snapshot.effects,
     hero: snapshot.hero,
     landscape: snapshot.landscape,
@@ -694,6 +843,12 @@ function applyLocalCommand(command, { remote = false } = {}) {
     case "select-archetype":
       game.selectArchetype(command.archetype, { allowLocked: remote });
       break;
+    case "craft-gear":
+      game.craftGear(command.itemId);
+      break;
+    case "equip-gear":
+      game.equipGear(command.itemId);
+      break;
     case "upgrade-sanctum":
       game.upgradeSanctum();
       break;
@@ -721,7 +876,7 @@ function dispatchCommand(command) {
   if (
     session.status === "connected" &&
     session.role === "defender" &&
-    !["fortify", "reset", "scene", "discover", "claim", "move-hero", "heal-army", "recruit-army", "select-archetype", "upgrade-sanctum", "trade-resources", "interact-landmark", "hero-ability"].includes(command.kind)
+    !["fortify", "reset", "scene", "discover", "claim", "move-hero", "heal-army", "recruit-army", "select-archetype", "craft-gear", "equip-gear", "upgrade-sanctum", "trade-resources", "interact-landmark", "hero-ability"].includes(command.kind)
   ) {
     return false;
   }
@@ -768,6 +923,21 @@ function resetRun() {
   elements.deployMode.classList.add("is-selected");
   elements.deployMode.setAttribute("aria-pressed", "true");
   if (menuOpen) setMenuOpen(false);
+}
+
+function advanceOrResetRun() {
+  const snapshot = currentSnapshot();
+  if (snapshot.raid?.phase === "won" && snapshot.room?.hasNext && !network?.isRemoteAuthority()) {
+    const result = game.advanceRoom();
+    if (result?.accepted) {
+      host.setDeployMode(true);
+      showCue(`Room ${Number(result.state.index) + 1} opened.`, 1800);
+      renderNow();
+      return result;
+    }
+  }
+  resetRun();
+  return { accepted: true, reset: true };
 }
 
 function transitionScene(sceneId, payload = {}) {
@@ -879,11 +1049,18 @@ function frame(now) {
 try {
   game = createBattleClashGame({
     progression: personalProfile,
-    world: personalWorld
+    world: personalWorld,
+    content: personalContent
   });
   auth = createSupabaseAuth({
     onChange(next) {
       updateAccountUi(accountStateFromAuth(next, next.status === "authenticated" ? "idle" : "offline"));
+      if (next.status === "authenticated") {
+        void hydrateAccountProfile(next.userId);
+      } else {
+        accountHydrationUserId = null;
+        accountHydrationPromise = null;
+      }
       if (host) renderNow();
     }
   });
@@ -977,6 +1154,10 @@ try {
 
   network = createPeerJsRoomAdapter({
     getProfile: () => currentSnapshot().progression,
+    getIdentity: () => ({
+      userId: accountState.status === "authenticated" ? accountState.userId : null,
+      profileRevision: currentSnapshot().world?.revision ?? 0
+    }),
     getAuthoritativeSnapshot: () => createPeerSnapshot(game.getSnapshot()),
     onCommand(command) {
       applyLocalCommand(command, { remote: true });
@@ -1043,11 +1224,10 @@ try {
     dispatchCommand({ kind: "hero-ability", abilityId: "arc-burst" });
     showCue("Ember releases an arc burst.", 1200);
   });
-  elements.playAgain.addEventListener("click", resetRun);
+  elements.playAgain.addEventListener("click", advanceOrResetRun);
   elements.accountSignIn.addEventListener("click", async () => {
     try {
       await auth.signIn(elements.accountEmail.value.trim(), elements.accountPassword.value);
-      await accountSync.flushQueue();
       showCue("Luminary account linked.", 1800);
     } catch (error) {
       updateAccountUi({ syncStatus: "auth-error" });
@@ -1063,7 +1243,17 @@ try {
       showCue(error.message, 2400);
     }
   });
+  elements.accountGoogle.addEventListener("click", () => {
+    try {
+      auth.signInWithProvider("google");
+    } catch (error) {
+      updateAccountUi({ syncStatus: "auth-error" });
+      showCue(error.message, 2400);
+    }
+  });
   elements.accountSync.addEventListener("click", () => syncAccount().catch((error) => showCue(error.message, 2200)));
+  elements.accountExport.addEventListener("click", () => exportAccountProfile().catch((error) => showCue(error.message, 2200)));
+  elements.accountDelete.addEventListener("click", () => deleteAccountProfile().catch((error) => showCue(error.message, 2200)));
   elements.accountSignOut.addEventListener("click", async () => {
     await auth.signOut();
     updateAccountUi(SIGNED_OUT_ACCOUNT);
@@ -1133,6 +1323,28 @@ try {
   elements.selectArcanist.addEventListener("click", () => {
     dispatchCommand({ kind: "select-archetype", archetype: "arcanist" });
     showCue("Arcanist loadout selected.", 1400);
+  });
+  const craft = (itemId) => {
+    if (network?.isRemoteAuthority()) {
+      if (network.sendCommand({ kind: "craft-gear", itemId })) showCue("Forge request sent to the defender Sanctum.", 1700);
+      return;
+    }
+    const result = game.craftGear(itemId);
+    renderNow();
+    showCue(result.accepted ? `${itemId} forged at Dawnwatch.` : "The forge lacks the required materials.", 1800);
+  };
+  elements.craftEmberWard.addEventListener("click", () => craft("ember-ward"));
+  elements.craftScoutLens.addEventListener("click", () => craft("scout-lens"));
+  elements.craftGlassbreaker.addEventListener("click", () => craft("glassbreaker"));
+  elements.equipLastGear.addEventListener("click", () => {
+    const itemId = elements.equipLastGear.dataset.itemId;
+    if (network?.isRemoteAuthority()) {
+      if (network.sendCommand({ kind: "equip-gear", itemId })) showCue("Loadout request sent to the defender Sanctum.", 1700);
+      return;
+    }
+    const result = game.equipGear(itemId);
+    renderNow();
+    showCue(result.accepted ? `${itemId} equipped.` : "Recover the gear before equipping it.", 1800);
   });
   elements.discoverNext.addEventListener("click", discoverNextTerritory);
   elements.claimTerritory.addEventListener("click", () => {
@@ -1212,6 +1424,9 @@ try {
     findWorldPath(startId, goalId) {
       return game.findWorldPath(startId, goalId);
     },
+    getAssetDiagnostics() {
+      return host.getAssetDiagnostics?.() ?? { requested: [], loaded: [], failed: [] };
+    },
     selectArchetype(archetype) {
       dispatchCommand({ kind: "select-archetype", archetype });
       return currentSnapshot();
@@ -1230,7 +1445,10 @@ try {
     },
     setMenuOpen,
     transitionToScene: transitionScene,
-    discoverNextTerritory
+    discoverNextTerritory,
+    getContentState: () => game.getContentState(),
+    craftGear(itemId) { return game.craftGear(itemId); },
+    equipGear(itemId) { return game.equipGear(itemId); }
   });
 
   renderNow();

@@ -1,7 +1,9 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { BATTLEFIELD } from "../../data/battlefield.js";
 import { TERRITORIES, isTerritorySceneId } from "../../data/world.js";
+import { assetById } from "../../assets/catalog.js";
 
 const sharedBody = new RoundedBoxGeometry(1, 1, 1, 4, 0.08);
 const sharedCap = new RoundedBoxGeometry(1, 1, 1, 3, 0.12);
@@ -192,6 +194,11 @@ function createEntityView(entity) {
     territoryMarker: Boolean(entity.territoryMarker),
     faction: entity.faction,
     movement: entity.movement?.state ?? null,
+    assetId: entity.renderable?.assetId ?? null,
+    fallbackParts: [body, cap, edges, crest].filter(Boolean),
+    assetRoot: null,
+    assetRequested: false,
+    assetFailed: false,
     baseScale: [...entity.renderable.size],
     lastHealthRatio: entity.health ? 1 : null,
     damageFlashUntil: 0
@@ -548,6 +555,62 @@ export function createThreeHost({
   const hitPoint = new THREE.Vector3();
   const entityViews = new Map();
   const effectViews = new Map();
+  const assetLoader = new GLTFLoader();
+  const assetTemplates = new Map();
+  const assetLoads = new Map();
+  const assetBaseUrl = import.meta.env.BASE_URL ?? "/";
+
+  function assetUrl(asset) {
+    return `${assetBaseUrl}${String(asset.path).replace(/^\/+/, "")}`;
+  }
+
+  function loadAssetTemplate(asset) {
+    if (assetTemplates.has(asset.id)) return Promise.resolve(assetTemplates.get(asset.id));
+    if (assetLoads.has(asset.id)) return assetLoads.get(asset.id);
+    const load = assetLoader.loadAsync(assetUrl(asset)).then((gltf) => {
+      assetTemplates.set(asset.id, gltf.scene);
+      assetLoads.delete(asset.id);
+      return gltf.scene;
+    }).catch((error) => {
+      assetLoads.delete(asset.id);
+      throw error;
+    });
+    assetLoads.set(asset.id, load);
+    return load;
+  }
+
+  function projectApprovedAsset(entity, view) {
+    const assetId = entity.renderable?.assetId;
+    const asset = assetId ? assetById(assetId) : null;
+    if (!asset || view.userData.assetRequested || view.userData.assetFailed) return;
+    view.userData.assetRequested = true;
+    loadAssetTemplate(asset).then((template) => {
+      if (!entityViews.has(entity.id)) return;
+      const root = template.clone(true);
+      root.name = `${entity.id}:asset:${asset.id}`;
+      root.traverse((node) => {
+        if (!node.isMesh) return;
+        node.castShadow = true;
+        node.receiveShadow = true;
+      });
+      const bounds = new THREE.Box3().setFromObject(root);
+      const size = bounds.getSize(new THREE.Vector3());
+      const targetHeight = Math.max(0.1, Number(entity.renderable.size?.[1] ?? 1));
+      const scale = targetHeight / Math.max(0.001, size.y);
+      root.scale.setScalar(scale);
+      const scaledBounds = new THREE.Box3().setFromObject(root);
+      const scaledCenter = scaledBounds.getCenter(new THREE.Vector3());
+      root.position.x -= scaledCenter.x;
+      root.position.z -= scaledCenter.z;
+      root.position.y -= scaledBounds.min.y;
+      view.add(root);
+      view.userData.assetRoot = root;
+      view.userData.fallbackParts.forEach((part) => { part.visible = false; });
+    }).catch(() => {
+      // The entity remains on its renderer-neutral cube fallback.
+      view.userData.assetFailed = true;
+    });
+  }
   let deployMode = true;
   let latestSnapshot = null;
   let latestPhase = null;
@@ -793,6 +856,12 @@ export function createThreeHost({
 
   function removeEntityView(view) {
     scene.remove(view);
+    view.userData.assetRoot?.traverse((node) => {
+      if (!node.isMesh) return;
+      node.geometry?.dispose?.();
+      if (Array.isArray(node.material)) node.material.forEach((material) => material.dispose?.());
+      else node.material?.dispose?.();
+    });
     for (const key of [
       "body",
       "cap",
@@ -841,6 +910,7 @@ export function createThreeHost({
       view.userData.landmarkId = entity.category === "landmark" ? entity.id : null;
       view.userData.hero = Boolean(entity.hero);
       view.userData.frontMarker = Boolean(entity.frontMarker);
+      projectApprovedAsset(entity, view);
       if (entity.frontMarker) {
         const paletteColor = entity.renderable?.color ?? "#94a3b8";
         const paletteEmissive = entity.renderable?.emissive ?? "#334155";
@@ -1093,8 +1163,27 @@ export function createThreeHost({
     renderer.render(scene, camera);
   }
 
+  function getAssetDiagnostics() {
+    const requested = [];
+    const loaded = [];
+    const failed = [];
+    for (const view of entityViews.values()) {
+      const assetId = view.userData.assetId;
+      if (!assetId) continue;
+      if (view.userData.assetRequested) requested.push(assetId);
+      if (view.userData.assetRoot) loaded.push(assetId);
+      if (view.userData.assetFailed) failed.push(assetId);
+    }
+    return {
+      requested: [...new Set(requested)].sort(),
+      loaded: [...new Set(loaded)].sort(),
+      failed: [...new Set(failed)].sort()
+    };
+  }
+
   return {
     render,
+    getAssetDiagnostics,
     setDeployMode(value) {
       deployMode = Boolean(value);
       if (!deployMode) {

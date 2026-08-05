@@ -11,7 +11,7 @@ defend boundaries.
 
 ## Status
 
-Complete locally on `agent/immersive-world-ui` (not pushed to `main`). Home Base, overworld,
+Complete locally on `agent/domain-validator` (not pushed to `main`). Home Base, overworld,
 territory state, economy ticks, scene transitions, and NexusEngine-backed world,
 territory, and combat A* queries are wired and validated. Dynamic landscape
 mutation, territory-specific encounter composition, full world rendering,
@@ -22,6 +22,14 @@ serializable world contract. Final verification includes `npm run check`,
 `npm run build`, `npm run build:pages`, `git diff --check`, and a live browser
 run that deployed eight delvers, shattered the Heart, and rendered the victory
 receipt with zero console errors.
+
+### Current PR audit lane
+
+The active feature branch is compatible with NexusEngine 0.0.4 semantic domains
+and adds deterministic authored room chains plus the content kit. Current proof
+is 675/675, with Player harness browser proof green.
+Main remains protected; external Supabase, Rails runtime, OAuth, hosted
+PeerServer/TURN, and required PR review are still release gates.
 
 ## Acceptance Criteria
 
@@ -253,18 +261,19 @@ receipt with zero console errors.
 - A clean level-scaled two-tab browser run proves networked Heart victory,
   defender authority, synchronized Home Base return, territory ownership, and
   persisted loot/economy receipts on both peers.
-- The private-repository Pages workflow validates and deploys the `dist/`
-  artifact on pushes to `main` while retaining manual dispatch for controlled
-  releases; `/docs` remains a local static fallback.
+- The private-repository Pages workflow validates the `main`, `staging`, and
+  `publish` snapshots and deploys one artifact at the root, `/staging/`, and
+  `/publish/`; `/docs` remains a local static fallback.
 - Three.js and PeerJS never own gameplay outcomes.
 - Deterministic checks, production build, zero-error browser launch, screenshots,
   and human-view acceptance all pass.
 
 ## Preserved Release Baseline
 
-The first public implementation remains on `main`, with solo fallback,
-defender-host PeerJS authority, persistent progression, and GitHub Pages
-deployment already proven.
+The validated current source baseline is on `staging` and `publish` at commit
+`6cf2c4c`. The protected PR into `main` must be approved before the development
+branch is aligned; afterward, `npm run check:tier-baseline` is the parity gate
+before new development changes begin.
 
 ## Later Product Work
 

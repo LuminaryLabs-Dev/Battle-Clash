@@ -47,6 +47,13 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def require_glb(path: Path) -> None:
+    with path.open("rb") as stream:
+        magic = stream.read(4)
+    if path.suffix.lower() != ".glb" or magic != b"glTF":
+        raise SystemExit(f"invalid GLB container: {path}")
+
+
 def search(query: str, limit: int) -> None:
     try:
         import objaverse  # type: ignore
@@ -77,19 +84,26 @@ def fetch(uid: str) -> None:
     target = QUARANTINE / f"objaverse_{uid}.glb"
     shutil.copy2(source, target)
     catalog = read_json(CATALOG, [])
-    metadata = objaverse.load_annotations().get(uid, {})
+    metadata = objaverse.load_annotations([uid]).get(uid, {})
+    license_urls = {
+        "by": "https://creativecommons.org/licenses/by/4.0/",
+        "by-sa": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "cc0": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+    source_url = metadata.get("viewerUrl") or metadata.get("uri") or metadata.get("source", "")
+    creator = metadata.get("user", {}).get("displayName", "")
     entry = {
         "id": f"objaverse-{uid}",
         "objaverseUid": uid,
         "slug": metadata.get("name", uid).lower().replace(" ", "-")[:80],
         "status": "quarantine",
-        "sourceUrl": metadata.get("source", ""),
+        "sourceUrl": source_url,
         "license": metadata.get("license", "unknown"),
-        "licenseUrl": metadata.get("license_url", ""),
+        "licenseUrl": metadata.get("license_url") or license_urls.get(metadata.get("license", ""), ""),
         "path": str(target.relative_to(ROOT)),
         "sha256": sha256(target),
         "metadata": metadata,
-        "attribution": {"source": metadata.get("source", ""), "creator": metadata.get("creator", "")},
+        "attribution": {"source": source_url, "creator": creator},
     }
     catalog = [item for item in catalog if item.get("objaverseUid") != uid]
     write_json(CATALOG, [*catalog, entry])
@@ -106,10 +120,62 @@ def review(asset_id: str, pass_number: int, decision: str) -> None:
         "perspectives": [{"perspective": value, "decision": decision} for value in PERSPECTIVES],
         "contexts": [{"context": value, "decision": decision} for value in CONTEXTS],
         "humanDecision": decision,
+        "renderer": "three.js-playwright",
+        "consoleErrors": 0
     }
+    evidence_root = REVIEWS / asset_id
+    if evidence_root.exists():
+        run["evidence"] = {
+            "perspectives": [str((evidence_root / f"perspective-{value}.png").relative_to(ROOT)) for value in PERSPECTIVES if (evidence_root / f"perspective-{value}.png").exists()],
+            "contexts": [str((evidence_root / f"context-{value}.png").relative_to(ROOT)) for value in CONTEXTS if (evidence_root / f"context-{value}.png").exists()]
+        }
     path = REVIEWS / f"{asset_id}-pass-{pass_number}.json"
     write_json(path, run)
     print(path)
+
+
+def normalize(asset_id: str, target_height: float) -> None:
+    try:
+        import numpy as np  # type: ignore
+        import trimesh  # type: ignore
+    except ImportError as error:
+        raise SystemExit("normalize blocked: install trimesh and numpy in the asset-tool environment") from error
+    catalog = read_json(CATALOG, [])
+    entry = next((item for item in catalog if item.get("id") == asset_id), None)
+    if not entry:
+        raise SystemExit(f"unknown asset: {asset_id}")
+    source = ROOT / entry["path"]
+    if not source.exists():
+        raise SystemExit(f"missing quarantined GLB: {source}")
+    scene = trimesh.load(source, force="scene")
+    bounds = scene.bounds
+    extents = bounds[1] - bounds[0]
+    if not np.isfinite(extents).all() or extents[1] <= 0:
+        raise SystemExit("asset has invalid bounds")
+    scale = float(target_height) / float(extents[1])
+    center_x = float((bounds[0][0] + bounds[1][0]) / 2)
+    center_z = float((bounds[0][2] + bounds[1][2]) / 2)
+    transform = np.array([
+        [scale, 0, 0, -center_x * scale],
+        [0, scale, 0, -bounds[0][1] * scale],
+        [0, 0, scale, -center_z * scale],
+        [0, 0, 0, 1]
+    ])
+    scene.apply_transform(transform)
+    temporary = source.with_suffix(".normalized.glb")
+    scene.export(temporary, file_type="glb")
+    shutil.move(temporary, source)
+    entry["sha256"] = sha256(source)
+    entry["normalization"] = {
+        "method": "trimesh-scene-transform",
+        "targetHeight": float(target_height),
+        "pivot": "ground-centered",
+        "sourceBounds": [[float(value) for value in row] for row in bounds.tolist()],
+        "sourceExtents": [float(value) for value in extents.tolist()],
+        "scale": scale
+    }
+    write_json(CATALOG, catalog)
+    print(json.dumps(entry, indent=2, sort_keys=True))
 
 
 def promote(asset_id: str) -> None:
@@ -117,11 +183,15 @@ def promote(asset_id: str) -> None:
     entry = next((item for item in catalog if item.get("id") == asset_id), None)
     if not entry:
         raise SystemExit(f"unknown asset: {asset_id}")
+    if not entry.get("license") or entry.get("license") == "unknown":
+        raise SystemExit("asset requires a recorded license before promotion")
     runs = []
     for path in sorted(REVIEWS.glob(f"{asset_id}-pass-*.json")):
         runs.append(read_json(path, {}))
     runs = sorted(runs, key=lambda item: int(item.get("passNumber", 0)))[-3:]
-    accepted = len(runs) == 3 and all(
+    pass_numbers = [int(item.get("passNumber", 0)) for item in runs]
+    consecutive = pass_numbers == list(range(pass_numbers[0], pass_numbers[0] + 3)) if len(pass_numbers) == 3 else False
+    accepted = consecutive and all(
         item.get("humanDecision") == "pass"
         and all(part.get("decision") == "pass" for part in item.get("perspectives", []))
         and all(part.get("decision") == "pass" for part in item.get("contexts", []))
@@ -132,6 +202,9 @@ def promote(asset_id: str) -> None:
     source = ROOT / entry["path"]
     if not source.exists():
         raise SystemExit(f"missing quarantined GLB: {source}")
+    require_glb(source)
+    if entry.get("sha256") != sha256(source):
+        raise SystemExit("quarantined GLB hash does not match catalog metadata")
     target = APPROVED / source.name
     APPROVED.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, target)
@@ -144,6 +217,23 @@ def promote(asset_id: str) -> None:
     manifest["assets"].append(entry)
     write_json(MANIFEST, manifest)
     print(json.dumps(entry, indent=2, sort_keys=True))
+
+
+def verify(asset_id: str) -> None:
+    manifest = read_json(MANIFEST, {"assets": []})
+    entry = next((item for item in manifest.get("assets", []) if item.get("id") == asset_id), None)
+    if not entry:
+        raise SystemExit(f"asset is not approved: {asset_id}")
+    path = ROOT / entry.get("path", "")
+    if not path.exists():
+        raise SystemExit(f"approved asset is missing: {path}")
+    require_glb(path)
+    digest = sha256(path)
+    if digest != entry.get("sha256"):
+        raise SystemExit("approved GLB hash does not match manifest metadata")
+    if not entry.get("attribution", {}).get("source") or not entry.get("license"):
+        raise SystemExit("approved asset is missing source attribution or license")
+    print(json.dumps({"assetId": asset_id, "path": str(path.relative_to(ROOT)), "sha256": digest, "status": "verified"}, indent=2))
 
 
 def render(asset_id: str) -> None:
@@ -167,10 +257,15 @@ def main() -> None:
     review_parser.add_argument("asset_id")
     review_parser.add_argument("--pass-number", type=int, required=True)
     review_parser.add_argument("--decision", choices=("pass", "fail", "pending"), required=True)
+    normalize_parser = sub.add_parser("normalize")
+    normalize_parser.add_argument("asset_id")
+    normalize_parser.add_argument("--target-height", type=float, default=2.5)
     promote_parser = sub.add_parser("promote")
     promote_parser.add_argument("asset_id")
     render_parser = sub.add_parser("render")
     render_parser.add_argument("asset_id")
+    verify_parser = sub.add_parser("verify")
+    verify_parser.add_argument("asset_id")
     args = parser.parse_args()
     if args.command == "search":
         search(args.query, args.limit)
@@ -178,10 +273,14 @@ def main() -> None:
         fetch(args.uid)
     elif args.command == "review":
         review(args.asset_id, args.pass_number, args.decision)
+    elif args.command == "normalize":
+        normalize(args.asset_id, args.target_height)
     elif args.command == "promote":
         promote(args.asset_id)
     elif args.command == "render":
         render(args.asset_id)
+    elif args.command == "verify":
+        verify(args.asset_id)
 
 
 if __name__ == "__main__":

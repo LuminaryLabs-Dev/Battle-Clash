@@ -9,6 +9,10 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 ## Durable Architecture Decisions
 
 - NexusEngine is the deterministic Core runtime and is pinned as an external dependency.
+- The feature branch is compatible with NexusEngine 0.0.4 semantic paths (`n:world`,
+  `n:network`, `n:runtime:*`, `n:simulation`, `n:spatial`, `n:interaction:*`,
+  `n:presentation:*`, and `n:world:scene`); retired `n:core-*` aliases are not
+  part of the game contract.
 - ECS entities, components, resources, events, and ordered systems own gameplay truth.
 - Deep game domains compose NexusEngine Core domains and small atomic kits.
 - Core World owns world identity, partitioning, cells, surfaces, focus, and portable lifecycle state.
@@ -60,6 +64,10 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - Encounter objectives are an atomic `encounter:objectives` ECS kit. Territory
   kind selects relic, pressure, front, or stronghold objectives; combat records
   destroyed entity IDs and the objective kit resolves progress/completion.
+- Authored room chains are encounter-domain state: `RoomState` exposes the
+  current room, deterministic exits, objective kind, and completed room IDs.
+  A won room advances through the chain; the World kit claims a territory only
+  after its final room and persists `roomProgress` on that territory.
 - Territory descriptors seed renderer-neutral landmark entities for settlement,
   resource, and territory-kind sites. They use `TerritoryMarker` and
   `ResourceNode` components, have no combat health, and are visible only in the
@@ -262,11 +270,14 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - Responsive camera framing derives from projected battlefield bounds instead
   of fixed vertical zoom values, so the full room survives compact and portrait views.
 - The private repository keeps `/docs` as a local static fallback, while the
-  primary Pages release path builds and publishes `dist/` through GitHub
-  Actions on pushes to `main`.
-- The Pages artifact workflow runs deterministic simulation checks, then
-  deploys on pushes to `main` while still supporting manual dispatch, preserving
-  the private-repository/public-Pages boundary.
+  primary Pages release path builds one artifact from the `main`, `staging`,
+  and `publish` branch snapshots.
+- The Pages artifact workflow runs deterministic checks and deploys the root,
+  `/staging/`, and `/publish/` paths on release-branch pushes while supporting
+  manual dispatch, preserving the private-repository/public-Pages boundary.
+- The Pages workflow performs a post-deploy curl health check for the published
+  Battle Clash title and runtime entrypoint before reporting the deployment
+  healthy.
 
 ## Online Foundation And Asset Boundary
 
@@ -274,24 +285,56 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
   policy and receipt layer, while PeerJS remains the live room transport.
 - Durable profile sync uses `battle-clash.profile-snapshot/1` and excludes ECS
   render entities, particles, and per-frame transforms. Offline receipts queue
-  locally with idempotency keys until an authenticated API is available.
+  locally with idempotency keys until an authenticated API is available. Profile
+  snapshots use the server revision endpoint; rejected revisions are preserved
+  in a bounded local conflict log and deletion requests are idempotent.
+- Sync retries refresh an expired Supabase session once on a 401 before applying
+  normal retry/backoff rules; non-retryable conflicts remain visible locally.
+- Account identity and data-rights actions stay inside the folded system menu:
+  email/password and Google sign-in share the Supabase session, export downloads
+  the Rails profile bundle, and deletion clears only Battle Clash local state
+  after the idempotent server tombstone succeeds.
 - The backend contract is published privately as
-  `LuminaryLabs-Dev/LuminaryLabs-Backend` on `agent/online-foundation`; Rails 8
+  `LuminaryLabs-Dev/LuminaryLabs-Backend` on `agent/production-foundation`; Rails 8
   and Ruby 3.3 remain required provisioning gates for running it locally.
 - Objaverse ingestion is quarantine-first. Only approved catalog entries may
   reach the Three.js asset boundary, with cube fallback retained for missing or
   over-budget GLBs. Review promotion requires three consecutive passing runs.
 - Hero combat is an ECS kit at `n:game:battle-clash:hero-combat`; its ability
   emits renderer-only effects and never becomes gameplay authority in Three.js.
+- `scripts/validate-domain-coverage.mjs` is the semantic validator gate. It
+  verifies 675 structural and behavioral checks across the 38-domain graph,
+  ECS vocabulary, archetype fixtures, 169-territory world, scene registry,
+  commands, determinism, and the complete Home Base-to-raid-to-Home Base flow.
+- `?solo=1` disables PeerJS discovery for deterministic browser-agent audits;
+  normal multiplayer room discovery remains the default behavior.
+- Authenticated PeerJS rooms now carry a versioned room hello with the account
+  UUID, role, profile revision, and browser reconnect token; signed-out peers
+  retain the explicit solo/degraded fallback.
+- Production content is no longer snapshot-only: `n:game:battle-clash:content`
+  owns a serializable `ContentState` for gear inventory/equipment, quest steps,
+  crafting receipts, loot promotion, and Sanctum room unlocks. Room wins feed
+  that kit; crafting/equip are Sanctum-gated APIs. Local storage and account
+  snapshots preserve the content state, while Three.js only presents it.
 
 ## Repository And Release
 
 - Local folder: `/Users/crimsonwheeler/Documents/GitHub/Battle-Clash`
 - GitHub repository: `LuminaryLabs-Dev/Battle-Clash` (private)
 - Public Pages URL: `https://luminarylabs-dev.github.io/Battle-Clash/`
-- Primary Pages source: GitHub Actions artifact from `dist/`
-- Local fallback artifact: `main` and `/docs`
+- Primary Pages source: one GitHub Actions artifact containing development
+  `main` at the root, staging at `staging/`, and production `publish/`
+  snapshots
+- Local fallback artifact: the checked-in `main` `/docs` tree
 - Workflow: `.github/workflows/deploy-pages.yml`
+
+## Branch Release Tiers
+
+- `main` is development with synthetic/local data at the root Pages URL.
+- `staging` is anonymized production staging at `/staging/`.
+- `publish` is production at `/publish/`.
+- Promotions are pull requests in the order main -> staging -> publish;
+  redacted tier audits are retained as release evidence.
 
 ## Conventions
 

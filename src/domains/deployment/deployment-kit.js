@@ -68,10 +68,11 @@ export function createDeploymentKit() {
     apiName: "battleClashDeployment",
     stability: "experimental",
     version: "0.1.0",
+    provides: ["n:game:battle-clash:deployment"],
     requires: [
       "n:game:battle-clash",
       "n:game:battle-clash:world",
-      "n:core-input"
+      "n:interaction:input"
     ],
     services: ["troop-budget", "edge-deployment"],
     systems: [

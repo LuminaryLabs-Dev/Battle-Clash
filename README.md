@@ -70,6 +70,9 @@ npm run dev
 Open the printed `/Battle-Clash/` URL. Open it in a second browser session to
 exercise automatic attacker/defender matching.
 
+For deterministic browser-agent audits, append `?solo=1` to disable PeerJS
+discovery for that tab. This leaves normal multiplayer behavior unchanged.
+
 Validation:
 
 ```sh
@@ -109,18 +112,38 @@ NAT environments.
 
 ## Deployment
 
-The primary Pages release path is the artifact-based GitHub Actions workflow,
-which builds and publishes `dist/` on pushes to `main`. For a local static
-fallback, refresh the checked-in `/docs` artifact with:
+Battle Clash uses three ordered branch tiers: `main` (development), `staging`
+(production staging), and `publish` (production). The policy and promotion requirements are in
+[`docs/BRANCH_TIERS.md`](docs/BRANCH_TIERS.md).
+
+The tiered Pages workflow builds the three public branches into one Pages site:
+
+- Development: <https://luminarylabs-dev.github.io/Battle-Clash/>
+- Staging: <https://luminarylabs-dev.github.io/Battle-Clash/staging/>
+- Production: <https://luminarylabs-dev.github.io/Battle-Clash/publish/>
+
+GitHub Pages gives one site per repository, so staging and production use stable subpaths of the
+same private-repository Pages site rather than pretending each branch is a
+separate Pages project.
+
+For a local static fallback, refresh the checked-in `/docs` artifact with:
 
 ```sh
 npm run build:pages
 ```
 
-The `.github/workflows/deploy-pages.yml` runs the deterministic simulation check
-and deploys automatically when `main` receives a push; manual dispatch remains
-available. Configure repository Pages to use GitHub Actions. The GitHub
-repository remains private while the Pages game is public.
+`.github/workflows/deploy-pages.yml` rebuilds production, staging, and publish
+after a push to any of those branches; manual dispatch remains available.
+Configure repository Pages to use GitHub Actions. The GitHub repository remains
+private while the Pages game is public.
+
+Use `.github/workflows/promote-tier.yml` to open a checked promotion PR in the
+only permitted order: `main -> staging -> publish`. The promotion
+workflow does not merge or push to `main`.
+
+See [docs/TIER_MAINTENANCE.md](docs/TIER_MAINTENANCE.md) for baseline parity,
+promotion, drift checks, and recovery procedures. The weekly tier maintenance
+workflow also provides manual baseline and promotion audits.
 
 See [MASTER_PLAN.md](MASTER_PLAN.md) for the domain and product roadmap.
 
@@ -133,6 +156,12 @@ sync cursors, and approved asset metadata. The browser remains playable while
 signed out and queues receipts locally until an authenticated backend is
 configured. Copy `.env.example` to a local environment file to configure the
 Supabase URL, anon key, and Rails API URL; never commit credentials.
+
+Supabase Auth supports email/password through the in-game account boundary and
+Google OAuth through `signInWithProvider("google")`. Configure the Supabase
+redirect URL to the Pages origin before enabling the OAuth control; passwords
+never pass through Battle Clash or Rails. The folded system menu also exposes
+profile sync, JSON export, and idempotent deletion without covering active play.
 
 Objaverse tooling is quarantine-first under `tools/objaverse/`. Only entries in
 `src/assets/approved-manifest.json` may cross the runtime asset boundary. The

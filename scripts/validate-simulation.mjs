@@ -58,8 +58,8 @@ assert.equal(first.snapshot.raid.phase, "won", "expected the bounded first raid 
 assert.equal(first.snapshot.deployment.remaining, 0);
 assert.equal(first.snapshot.activeCellCount, 49);
 assert.ok(first.snapshot.domains.includes("n:world"));
-assert.ok(first.snapshot.domains.includes("n:core-network"));
-assert.ok(first.snapshot.domains.includes("n:core-persistence"));
+assert.ok(first.snapshot.domains.includes("n:network"));
+assert.ok(first.snapshot.domains.includes("n:runtime:persistence"));
 assert.ok(first.snapshot.domains.includes("n:game:battle-clash:combat"));
 assert.ok(first.snapshot.domains.includes("n:game:battle-clash:progression"));
 assert.ok(first.snapshot.progression.runs === 1);
@@ -70,7 +70,7 @@ assert.deepEqual(first.snapshot.world.discoveredTerritoryIds, ["dawnwatch-sanctu
 assert.equal(first.snapshot.world.grid.width, 100);
 assert.equal(first.snapshot.world.grid.height, 100);
 assert.equal(Object.keys(first.snapshot.world.territories).length, 169);
-const sceneRegistry = first.game.engine.n.coreScene.getSceneRegistry();
+const sceneRegistry = first.game.engine.n.scene.getSceneRegistry();
 assert.equal(Object.keys(sceneRegistry).filter((id) => id.startsWith("territory:")).length, 168);
 assert.equal(sceneRegistry["territory:ash-crossing"].metadata.territoryId, "ash-crossing");
 assert.equal(first.snapshot.world.territories["ash-crossing"].sceneId, "territory:ash-crossing");
@@ -349,6 +349,17 @@ autoClaim.startRaid();
 autoClaim.tick(2);
 assert.equal(autoClaim.getSnapshot().raid.phase, "won");
 autoClaim.tick();
+while (autoClaim.getSnapshot().room?.hasNext) {
+  const nextRoom = autoClaim.advanceRoom();
+  assert.equal(nextRoom.accepted, true);
+  const roomCore = autoClaim.engine.world.query(Components.Identity, Components.Health)
+    .find((entity) => autoClaim.engine.world.getComponent(entity, Components.Identity).role === "core");
+  const roomCoreHealth = autoClaim.engine.world.getComponent(roomCore, Components.Health);
+  autoClaim.engine.world.setComponent(roomCore, Components.Health, { ...roomCoreHealth, current: 0 });
+  autoClaim.startRaid();
+  autoClaim.tick(2);
+  autoClaim.tick();
+}
 assert.equal(autoClaim.getSnapshot().territory.ownerFaction, "player");
 assert.equal(autoClaim.getSnapshot().world.lastClaimReward.territoryId, "ash-crossing");
 assert.ok(autoClaim.getSnapshot().world.activeRegionIds.includes("ash-crossing"));

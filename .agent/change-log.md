@@ -117,3 +117,76 @@
   additional fronts, strongholds, dungeons, wilds, and resource profiles.
 - Added NexusEngine world-graph A* alongside territory-grid A* and validated a
   Dawnwatch-to-Blackglass route.
+
+## 2026-08-04 03:40:00 EDT
+
+- Added `scripts/validate-domain-coverage.mjs` with 498 semantic checks and a
+  99% threshold. The current report passes at 100% and is consumed by the
+  BattleClash-Player cross-repository gate.
+
+## 2026-08-04 04:05:00 EDT
+
+- Added explicit `?solo=1` PeerJS bypass for deterministic browser-agent
+  validation; normal room discovery remains the default.
+
+## 2026-08-04 04:20:00 EDT
+
+- Local browser proof with `?solo=1` reached Home Base → frontier → Ash
+  Crossing → encounter → victory → Dawnwatch Sanctum with zero console errors.
+- 2026-08-04: Expanded semantic validation to 612 checks, including per-event
+  behavior, resource ownership, asset manifest integrity, GLB descriptors, and
+  cube fallback resolution. Battle-Clash and BattleClash-Player gates pass.
+
+## 2026-08-04 21:10:00 EDT
+
+- Audited the online PR surface and exposed the existing Supabase/Rails account
+  contracts in the folded system menu: Google sign-in, profile export, and
+  idempotent profile deletion now have player-facing controls.
+- Profile export uses a browser download boundary; deletion clears only Battle
+  Clash local profile/queue keys after the server tombstone succeeds.
+- Added HTML markers to the auth contract and preserved 675/675 semantic proof,
+  production build, Pages artifact, and responsive zero-error browser proof.
+
+## 2026-08-04 22:00:00 EDT
+
+- Added explicit `build`, `staging`, `publish`, and protected `main` release
+  tiers with synthetic, sandbox, candidate, and production data policies.
+- Added tier validation, browser-visible release metadata, redacted tier audit
+  artifacts, and a PR-only promotion workflow in the order build -> staging ->
+  publish -> main.
+- Replaced the single-branch Pages workflow with one combined artifact that
+  serves production at `/`, staging at `/staging/`, and publish at `/publish/`.
+
+## 2026-08-04 22:25:00 EDT
+
+- Created remote `build`, `staging`, and `publish` refs from the validated tier
+  commit; `main` remained unchanged and protected.
+- Added required review plus check/audit protection to all four tier branches
+  and allowed `staging`/`publish` in the existing `github-pages` environment.
+- Fixed tier archive sizing and legacy-main compatibility in the Pages matrix;
+  the publish-triggered deployment passed all three URL health checks.
+- Public staging browser proof passed the full episode and desktop/compact/
+  portrait views with zero console errors and one approved GLB loaded.
+
+## 2026-08-04 23:00:00 EDT
+
+- Reclassified the release contract to three branches: development `main`,
+  production staging `staging`, and production `publish`.
+- Removed the build-tier workflow and changed the promotion path to
+  `main -> staging -> publish`; production Pages is now `/publish/`.
+
+## 2026-08-05 01:36:18 EDT
+
+- Added `validate-tier-flow.mjs` with release-ref, exact-baseline, and
+  fast-forwardable-promotion modes.
+- Added package scripts, release-manifest parity metadata, branch-audit checks,
+  and a weekly/manual tier-maintenance workflow.
+- Added the tier maintenance runbook and reconciled stale agent/release notes
+  with the three-branch development -> staging -> production flow.
+
+## 2026-08-05 01:45:00 EDT
+
+- Pushed the maintenance guardrails to `agent/domain-validator` and updated
+  PR #1; branch-audit and checks completed successfully.
+- Enabled protected auto-merge without bypassing review. Baseline alignment is
+  waiting on GitHub's required approving review.

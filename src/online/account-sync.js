@@ -1,7 +1,8 @@
 const DEFAULT_BACKEND_URL = "http://127.0.0.1:3000";
 
 function backendUrl() {
-  return String(import.meta.env.VITE_BATTLE_CLASH_BACKEND_URL ?? DEFAULT_BACKEND_URL).replace(/\/$/, "");
+  const env = import.meta.env ?? {};
+  return String(env.VITE_BATTLE_CLASH_BACKEND_URL ?? DEFAULT_BACKEND_URL).replace(/\/$/, "");
 }
 
 function idempotencyKey(kind) {
@@ -24,57 +25,98 @@ export function durableProfileSnapshot(snapshot = {}) {
     landscape: snapshot.landscape ?? null,
     account: snapshot.account ?? null,
     loot: snapshot.loot ?? null,
-    session: snapshot.session ? {
-      schema: snapshot.session.schema,
-      role: snapshot.session.role,
-      roomId: snapshot.session.roomId
-    } : null
+    content: snapshot.content ?? null
   };
 }
 
-export function createAccountSync({ auth, getSnapshot, onSync, storage = window.localStorage } = {}) {
+export function createAccountSync({ auth, getSnapshot, onSync, storage = window.localStorage, fetchImpl = globalThis.fetch, backendBaseUrl = backendUrl(), idempotencyKeyFactory = idempotencyKey, retryAttempts = 3, retryDelayMs = 100 } = {}) {
   const queueKey = "battle-clash.sync-queue.v1";
+  const conflictKey = "battle-clash.sync-conflicts.v1";
+  let serverRevision = null;
 
   function readQueue() {
     try { return JSON.parse(storage.getItem(queueKey) ?? "[]"); } catch { return []; }
   }
 
   function writeQueue(queue) {
-    storage.setItem(queueKey, JSON.stringify(queue.slice(-100)));
+    const unique = [...new Map(queue.map((entry) => [entry.idempotencyKey, entry])).values()];
+    storage.setItem(queueKey, JSON.stringify(unique.slice(-100)));
+  }
+
+  function writeConflict(entry, error) {
+    let conflicts = [];
+    try { conflicts = JSON.parse(storage.getItem(conflictKey) ?? "[]"); } catch { conflicts = []; }
+    conflicts.push({ entry, error: { message: error.message, status: error.status, body: error.body } });
+    storage.setItem(conflictKey, JSON.stringify(conflicts.slice(-50)));
+  }
+
+  function entryBody(entry) {
+    if (["/api/v1/match_receipts", "/api/v1/profiles/snapshots"].includes(entry.path)) return entry.payload;
+    return { kind: entry.kind, payload: entry.payload };
   }
 
   async function request(path, options = {}) {
-    const token = auth?.getAccessToken?.();
-    if (!token) throw new Error("account-not-authenticated");
-    const response = await fetch(`${backendUrl()}${path}`, {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        ...(options.headers ?? {})
+    let attempt = 0;
+    let refreshed = false;
+    while (true) {
+      const token = auth?.getAccessToken?.();
+      if (!token) throw new Error("account-not-authenticated");
+      try {
+        const response = await fetchImpl(`${backendBaseUrl}${path}`, {
+          ...options,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            ...(options.headers ?? {})
+          }
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          if (response.status === 401 && !refreshed && auth?.refreshSession) {
+            refreshed = true;
+            await auth.refreshSession();
+            continue;
+          }
+          const error = new Error(body.error ?? `backend-${response.status}`);
+          error.status = response.status;
+          error.body = body;
+          if (response.status >= 500 && attempt < retryAttempts) throw error;
+          throw error;
+        }
+        if (Number.isFinite(Number(body?.revision))) serverRevision = Number(body.revision);
+        return body;
+      } catch (error) {
+        if (error.status !== undefined && error.status < 500) throw error;
+        if (attempt >= retryAttempts) throw error;
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs * (2 ** attempt)));
+        attempt += 1;
       }
-    });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const error = new Error(body.error ?? `backend-${response.status}`);
-      error.status = response.status;
-      error.body = body;
-      throw error;
     }
-    return body;
   }
 
   async function pushReceipt(kind, payload) {
-    const entry = { kind, payload, idempotencyKey: idempotencyKey(kind) };
+    return pushEntry("/api/v1/receipts", kind, payload);
+  }
+
+  async function pushMatchReceipt(payload) {
+    return pushEntry("/api/v1/match_receipts", "match.completed", payload);
+  }
+
+  async function pushEntry(path, kind, payload) {
+    const entry = { path, kind, payload, idempotencyKey: idempotencyKeyFactory(kind) };
     try {
-      const result = await request("/api/v1/receipts", {
+      const result = await request(path, {
         method: "POST",
         headers: { "Idempotency-Key": entry.idempotencyKey },
-        body: JSON.stringify({ kind, payload })
+        body: JSON.stringify(entryBody(entry))
       });
       onSync?.({ status: "synced", result });
       return result;
     } catch (error) {
+      if (error.status === 409) {
+        onSync?.({ status: "conflict", error: error.message, body: error.body });
+        return { queued: false, conflict: true, body: error.body };
+      }
       const queue = readQueue();
       writeQueue([...queue, entry]);
       onSync?.({ status: "queued", error: error.message });
@@ -89,13 +131,18 @@ export function createAccountSync({ auth, getSnapshot, onSync, storage = window.
     let flushed = 0;
     for (const entry of queue) {
       try {
-        await request("/api/v1/receipts", {
+        await request(entry.path ?? "/api/v1/receipts", {
           method: "POST",
           headers: { "Idempotency-Key": entry.idempotencyKey },
-          body: JSON.stringify({ kind: entry.kind, payload: entry.payload })
+          body: JSON.stringify(entryBody(entry))
         });
         flushed += 1;
-      } catch {
+      } catch (error) {
+        if (error.status === 409) {
+          writeConflict(entry, error);
+          onSync?.({ status: "conflict", error: error.message, body: error.body });
+          continue;
+        }
         remaining.push(entry);
       }
     }
@@ -106,17 +153,29 @@ export function createAccountSync({ auth, getSnapshot, onSync, storage = window.
   async function pushSnapshot() {
     const snapshot = getSnapshot?.();
     if (!snapshot) return { queued: false, skipped: true };
-    return pushReceipt("profile.snapshot", {
+    return pushEntry("/api/v1/profiles/snapshots", "profile.snapshot", {
       snapshot: durableProfileSnapshot(snapshot),
-      clientRevision: snapshot.world?.revision ?? 0
+      revision: serverRevision ?? 0
     });
   }
 
   async function pullProfile() {
     const result = await request("/api/v1/profiles/current");
+    serverRevision = Number(result?.revision ?? result?.profile?.revision ?? 0);
     onSync?.({ status: "pulled", result });
     return result;
   }
 
-  return Object.freeze({ pushReceipt, pushSnapshot, pullProfile, flushQueue, pending: () => readQueue().length });
+  async function exportProfile() {
+    return request("/api/v1/profiles/current/export");
+  }
+
+  async function requestAccountDeletion() {
+    return request("/api/v1/profiles/current", {
+      method: "DELETE",
+      headers: { "Idempotency-Key": idempotencyKeyFactory("profile.delete") }
+    });
+  }
+
+  return Object.freeze({ pushReceipt, pushMatchReceipt, pushSnapshot, pullProfile, exportProfile, requestAccountDeletion, flushQueue, pending: () => readQueue().length });
 }

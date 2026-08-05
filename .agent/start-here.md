@@ -13,7 +13,10 @@ Read in this order:
 9. `feedback.md`
 10. `change-log.md`
 
-The first playable remains released on `main`. The immersive world-UI pass is
-locally proven on `agent/immersive-world-ui` and has not been pushed or deployed.
-Its next release lane is explicit authorization, refreshed `/docs`, branch
-publication, default-branch integration, Pages completion, and live browser proof.
+The Battle-Clash release chain is `main` (development) -> `staging`
+(production staging) -> `publish` (production). `staging` and `publish` carry
+the current `6cf2c4c` source baseline; the protected `agent/domain-validator`
+PR still needs approval before `main` can be aligned. Run
+`npm run check:tier-baseline` after that merge and before the first new change.
+Supabase/OAuth, production Rails, and hosted PeerServer/TURN remain provider
+gates.

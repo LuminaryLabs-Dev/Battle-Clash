@@ -1,0 +1,56 @@
+{
+  "schema": "battle-clash.release-tiers/1",
+  "project": "Battle Clash",
+  "defaultBranch": "main",
+  "order": ["main", "staging", "publish"],
+  "tiers": {
+    "main": {
+      "branch": "main",
+      "phase": "development",
+      "dataMode": "synthetic-dev",
+      "profilePolicy": "development-only",
+      "networkPolicy": "development-peer-server",
+      "pages": {
+        "published": true,
+        "subpath": "",
+        "basePath": "/Battle-Clash/",
+        "url": "https://luminarylabs-dev.github.io/Battle-Clash/"
+      },
+      "promotion": { "target": "staging", "requires": ["check", "domain-coverage", "release-audit"] }
+    },
+    "staging": {
+      "branch": "staging",
+      "phase": "shared-verification",
+      "dataMode": "anonymized-seed",
+      "profilePolicy": "sandbox-only",
+      "networkPolicy": "staging-peer-server",
+      "pages": {
+        "published": true,
+        "subpath": "staging",
+        "basePath": "/Battle-Clash/staging/",
+        "url": "https://luminarylabs-dev.github.io/Battle-Clash/staging/"
+      },
+      "promotion": { "target": "publish", "requires": ["check", "browser-proof", "asset-audit", "release-audit"] }
+    },
+    "publish": {
+      "branch": "publish",
+      "phase": "production",
+      "dataMode": "live",
+      "profilePolicy": "authenticated-production",
+      "networkPolicy": "production-peer-server",
+      "pages": {
+        "published": true,
+        "subpath": "publish",
+        "basePath": "/Battle-Clash/publish/",
+        "url": "https://luminarylabs-dev.github.io/Battle-Clash/publish/"
+      },
+      "promotion": { "target": null, "requires": ["protected-review", "deployment-health", "browser-proof", "backend-proof", "multiplayer-proof"] }
+    }
+  },
+  "policy": {
+    "mainReceivesOnlyThroughPullRequest": true,
+    "credentials": "provider-encrypted-only",
+    "pagesSiteModel": "one-repository-site-with-tier-paths",
+    "developmentTierIsNeverAProductionDataSource": true
+  }
+}

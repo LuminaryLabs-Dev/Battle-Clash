@@ -173,15 +173,15 @@
           <p id="worldHeroReadout" class="world-panel__hero">EMBER · LV 1 · SCOUT R2</p>
           <p id="worldResources" class="world-panel__resources">G 120 · F 80 · I 35 · A 0</p>
           <div class="world-panel__actions">
-            <button id="enterFrontierButton" class="world-action" type="button">Open frontier</button>
+            <button id="enterFrontierButton" class="world-action" type="button" aria-label="Open frontier">Open frontier</button>
             <button id="healArmyButton" class="world-action" type="button" hidden>Heal army</button>
             <button id="recruitArmyButton" class="world-action" type="button" hidden>Recruit</button>
             <button id="upgradeSanctumButton" class="world-action world-action--primary" type="button" hidden>Upgrade sanctum</button>
             <button id="tradeResourcesButton" class="world-action" type="button" hidden>Trade 5 iron</button>
-            <button id="discoverNextButton" class="world-action" type="button" hidden>Discover next</button>
+            <button id="discoverNextButton" class="world-action" type="button" aria-label="Discover next territory" hidden>Discover next</button>
             <button id="claimTerritoryButton" class="world-action" type="button" hidden>Claim territory</button>
-            <button id="enterEncounterButton" class="world-action world-action--primary" type="button" hidden>Enter front</button>
-            <button id="returnSanctumButton" class="world-action" type="button" hidden>Return home</button>
+            <button id="enterEncounterButton" class="world-action world-action--primary" type="button" aria-label="Enter front" hidden>Enter front</button>
+            <button id="returnSanctumButton" class="world-action" type="button" aria-label="Return home" hidden>Return home</button>
           </div>
         </section>
       </aside>
@@ -243,8 +243,13 @@
               <div class="account-actions">
                 <button id="accountSignInButton" class="menu-action" type="button">Sign in</button>
                 <button id="accountSignUpButton" class="menu-action" type="button">Create account</button>
+                <button id="accountGoogleButton" class="menu-action" type="button">Continue with Google</button>
                 <button id="accountSyncButton" class="menu-action" type="button" disabled>Sync profile</button>
                 <button id="accountSignOutButton" class="menu-action" type="button" hidden>Sign out</button>
+              </div>
+              <div class="account-actions account-data-actions">
+                <button id="accountExportButton" class="menu-action" type="button" hidden>Export profile</button>
+                <button id="accountDeleteButton" class="menu-action" type="button" hidden>Delete profile</button>
               </div>
             </div>
           </details>
@@ -264,6 +269,17 @@
               <button id="selectDelverButton" class="menu-action" type="button">Delver · balanced</button>
               <button id="selectLancerButton" class="menu-action" type="button" disabled>Lancer · heavy</button>
               <button id="selectArcanistButton" class="menu-action" type="button" disabled>Arcanist · ranged</button>
+            </div>
+          </details>
+
+          <details class="advanced-panel" id="contentPanel">
+            <summary>Sanctum forge</summary>
+            <div class="advanced-content">
+              <p id="contentReadout">No gear recovered.</p>
+              <button id="craftEmberWardButton" class="menu-action" type="button">Forge Ember Ward</button>
+              <button id="craftScoutLensButton" class="menu-action" type="button">Forge Scout Lens</button>
+              <button id="craftGlassbreakerButton" class="menu-action" type="button">Forge Glassbreaker</button>
+              <button id="equipLastGearButton" class="menu-action" type="button" disabled>Equip recovered gear</button>
             </div>
           </details>
 

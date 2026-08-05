@@ -133,11 +133,12 @@ export function createCombatKit() {
     apiName: "battleClashCombat",
     stability: "experimental",
     version: "0.1.0",
+    provides: ["n:game:battle-clash:combat"],
     requires: [
       "n:game:battle-clash",
       "n:game:battle-clash:targeting",
       "n:game:battle-clash:navigation",
-      "n:core-simulation"
+      "n:simulation"
     ],
     services: ["health", "attack-cooldown", "damage-resolution", "destruction"],
     systems: [

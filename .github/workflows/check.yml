@@ -1,0 +1,25 @@
+name: Battle-Clash checks
+
+on:
+  push:
+    branches: [main, staging, publish]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Fetch release tier refs
+        run: git fetch --no-tags origin main staging publish
+      - run: npm run check:tier-flow
+      - run: npm run check:all
+      - run: git diff --check

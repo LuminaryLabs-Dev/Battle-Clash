@@ -67,15 +67,16 @@ receipts.
 
 ```txt
 n:world             world identity, cells, surface, focus, snapshots
-n:core-data         schemas, deterministic random, digest contracts
-n:core-spatial      transforms, distances, zones
-n:core-simulation   timers, objectives, ordered resolution
-n:core-input        semantic action contracts
-n:core-network      sessions, peers, envelopes, authority, sync policy
-n:core-persistence  profile slots and adapter contracts
-n:core-graphics     renderer-neutral presentation descriptors
-n:core-camera       camera intent and framing contracts
-n:core-ui           HUD and accessibility descriptors
+n:runtime:data      schemas, deterministic random, digest contracts
+n:spatial           transforms, distances, zones
+n:simulation        timers, objectives, ordered resolution
+n:interaction:input semantic action contracts
+n:network           sessions, peers, envelopes, authority, sync policy
+n:runtime:persistence profile slots and adapter contracts
+n:presentation:graphics renderer-neutral presentation descriptors
+n:presentation:camera camera intent and framing contracts
+n:presentation:ui  HUD and accessibility descriptors
+n:world:scene       host-neutral scene lifecycle and transitions
 ```
 
 ### Deep Game Domains

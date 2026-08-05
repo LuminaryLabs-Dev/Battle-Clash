@@ -73,7 +73,8 @@ export function createHeroCombatKit() {
     apiName: "battleClashHeroCombat",
     stability: "experimental",
     version: "0.1.0",
-    requires: ["n:game:battle-clash", "n:game:battle-clash:combat", "n:core-simulation"],
+    provides: ["n:game:battle-clash:hero-combat"],
+    requires: ["n:game:battle-clash", "n:game:battle-clash:combat", "n:simulation"],
     services: ["hero-combat", "ability-cooldowns"],
     systems: [{ phase: "input", name: "battleClashHeroAbilitySystem", system: heroAbilitySystem }],
     metadata: {

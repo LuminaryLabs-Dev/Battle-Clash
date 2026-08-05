@@ -63,7 +63,8 @@ export function createEncounterKit() {
     apiName: "battleClashEncounterObjectives",
     stability: "experimental",
     version: "0.1.0",
-    requires: ["n:game:battle-clash", "n:game:battle-clash:raid", "n:core-simulation"],
+    provides: ["n:game:battle-clash:encounter:objectives"],
+    requires: ["n:game:battle-clash", "n:game:battle-clash:raid", "n:simulation"],
     services: ["objective-selection", "objective-progress", "objective-receipts"],
     systems: [{ phase: "cleanup", name: "battleClashObjectiveSystem", system: objectiveSystem }],
     createApi({ world }) {

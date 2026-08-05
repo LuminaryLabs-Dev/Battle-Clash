@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Battle Clash asset review</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0b1020}canvas{display:block;width:100%;height:100%}</style></head>
+  <body>
+    <canvas id="review"></canvas>
+    <script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js"}}</script>
+    <script type="module">
+      import * as THREE from "/node_modules/three/build/three.module.js";
+      import { GLTFLoader } from "/node_modules/three/examples/jsm/loaders/GLTFLoader.js";
+      const params = new URLSearchParams(location.search);
+      const canvas = document.querySelector("#review");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(innerWidth, innerHeight, false);
+      renderer.shadowMap.enabled = true;
+      const scene = new THREE.Scene();
+      const background = { sanctum: 0x172554, territory: 0x123b32, combat: 0x3b1d2a }[params.get("context")] ?? 0x0b1020;
+      scene.background = new THREE.Color(background);
+      scene.add(new THREE.HemisphereLight(0xdbeafe, 0x111827, 2.1));
+      const key = new THREE.DirectionalLight(0xffffff, 3.4); key.position.set(4, 7, 5); key.castShadow = true; scene.add(key);
+      const fill = new THREE.PointLight(0x7dd3fc, 15, 18); fill.position.set(-4, 3, -3); scene.add(fill);
+      const ground = new THREE.Mesh(new THREE.CircleGeometry(3.8, 48), new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.9 }));
+      ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+      const camera = new THREE.PerspectiveCamera(34, innerWidth / innerHeight, 0.01, 100);
+      const positions = { front: [0, 2.2, 5.2], rear: [0, 2.2, -5.2], side: [5.2, 2.2, 0], "three-quarter": [4.2, 3, 4.2], top: [0, 7, 0.01] };
+      const view = params.get("view") ?? "three-quarter";
+      const position = positions[view] ?? positions["three-quarter"];
+      camera.position.set(...position); camera.lookAt(0, 1, 0);
+      new GLTFLoader().load(params.get("asset"), (gltf) => {
+        const model = gltf.scene;
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center); model.position.y += 1.15;
+        model.traverse((node) => { if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; } });
+        scene.add(model);
+        window.reviewReady = { view, context: params.get("context") ?? null, meshes: model.getObjectByProperty("isMesh", true) ? 1 : 0 };
+        const animate = () => { requestAnimationFrame(animate); model.rotation.y += 0.002; renderer.render(scene, camera); };
+        animate();
+      }, undefined, (error) => { window.reviewError = String(error?.message ?? error); });
+      addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight, false); });
+    </script>
+  </body>
+</html>

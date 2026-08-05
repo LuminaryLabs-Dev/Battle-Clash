@@ -21,8 +21,9 @@
   interactions; other state belongs in the world or the invoked system menu.
 - Responsive camera framing must fit projected room bounds across desktop,
   compact landscape, and portrait viewports.
-- Pages publishes verified `/docs` output from `main`; the custom `dist/`
-  artifact workflow is manual while organization Actions billing is unavailable.
+- Pages publishes one combined artifact: development from `main` at the root,
+  staging from `staging/`, and production from `publish/`. The checked-in
+  `/docs` tree remains a local fallback.
 
 ## Conventions
 
@@ -31,3 +32,17 @@
 - Store human-view routing and proof in `.agent/feedback-packets/`.
 - Keep provider SDK details outside gameplay domains.
 - Mark unknown future product decisions as `TBD`.
+- A validator now measures registered domains, ECS vocabulary, archetypes,
+  territories, scenes, composition APIs, peer commands, deterministic replay,
+  and the full Home Base → frontier → territory → encounter → raid → Home Base
+  flow. Coverage is a gate, not a claim about untested external services.
+- Account identity and data rights stay behind the invoked system menu: email /
+  password and Google share Supabase Auth, Rails owns export/deletion, and only
+  Battle Clash's local profile and sync queue are cleared after deletion.
+- Release state is explicit and data-policy-bound: `main` is development,
+  `staging` is anonymized production staging, and `publish` is production.
+  Public Pages uses `/staging/` and `/publish/` paths beside the development
+  root because a repository has one Pages site. Promotion is PR-only in the
+  order main -> staging -> publish, with redacted tier audits. The tier-flow
+  validator checks exact baseline parity and prevents target-only commits from
+  entering a promotion.

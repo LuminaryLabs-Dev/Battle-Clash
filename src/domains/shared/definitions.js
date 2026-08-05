@@ -42,9 +42,17 @@ export const Resources = Object.freeze({
   LandscapeState: defineResource("battle-clash.landscape-state"),
   SanctumState: defineResource("battle-clash.sanctum-state"),
   ObjectiveState: defineResource("battle-clash.objective-state"),
+  RoomState: defineResource("battle-clash.room-state"),
   LootState: defineResource("battle-clash.loot-state"),
+  ContentState: defineResource("battle-clash.content-state"),
   AccountState: defineResource("battle-clash.account-state"),
-  AbilityState: defineResource("battle-clash.ability-state")
+  AbilityState: defineResource("battle-clash.ability-state"),
+  PlayerState: defineResource("battle-clash.player-state"),
+  PlayerObservation: defineResource("battle-clash.player-observation"),
+  PlayerMemory: defineResource("battle-clash.player-memory"),
+  PlayerDecision: defineResource("battle-clash.player-decision"),
+  PlayerEpisode: defineResource("battle-clash.player-episode"),
+  PlayerLearningSignal: defineResource("battle-clash.player-learning-signal")
 });
 
 export const Events = Object.freeze({
@@ -71,6 +79,22 @@ export const Events = Object.freeze({
   LandscapeChanged: defineEvent("battle-clash.landscape.changed"),
   ObjectiveProgressed: defineEvent("battle-clash.objective.progressed"),
   ObjectiveCompleted: defineEvent("battle-clash.objective.completed"),
+  RoomChanged: defineEvent("battle-clash.room.changed"),
   AccountChanged: defineEvent("battle-clash.account.changed"),
-  AbilityUsed: defineEvent("battle-clash.ability.used")
+  AbilityUsed: defineEvent("battle-clash.ability.used"),
+  PlayerObserved: defineEvent("battle-clash.player.observed"),
+  PlayerMemoryStored: defineEvent("battle-clash.player.memory-stored"),
+  PlayerMemoryRetrieved: defineEvent("battle-clash.player.memory-retrieved"),
+  PlayerDecisionMade: defineEvent("battle-clash.player.decision-made"),
+  PlayerActionAccepted: defineEvent("battle-clash.player.action-accepted"),
+  PlayerActionRejected: defineEvent("battle-clash.player.action-rejected"),
+  PlayerOutcomeRecorded: defineEvent("battle-clash.player.outcome-recorded"),
+  PlayerEpisodeStarted: defineEvent("battle-clash.player.episode-started"),
+  PlayerEpisodeCompleted: defineEvent("battle-clash.player.episode-completed"),
+  PlayerEpisodeFailed: defineEvent("battle-clash.player.episode-failed"),
+  PlayerSkillPromoted: defineEvent("battle-clash.player.skill-promoted"),
+  GearLooted: defineEvent("battle-clash.content.gear-looted"),
+  QuestProgressed: defineEvent("battle-clash.content.quest-progressed"),
+  ItemCrafted: defineEvent("battle-clash.content.item-crafted"),
+  GearEquipped: defineEvent("battle-clash.content.gear-equipped")
 });

@@ -1,4 +1,8 @@
 node_modules/
+artifacts/validation/
 dist/
+public/assets/
+public/release-tier.json
+docs/release-tier.json
 output/
 .DS_Store

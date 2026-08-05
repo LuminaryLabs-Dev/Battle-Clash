@@ -1,0 +1,21 @@
+import { readFile } from "node:fs/promises";
+
+const manifest = JSON.parse(await readFile("release-manifest.json", "utf8"));
+const tiers = JSON.parse(await readFile("release-tiers.json", "utf8"));
+const required = ["npm ci", "npm run check", "npm run check:domains", "npm run check:tier-flow", "npm run build", "npm run build:pages", "git diff --check"];
+if (manifest.schema !== "battle-clash.release/1") throw new Error("release manifest schema drifted");
+if (JSON.stringify(manifest.requiredChecks) !== JSON.stringify(required)) throw new Error("release checks drifted");
+if (manifest.deployment.sourceBranch !== "publish") throw new Error("production Pages must deploy from publish");
+if (manifest.secretsPolicy !== "provider-encrypted-only") throw new Error("secrets policy missing");
+if (manifest.audit?.schema !== "battle-clash.release-audit/1") throw new Error("release audit schema missing");
+if (manifest.audit?.artifact !== "battle-clash-release-audit") throw new Error("release audit artifact missing");
+if (manifest.tiers !== "release-tiers.json" || tiers.schema !== "battle-clash.release-tiers/1") throw new Error("release tier contract missing");
+if (manifest.deployment.developmentUrl !== tiers.tiers.main.pages.url) throw new Error("development Pages URL drifted");
+if (manifest.deployment.stagingUrl !== tiers.tiers.staging.pages.url) throw new Error("staging Pages URL drifted");
+if (manifest.deployment.productionUrl !== tiers.tiers.publish.pages.url) throw new Error("production Pages URL drifted");
+if (JSON.stringify(manifest.branchFlow?.order) !== JSON.stringify(tiers.order)) throw new Error("branch flow order drifted");
+if (manifest.branchFlow?.promotionWorkflow !== ".github/workflows/promote-tier.yml") throw new Error("promotion workflow missing");
+if (manifest.branchFlow?.parityScript !== "scripts/validate-tier-flow.mjs") throw new Error("tier parity script missing");
+if (manifest.branchFlow?.baselineMode !== "identical-tree") throw new Error("baseline parity mode drifted");
+if (manifest.branchFlow?.promotionMode !== "target-is-ancestor-of-source") throw new Error("promotion ancestry mode drifted");
+console.log(JSON.stringify({ ok: true, schema: manifest.schema, checks: required.length, deployment: manifest.deployment }, null, 2));

@@ -57,6 +57,9 @@ export function normalizePeerCommand(value = {}) {
       return { kind: value.kind, archetype: String(value.archetype ?? "delver") };
     case "select-archetype":
       return { kind: value.kind, archetype: String(value.archetype ?? "delver") };
+    case "craft-gear":
+    case "equip-gear":
+      return { kind: value.kind, itemId: String(value.itemId ?? "") };
     case "trade-resources":
       return {
         kind: value.kind,
