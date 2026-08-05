@@ -35,8 +35,11 @@ const elements = {
   accountPassword: document.querySelector("#accountPassword"),
   accountSignIn: document.querySelector("#accountSignInButton"),
   accountSignUp: document.querySelector("#accountSignUpButton"),
+  accountGoogle: document.querySelector("#accountGoogleButton"),
   accountSync: document.querySelector("#accountSyncButton"),
   accountSignOut: document.querySelector("#accountSignOutButton"),
+  accountExport: document.querySelector("#accountExportButton"),
+  accountDelete: document.querySelector("#accountDeleteButton"),
   networkBadge: document.querySelector("#networkBadge"),
   partySigil: document.querySelector("#partySigil"),
   heartSigil: document.querySelector("#heartSigil"),
@@ -139,6 +142,9 @@ function updateAccountUi(next = accountState) {
     elements.accountSignOut.hidden = accountState.status !== "authenticated";
     elements.accountSignIn.hidden = accountState.status === "authenticated";
     elements.accountSignUp.hidden = accountState.status === "authenticated";
+    elements.accountGoogle.hidden = accountState.status === "authenticated";
+    elements.accountExport.hidden = accountState.status !== "authenticated";
+    elements.accountDelete.hidden = accountState.status !== "authenticated";
   }
 }
 
@@ -170,6 +176,41 @@ async function syncAccount() {
   const result = await accountSync.pushSnapshot();
   updateAccountUi({ syncStatus: result.queued ? "queued" : "synced", pendingReceipts: accountSync.pending() });
   showCue(result.queued ? "Profile queued for sync." : "Profile synced to Luminary.", 1800);
+}
+
+async function exportAccountProfile() {
+  if (!accountSync || accountState.status !== "authenticated") {
+    showCue("Sign in to export the Luminary profile.", 1800);
+    return;
+  }
+  const payload = await accountSync.exportProfile();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `battle-clash-profile-${accountState.userId ?? "export"}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+  showCue("Profile export downloaded.", 1800);
+}
+
+async function deleteAccountProfile() {
+  if (!accountSync || accountState.status !== "authenticated") {
+    showCue("Sign in to manage the Luminary profile.", 1800);
+    return;
+  }
+  if (!window.confirm("Delete this Luminary profile? This cannot be undone.")) return;
+  await accountSync.requestAccountDeletion();
+  for (const key of [
+    "battle-clash.profile.v1",
+    "battle-clash.world-profile.v1",
+    "battle-clash.content-profile.v1",
+    "battle-clash.sync-queue.v1",
+    "battle-clash.sync-conflicts.v1"
+  ]) window.localStorage.removeItem(key);
+  await auth.signOut();
+  showCue("Profile deleted. Returning to offline play.", 2200);
+  window.setTimeout(() => window.location.reload(), 450);
 }
 
 function applyRemoteProfile(result) {
@@ -1200,7 +1241,17 @@ try {
       showCue(error.message, 2400);
     }
   });
+  elements.accountGoogle.addEventListener("click", () => {
+    try {
+      auth.signInWithProvider("google");
+    } catch (error) {
+      updateAccountUi({ syncStatus: "auth-error" });
+      showCue(error.message, 2400);
+    }
+  });
   elements.accountSync.addEventListener("click", () => syncAccount().catch((error) => showCue(error.message, 2200)));
+  elements.accountExport.addEventListener("click", () => exportAccountProfile().catch((error) => showCue(error.message, 2200)));
+  elements.accountDelete.addEventListener("click", () => deleteAccountProfile().catch((error) => showCue(error.message, 2200)));
   elements.accountSignOut.addEventListener("click", async () => {
     await auth.signOut();
     updateAccountUi(SIGNED_OUT_ACCOUNT);

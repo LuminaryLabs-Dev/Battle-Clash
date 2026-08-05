@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { buildProviderAuthorizeUrl, createSupabaseAuth } from "../src/online/supabase-auth.js";
+
+const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+for (const id of ["accountGoogleButton", "accountExportButton", "accountDeleteButton"]) {
+  assert.match(html, new RegExp(`id="${id}"`), `${id} missing from account controls`);
+}
 
 const authConfig = { url: "https://example.supabase.co", anonKey: "anon-test" };
 const values = new Map();

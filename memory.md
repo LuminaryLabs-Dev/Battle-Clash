@@ -285,6 +285,10 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
   locally with idempotency keys until an authenticated API is available. Profile
   snapshots use the server revision endpoint; rejected revisions are preserved
   in a bounded local conflict log and deletion requests are idempotent.
+- Account identity and data-rights actions stay inside the folded system menu:
+  email/password and Google sign-in share the Supabase session, export downloads
+  the Rails profile bundle, and deletion clears only Battle Clash local state
+  after the idempotent server tombstone succeeds.
 - The backend contract is published privately as
   `LuminaryLabs-Dev/LuminaryLabs-Backend` on `agent/production-foundation`; Rails 8
   and Ruby 3.3 remain required provisioning gates for running it locally.
