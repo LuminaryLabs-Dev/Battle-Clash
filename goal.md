@@ -261,18 +261,19 @@ PeerServer/TURN, and required PR review are still release gates.
 - A clean level-scaled two-tab browser run proves networked Heart victory,
   defender authority, synchronized Home Base return, territory ownership, and
   persisted loot/economy receipts on both peers.
-- The private-repository Pages workflow validates and deploys the `dist/`
-  artifact on pushes to `main` while retaining manual dispatch for controlled
-  releases; `/docs` remains a local static fallback.
+- The private-repository Pages workflow validates the `main`, `staging`, and
+  `publish` snapshots and deploys one artifact at the root, `/staging/`, and
+  `/publish/`; `/docs` remains a local static fallback.
 - Three.js and PeerJS never own gameplay outcomes.
 - Deterministic checks, production build, zero-error browser launch, screenshots,
   and human-view acceptance all pass.
 
 ## Preserved Release Baseline
 
-The first public implementation remains on `main`, with solo fallback,
-defender-host PeerJS authority, persistent progression, and GitHub Pages
-deployment already proven.
+The validated current source baseline is on `staging` and `publish` at commit
+`6cf2c4c`. The protected PR into `main` must be approved before the development
+branch is aligned; afterward, `npm run check:tier-baseline` is the parity gate
+before new development changes begin.
 
 ## Later Product Work
 

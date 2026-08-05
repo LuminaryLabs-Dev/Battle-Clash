@@ -174,3 +174,12 @@
   production staging `staging`, and production `publish`.
 - Removed the build-tier workflow and changed the promotion path to
   `main -> staging -> publish`; production Pages is now `/publish/`.
+
+## 2026-08-05 01:36:18 EDT
+
+- Added `validate-tier-flow.mjs` with release-ref, exact-baseline, and
+  fast-forwardable-promotion modes.
+- Added package scripts, release-manifest parity metadata, branch-audit checks,
+  and a weekly/manual tier-maintenance workflow.
+- Added the tier maintenance runbook and reconciled stale agent/release notes
+  with the three-branch development -> staging -> production flow.

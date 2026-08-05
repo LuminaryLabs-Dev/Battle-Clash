@@ -18,5 +18,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Fetch release tier refs
+        run: git fetch --no-tags origin main staging publish
+      - run: npm run check:tier-flow
       - run: npm run check:all
       - run: git diff --check

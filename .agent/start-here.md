@@ -13,10 +13,10 @@ Read in this order:
 9. `feedback.md`
 10. `change-log.md`
 
-The feature work is currently split across protected PRs:
-`agent/domain-validator` for Battle-Clash, `agent/player-harness` for the
-Player harness, and `agent/production-foundation` for the Rails backend. Their
-required checks are green, but each PR still needs one approving review before
-the default branch can advance. The public Pages URL remains the older `main`
-artifact until that protected merge and deployment occur. Supabase/OAuth,
-production Rails, and hosted PeerServer/TURN remain provider gates.
+The Battle-Clash release chain is `main` (development) -> `staging`
+(production staging) -> `publish` (production). `staging` and `publish` carry
+the current `6cf2c4c` source baseline; the protected `agent/domain-validator`
+PR still needs approval before `main` can be aligned. Run
+`npm run check:tier-baseline` after that merge and before the first new change.
+Supabase/OAuth, production Rails, and hosted PeerServer/TURN remain provider
+gates.

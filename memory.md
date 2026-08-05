@@ -270,11 +270,11 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - Responsive camera framing derives from projected battlefield bounds instead
   of fixed vertical zoom values, so the full room survives compact and portrait views.
 - The private repository keeps `/docs` as a local static fallback, while the
-  primary Pages release path builds and publishes `dist/` through GitHub
-  Actions on pushes to `main`.
-- The Pages artifact workflow runs deterministic simulation checks, then
-  deploys on pushes to `main` while still supporting manual dispatch, preserving
-  the private-repository/public-Pages boundary.
+  primary Pages release path builds one artifact from the `main`, `staging`,
+  and `publish` branch snapshots.
+- The Pages artifact workflow runs deterministic checks and deploys the root,
+  `/staging/`, and `/publish/` paths on release-branch pushes while supporting
+  manual dispatch, preserving the private-repository/public-Pages boundary.
 - The Pages workflow performs a post-deploy curl health check for the published
   Battle Clash title and runtime entrypoint before reporting the deployment
   healthy.

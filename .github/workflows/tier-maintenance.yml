@@ -1,0 +1,75 @@
+name: Battle Clash tier maintenance
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Tier audit mode"
+        required: true
+        default: refs
+        type: choice
+        options: [refs, baseline, promotion]
+      source:
+        description: "Promotion source when mode is promotion"
+        required: false
+        default: main
+        type: choice
+        options: [main, staging]
+      target:
+        description: "Promotion target when mode is promotion"
+        required: false
+        default: staging
+        type: choice
+        options: [staging, publish]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    env:
+      FLOW_MODE: ${{ github.event.inputs.mode || 'refs' }}
+      FLOW_SOURCE: ${{ github.event.inputs.source || '' }}
+      FLOW_TARGET: ${{ github.event.inputs.target || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Fetch release tier refs
+        run: git fetch --no-tags origin main staging publish
+      - run: npm run check:tier
+      - run: npm run check:release
+      - name: Run tier flow audit
+        run: |
+          set -euo pipefail
+          case "$FLOW_MODE" in
+            refs)
+              npm run check:tier-flow | tee tier-flow-audit.json
+              ;;
+            baseline)
+              npm run check:tier-baseline | tee tier-flow-audit.json
+              ;;
+            promotion)
+              test -n "$FLOW_SOURCE"
+              test -n "$FLOW_TARGET"
+              BATTLE_CLASH_PROMOTION_SOURCE="$FLOW_SOURCE" \
+                BATTLE_CLASH_PROMOTION_TARGET="$FLOW_TARGET" \
+                npm run check:tier-promotion | tee tier-flow-audit.json
+              ;;
+            *)
+              echo "Unsupported FLOW_MODE=$FLOW_MODE" >&2
+              exit 1
+              ;;
+          esac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: battle-clash-tier-flow-${{ github.run_id }}
+          path: tier-flow-audit.json
