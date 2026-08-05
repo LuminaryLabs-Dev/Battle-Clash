@@ -23,7 +23,10 @@ try {
     await mkdir(source, { recursive: true });
 
     execFileSync("git", ["show-ref", "--verify", "--quiet", `refs/remotes/${ref}`], { cwd: root });
-    const archive = execFileSync("git", ["archive", "--format=tar", ref], { cwd: root });
+    const archive = execFileSync("git", ["archive", "--format=tar", ref], {
+      cwd: root,
+      maxBuffer: 128 * 1024 * 1024
+    });
     execFileSync("tar", ["-xf", "-", "-C", source], { cwd: root, input: archive });
 
     const env = {
