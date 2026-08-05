@@ -1185,7 +1185,6 @@ try {
   elements.accountSignIn.addEventListener("click", async () => {
     try {
       await auth.signIn(elements.accountEmail.value.trim(), elements.accountPassword.value);
-      await accountSync.flushQueue();
       showCue("Luminary account linked.", 1800);
     } catch (error) {
       updateAccountUi({ syncStatus: "auth-error" });
