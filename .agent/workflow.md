@@ -34,6 +34,6 @@
 | Configure Supabase, OAuth, Rails production, PeerServer/TURN, and secrets | Pending provider setup | User/provider |
 | Redeploy Pages from updated default branch and run deployed-browser proof | Pending protected merge and deployment | Codex |
 | Add three branch release tiers and redacted promotion audits | Complete on feature branch and remote tiers | Codex |
-| Add tier-flow parity validator and scheduled maintenance audit | Complete locally; remote publication pending | Codex |
+| Add tier-flow parity validator and scheduled maintenance audit | Complete on feature branch; PR #1 checks green | Codex |
 | Align `main`, `staging`, and `publish` to one source baseline | Blocked on protected PR review | User/reviewer |
 | Begin feature delivery through `main -> staging -> publish` | Pending baseline alignment | Codex |
