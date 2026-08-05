@@ -74,3 +74,17 @@ jobs:
           page_html="$(curl --fail --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors "$PAGE_URL")"
           printf '%s' "$page_html" | grep -q "<title>Battle Clash</title>"
           printf '%s' "$page_html" | grep -q "<script"
+
+      - name: Write redacted release audit
+        env:
+          RELEASE_AUDIT_PATH: ${{ runner.temp }}/battle-clash-release-audit.json
+          RELEASE_PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          RELEASE_STATUS: deployed
+          BROWSER_PROOF_ARTIFACT: pages-health
+        run: node scripts/write-release-audit.mjs
+
+      - name: Upload release audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-clash-release-audit
+          path: ${{ runner.temp }}/battle-clash-release-audit.json
