@@ -6,5 +6,6 @@
   "deployment": { "provider": "github-pages", "sourceBranch": "main", "workflow": ".github/workflows/deploy-pages.yml" },
   "online": { "identity": "supabase-auth", "transport": "peerjs", "durableApi": "rails" },
   "assets": { "catalog": "src/assets/approved-manifest.json", "fallback": "cube" },
+  "audit": { "schema": "battle-clash.release-audit/1", "artifact": "battle-clash-release-audit", "healthCheck": "published-pages-entrypoint" },
   "secretsPolicy": "provider-encrypted-only"
 }
