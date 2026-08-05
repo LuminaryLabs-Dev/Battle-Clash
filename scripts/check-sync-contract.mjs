@@ -8,6 +8,8 @@ const storage = {
   removeItem: (key) => values.delete(key)
 };
 const auth = { getAccessToken: () => "access-token" };
+let refreshCount = 0;
+auth.refreshSession = async () => { refreshCount += 1; };
 const states = [];
 let mode = "offline";
 let requests = 0;
@@ -17,6 +19,7 @@ const fetchImpl = async (url, options) => {
   requestLog.push({ url, options });
   if (mode === "offline") throw new Error("offline");
   if (mode === "retry" && requests === 1) return response({ error: "temporary" }, 503);
+  if (mode === "refresh" && requests === 1) return response({ error: "expired" }, 401);
   if (mode === "conflict") return response({ error: "revision-conflict", profile: { revision: 4 } }, 409);
   return response({ accepted: true, path: url, method: options.method });
 };
@@ -50,6 +53,12 @@ mode = "online";
 const match = await sync.pushMatchReceipt({ roomId: "room-1", authorityId: "host-1", result: "victory", profileRevision: 2, sequenceStart: 1, sequenceEnd: 8, rewardIdempotencyKey: "reward-1" });
 assert.equal(match.accepted, true);
 
+mode = "refresh";
+requests = 0;
+const refreshed = await sync.pushReceipt("session.refresh", { victory: true });
+assert.equal(refreshed.accepted, true);
+assert.equal(refreshCount, 1, "expired sessions must refresh once before retrying");
+
 mode = "conflict";
 const conflict = await sync.pushSnapshot();
 assert.equal(conflict.conflict, true);
@@ -65,4 +74,4 @@ mode = "online";
 const deletion = await sync.requestAccountDeletion();
 assert.equal(deletion.accepted, true);
 assert.ok(requestLog.at(-1).options.headers["Idempotency-Key"]);
-console.log("Sync contract: PASS (offline queue, idempotency, retry/backoff, conflict preservation)");
+console.log("Sync contract: PASS (offline queue, idempotency, retry/backoff, session refresh, conflict preservation)");

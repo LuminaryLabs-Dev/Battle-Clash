@@ -56,10 +56,11 @@ export function createAccountSync({ auth, getSnapshot, onSync, storage = window.
   }
 
   async function request(path, options = {}) {
-    const token = auth?.getAccessToken?.();
-    if (!token) throw new Error("account-not-authenticated");
     let attempt = 0;
+    let refreshed = false;
     while (true) {
+      const token = auth?.getAccessToken?.();
+      if (!token) throw new Error("account-not-authenticated");
       try {
         const response = await fetchImpl(`${backendBaseUrl}${path}`, {
           ...options,
@@ -71,6 +72,11 @@ export function createAccountSync({ auth, getSnapshot, onSync, storage = window.
         });
         const body = await response.json().catch(() => ({}));
         if (!response.ok) {
+          if (response.status === 401 && !refreshed && auth?.refreshSession) {
+            refreshed = true;
+            await auth.refreshSession();
+            continue;
+          }
           const error = new Error(body.error ?? `backend-${response.status}`);
           error.status = response.status;
           error.body = body;
