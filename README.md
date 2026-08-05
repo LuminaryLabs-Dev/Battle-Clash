@@ -140,7 +140,8 @@ Supabase URL, anon key, and Rails API URL; never commit credentials.
 Supabase Auth supports email/password through the in-game account boundary and
 Google OAuth through `signInWithProvider("google")`. Configure the Supabase
 redirect URL to the Pages origin before enabling the OAuth control; passwords
-never pass through Battle Clash or Rails.
+never pass through Battle Clash or Rails. The folded system menu also exposes
+profile sync, JSON export, and idempotent deletion without covering active play.
 
 Objaverse tooling is quarantine-first under `tools/objaverse/`. Only entries in
 `src/assets/approved-manifest.json` may cross the runtime asset boundary. The
