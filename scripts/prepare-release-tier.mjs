@@ -2,7 +2,11 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { readFile } from "node:fs/promises";
 
 const manifest = JSON.parse(await readFile("release-tiers.json", "utf8"));
-const requested = String(process.env.BATTLE_CLASH_TIER ?? process.env.GITHUB_REF_NAME ?? "build").trim();
+// Ordinary branch checks should build the root contract unless a workflow
+// explicitly selects a public tier. The Pages matrix and promotion workflow
+// set BATTLE_CLASH_TIER; this keeps a plain npm run build deterministic on any
+// feature branch and prevents stale branch names from changing asset paths.
+const requested = String(process.env.BATTLE_CLASH_TIER ?? "build").trim();
 const tier = manifest.tiers?.[requested] ? requested : "build";
 const entry = manifest.tiers[tier];
 const basePath = String(process.env.BATTLE_CLASH_BASE_PATH ?? entry.pages.basePath ?? "/Battle-Clash/").trim();
