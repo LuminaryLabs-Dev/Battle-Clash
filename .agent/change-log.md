@@ -156,3 +156,14 @@
   publish -> main.
 - Replaced the single-branch Pages workflow with one combined artifact that
   serves production at `/`, staging at `/staging/`, and publish at `/publish/`.
+
+## 2026-08-04 22:25:00 EDT
+
+- Created remote `build`, `staging`, and `publish` refs from the validated tier
+  commit; `main` remained unchanged and protected.
+- Added required review plus check/audit protection to all four tier branches
+  and allowed `staging`/`publish` in the existing `github-pages` environment.
+- Fixed tier archive sizing and legacy-main compatibility in the Pages matrix;
+  the publish-triggered deployment passed all three URL health checks.
+- Public staging browser proof passed the full episode and desktop/compact/
+  portrait views with zero console errors and one approved GLB loaded.

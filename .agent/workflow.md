@@ -33,4 +33,4 @@
 | Review feature branches and merge through protected PRs | Blocked on required approving review | User/reviewer |
 | Configure Supabase, OAuth, Rails production, PeerServer/TURN, and secrets | Pending provider setup | User/provider |
 | Redeploy Pages from updated default branch and run deployed-browser proof | Pending protected merge and deployment | Codex |
-| Add four branch release tiers and redacted promotion audits | In progress on feature branch | Codex |
+| Add four branch release tiers and redacted promotion audits | Complete on feature branch and remote tiers | Codex |
