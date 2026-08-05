@@ -2,7 +2,7 @@ name: Battle Clash branch tier audit
 
 on:
   push:
-    branches: [main, build, staging, publish]
+    branches: [main, staging, publish]
   pull_request:
   workflow_dispatch:
 
@@ -22,8 +22,8 @@ jobs:
       - name: Resolve tier policy
         run: |
           case "${GITHUB_REF_NAME}" in
-            main|build|staging|publish) tier="${GITHUB_REF_NAME}" ;;
-            *) tier="build" ;;
+            main|staging|publish) tier="${GITHUB_REF_NAME}" ;;
+            *) tier="main" ;;
           esac
           echo "BATTLE_CLASH_TIER=$tier" >> "$GITHUB_ENV"
           echo "BATTLE_CLASH_ENFORCE_TIER=true" >> "$GITHUB_ENV"

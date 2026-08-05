@@ -2,7 +2,7 @@ name: Battle-Clash checks
 
 on:
   push:
-    branches: [main, build, staging, publish]
+    branches: [main, staging, publish]
   pull_request:
 
 permissions:

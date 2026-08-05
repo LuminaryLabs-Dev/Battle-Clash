@@ -2,15 +2,20 @@
   "schema": "battle-clash.release-tiers/1",
   "project": "Battle Clash",
   "defaultBranch": "main",
-  "order": ["build", "staging", "publish", "main"],
+  "order": ["main", "staging", "publish"],
   "tiers": {
-    "build": {
-      "branch": "build",
-      "phase": "integration",
-      "dataMode": "synthetic",
-      "profilePolicy": "local-only",
-      "networkPolicy": "solo-or-sandbox",
-      "pages": { "published": false, "subpath": null, "basePath": null, "url": null },
+    "main": {
+      "branch": "main",
+      "phase": "development",
+      "dataMode": "synthetic-dev",
+      "profilePolicy": "development-only",
+      "networkPolicy": "development-peer-server",
+      "pages": {
+        "published": true,
+        "subpath": "",
+        "basePath": "/Battle-Clash/",
+        "url": "https://luminarylabs-dev.github.io/Battle-Clash/"
+      },
       "promotion": { "target": "staging", "requires": ["check", "domain-coverage", "release-audit"] }
     },
     "staging": {
@@ -29,37 +34,23 @@
     },
     "publish": {
       "branch": "publish",
-      "phase": "release-candidate",
-      "dataMode": "production-shaped",
-      "profilePolicy": "candidate-only",
-      "networkPolicy": "production-sandbox",
-      "pages": {
-        "published": true,
-        "subpath": "publish",
-        "basePath": "/Battle-Clash/publish/",
-        "url": "https://luminarylabs-dev.github.io/Battle-Clash/publish/"
-      },
-      "promotion": { "target": "main", "requires": ["check", "browser-proof", "backend-proof", "multiplayer-proof", "release-audit"] }
-    },
-    "main": {
-      "branch": "main",
       "phase": "production",
       "dataMode": "live",
       "profilePolicy": "authenticated-production",
       "networkPolicy": "production-peer-server",
       "pages": {
         "published": true,
-        "subpath": "",
-        "basePath": "/Battle-Clash/",
-        "url": "https://luminarylabs-dev.github.io/Battle-Clash/"
+        "subpath": "publish",
+        "basePath": "/Battle-Clash/publish/",
+        "url": "https://luminarylabs-dev.github.io/Battle-Clash/publish/"
       },
-      "promotion": { "target": null, "requires": ["protected-review", "deployment-health", "browser-proof"] }
+      "promotion": { "target": null, "requires": ["protected-review", "deployment-health", "browser-proof", "backend-proof", "multiplayer-proof"] }
     }
   },
   "policy": {
     "mainReceivesOnlyThroughPullRequest": true,
     "credentials": "provider-encrypted-only",
     "pagesSiteModel": "one-repository-site-with-tier-paths",
-    "buildTierIsNeverAProductionDataSource": true
+    "developmentTierIsNeverAProductionDataSource": true
   }
 }

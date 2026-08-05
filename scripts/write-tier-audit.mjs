@@ -3,8 +3,8 @@ import path from "node:path";
 import { readFile } from "node:fs/promises";
 
 const manifest = JSON.parse(await readFile("release-tiers.json", "utf8"));
-const requested = String(process.env.BATTLE_CLASH_TIER ?? process.env.GITHUB_REF_NAME ?? "build").trim();
-const tier = manifest.tiers?.[requested] ? requested : "build";
+const requested = String(process.env.BATTLE_CLASH_TIER ?? process.env.GITHUB_REF_NAME ?? "main").trim();
+const tier = manifest.tiers?.[requested] ? requested : "main";
 const entry = manifest.tiers[tier];
 const output = path.resolve(process.env.TIER_AUDIT_PATH ?? `tier-audit-${tier}.json`);
 const audit = {

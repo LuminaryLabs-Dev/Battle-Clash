@@ -112,19 +112,17 @@ NAT environments.
 
 ## Deployment
 
-Battle Clash uses four ordered branch tiers: `build` (integration), `staging`
-(shared verification), `publish` (release candidate), and `main`
-(production). The policy and promotion requirements are in
+Battle Clash uses three ordered branch tiers: `main` (development), `staging`
+(production staging), and `publish` (production). The policy and promotion requirements are in
 [`docs/BRANCH_TIERS.md`](docs/BRANCH_TIERS.md).
 
 The tiered Pages workflow builds the three public branches into one Pages site:
 
-- Production: <https://luminarylabs-dev.github.io/Battle-Clash/>
+- Development: <https://luminarylabs-dev.github.io/Battle-Clash/>
 - Staging: <https://luminarylabs-dev.github.io/Battle-Clash/staging/>
-- Publish candidate: <https://luminarylabs-dev.github.io/Battle-Clash/publish/>
+- Production: <https://luminarylabs-dev.github.io/Battle-Clash/publish/>
 
-`build` is artifact-only and never receives production data. GitHub Pages gives
-one site per repository, so staging and publish use stable subpaths of the
+GitHub Pages gives one site per repository, so staging and production use stable subpaths of the
 same private-repository Pages site rather than pretending each branch is a
 separate Pages project.
 
@@ -140,7 +138,7 @@ Configure repository Pages to use GitHub Actions. The GitHub repository remains
 private while the Pages game is public.
 
 Use `.github/workflows/promote-tier.yml` to open a checked promotion PR in the
-only permitted order: `build -> staging -> publish -> main`. The promotion
+only permitted order: `main -> staging -> publish`. The promotion
 workflow does not merge or push to `main`.
 
 See [MASTER_PLAN.md](MASTER_PLAN.md) for the domain and product roadmap.

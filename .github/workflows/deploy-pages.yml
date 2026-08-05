@@ -40,7 +40,7 @@ jobs:
       - name: Fetch all public tier branches
         run: git fetch --no-tags origin main staging publish
 
-      - name: Build and audit production, staging, and publish paths
+      - name: Build and audit development, staging, and production paths
         env:
           GITHUB_SHA: ${{ github.sha }}
         run: node scripts/build-pages-tiers.mjs
@@ -57,7 +57,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v5
 
-      - name: Verify production, staging, and publish URLs
+      - name: Verify development, staging, and production URLs
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |

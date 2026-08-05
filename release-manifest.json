@@ -5,12 +5,12 @@
   "requiredChecks": ["npm ci", "npm run check", "npm run check:domains", "npm run build", "npm run build:pages", "git diff --check"],
   "deployment": {
     "provider": "github-pages",
-    "sourceBranch": "main",
+    "sourceBranch": "publish",
     "workflow": ".github/workflows/deploy-pages.yml",
     "siteModel": "one-repository-site-with-tier-paths",
-    "productionUrl": "https://luminarylabs-dev.github.io/Battle-Clash/",
+    "developmentUrl": "https://luminarylabs-dev.github.io/Battle-Clash/",
     "stagingUrl": "https://luminarylabs-dev.github.io/Battle-Clash/staging/",
-    "publishUrl": "https://luminarylabs-dev.github.io/Battle-Clash/publish/"
+    "productionUrl": "https://luminarylabs-dev.github.io/Battle-Clash/publish/"
   },
   "tiers": "release-tiers.json",
   "online": { "identity": "supabase-auth", "transport": "peerjs", "durableApi": "rails" },

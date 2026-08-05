@@ -167,3 +167,10 @@
   the publish-triggered deployment passed all three URL health checks.
 - Public staging browser proof passed the full episode and desktop/compact/
   portrait views with zero console errors and one approved GLB loaded.
+
+## 2026-08-04 23:00:00 EDT
+
+- Reclassified the release contract to three branches: development `main`,
+  production staging `staging`, and production `publish`.
+- Removed the build-tier workflow and changed the promotion path to
+  `main -> staging -> publish`; production Pages is now `/publish/`.

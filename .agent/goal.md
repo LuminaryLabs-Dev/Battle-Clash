@@ -28,9 +28,9 @@ and production art remain larger follow-on work.
 - PeerJS remains a transport adapter and failures preserve solo play.
 - Build and deterministic replay checks pass.
 - Local browser screenshots, readability metrics, and zero-console-error proof pass.
-- Release state is promoted through `build -> staging -> publish -> main` with
-  tier-specific data policies, redacted audit artifacts, and distinct staging
-  and production Pages paths.
+- Release state is promoted through `main -> staging -> publish` with
+  development, staging, and production data policies, redacted audit artifacts,
+  and distinct staging and production Pages paths.
 
 ## Continuation: semantic validation
 

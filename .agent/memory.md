@@ -39,9 +39,8 @@
 - Account identity and data rights stay behind the invoked system menu: email /
   password and Google share Supabase Auth, Rails owns export/deletion, and only
   Battle Clash's local profile and sync queue are cleared after deletion.
-- Release state is explicit and data-policy-bound: `build` is synthetic/local,
-  `staging` is anonymized sandbox, `publish` is production-shaped candidate,
-  and protected `main` is production. Public Pages uses `/staging/` and
-  `/publish/` paths beside the production root because a repository has one
-  Pages site. Promotion is PR-only in the order build -> staging -> publish ->
-  main, with redacted tier audits.
+- Release state is explicit and data-policy-bound: `main` is development,
+  `staging` is anonymized production staging, and `publish` is production.
+  Public Pages uses `/staging/` and `/publish/` paths beside the development
+  root because a repository has one Pages site. Promotion is PR-only in the
+  order main -> staging -> publish, with redacted tier audits.

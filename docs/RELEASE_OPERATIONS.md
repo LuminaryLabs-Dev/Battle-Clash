@@ -2,8 +2,9 @@
 
 ## Branch policy
 
-Work lands on feature branches and advances through `build`, `staging`,
-`publish`, then protected `main`. The four branch contracts are defined in
+Work lands on feature branches and advances through development `main`,
+production staging `staging`, then production `publish`. The three branch
+contracts are defined in
 [`../release-tiers.json`](../release-tiers.json) and explained in
 [`BRANCH_TIERS.md`](BRANCH_TIERS.md). A promotion PR is the only path between
 tiers; direct pushes to `main` are not part of the release process.
@@ -18,9 +19,9 @@ never credentials, passwords, tokens, or private profile payloads.
 from their remote branch snapshots and publishes them as one artifact. The
 expected links are:
 
-- Production: `https://luminarylabs-dev.github.io/Battle-Clash/`
+- Development: `https://luminarylabs-dev.github.io/Battle-Clash/`
 - Staging: `https://luminarylabs-dev.github.io/Battle-Clash/staging/`
-- Publish: `https://luminarylabs-dev.github.io/Battle-Clash/publish/`
+- Production: `https://luminarylabs-dev.github.io/Battle-Clash/publish/`
 
 Provider secrets are configured outside Git and are never copied into this
 repository.

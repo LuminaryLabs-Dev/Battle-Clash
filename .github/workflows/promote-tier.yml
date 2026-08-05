@@ -7,12 +7,12 @@ on:
         description: "Source tier"
         required: true
         type: choice
-        options: [build, staging, publish]
+        options: [main, staging]
       target:
         description: "Target tier"
         required: true
         type: choice
-        options: [staging, publish, main]
+        options: [staging, publish]
 
 permissions:
   contents: read
@@ -36,8 +36,8 @@ jobs:
       - name: Enforce promotion order
         run: |
           case "${SOURCE}:${TARGET}" in
-            build:staging|staging:publish|publish:main) ;;
-            *) echo "Only build -> staging -> publish -> main is allowed" >&2; exit 1 ;;
+            main:staging|staging:publish) ;;
+            *) echo "Only main -> staging -> publish is allowed" >&2; exit 1 ;;
           esac
       - name: Validate source tier
         run: |
