@@ -15,6 +15,8 @@ expected public origin is `https://luminarylabs-dev.github.io/Battle-Clash/`.
 ## Health checks
 
 - Pages: `PAGES_ARTIFACT_ROOT=docs npm run check:pages-artifact` before upload.
+- Pages deploy: the workflow curls the published `page_url` and requires the
+  Battle Clash title and runtime script before the deployment is healthy.
 - Client: `npm run check`, `npm run check:domains`.
 - Player: `npm run check:all` plus browser viewport proof.
 - Backend: Ruby 3.3 CI, migrations, request tests, and RLS checks.
