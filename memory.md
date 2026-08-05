@@ -275,6 +275,9 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - The Pages artifact workflow runs deterministic simulation checks, then
   deploys on pushes to `main` while still supporting manual dispatch, preserving
   the private-repository/public-Pages boundary.
+- The Pages workflow performs a post-deploy curl health check for the published
+  Battle Clash title and runtime entrypoint before reporting the deployment
+  healthy.
 
 ## Online Foundation And Asset Boundary
 
@@ -285,6 +288,8 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
   locally with idempotency keys until an authenticated API is available. Profile
   snapshots use the server revision endpoint; rejected revisions are preserved
   in a bounded local conflict log and deletion requests are idempotent.
+- Sync retries refresh an expired Supabase session once on a 401 before applying
+  normal retry/backoff rules; non-retryable conflicts remain visible locally.
 - Account identity and data-rights actions stay inside the folded system menu:
   email/password and Google sign-in share the Supabase session, export downloads
   the Rails profile bundle, and deletion clears only Battle Clash local state
