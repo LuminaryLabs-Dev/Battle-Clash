@@ -1,0 +1,30 @@
+name: Battle Clash build tier
+
+on:
+  push:
+    branches: [build]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BATTLE_CLASH_TIER: build
+      BATTLE_CLASH_ENFORCE_TIER: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check:all
+      - run: npm run build
+      - run: git diff --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: battle-clash-build-${{ github.sha }}
+          path: dist

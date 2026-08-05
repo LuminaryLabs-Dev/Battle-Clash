@@ -322,9 +322,20 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - Local folder: `/Users/crimsonwheeler/Documents/GitHub/Battle-Clash`
 - GitHub repository: `LuminaryLabs-Dev/Battle-Clash` (private)
 - Public Pages URL: `https://luminarylabs-dev.github.io/Battle-Clash/`
-- Primary Pages source: GitHub Actions artifact from `dist/`
-- Local fallback artifact: `main` and `/docs`
+- Primary Pages source: one GitHub Actions artifact containing `main` at the
+  root plus `staging/` and `publish/` snapshots
+- Local fallback artifact: the checked-in `main` `/docs` tree
 - Workflow: `.github/workflows/deploy-pages.yml`
+
+## Branch Release Tiers
+
+- `build` is integration-only with synthetic/local data and an artifact gate.
+- `staging` is the anonymized shared-verification tier at `/staging/`.
+- `publish` is the production-shaped release candidate at `/publish/`.
+- `main` is protected production and remains the default branch at the root
+  Pages URL.
+- Promotions are pull requests in the order build -> staging -> publish ->
+  main; redacted tier audits are retained as release evidence.
 
 ## Conventions
 

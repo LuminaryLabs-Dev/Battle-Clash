@@ -146,3 +146,13 @@
   Clash local profile/queue keys after the server tombstone succeeds.
 - Added HTML markers to the auth contract and preserved 675/675 semantic proof,
   production build, Pages artifact, and responsive zero-error browser proof.
+
+## 2026-08-04 22:00:00 EDT
+
+- Added explicit `build`, `staging`, `publish`, and protected `main` release
+  tiers with synthetic, sandbox, candidate, and production data policies.
+- Added tier validation, browser-visible release metadata, redacted tier audit
+  artifacts, and a PR-only promotion workflow in the order build -> staging ->
+  publish -> main.
+- Replaced the single-branch Pages workflow with one combined artifact that
+  serves production at `/`, staging at `/staging/`, and publish at `/publish/`.

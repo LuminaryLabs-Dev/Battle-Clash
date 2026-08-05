@@ -2,7 +2,7 @@ name: Battle-Clash checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, build, staging, publish]
   pull_request:
 
 permissions:
@@ -19,3 +19,4 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check:all
+      - run: git diff --check

@@ -21,8 +21,9 @@
   interactions; other state belongs in the world or the invoked system menu.
 - Responsive camera framing must fit projected room bounds across desktop,
   compact landscape, and portrait viewports.
-- Pages publishes verified `/docs` output from `main`; the custom `dist/`
-  artifact workflow is manual while organization Actions billing is unavailable.
+- Pages publishes one combined artifact: production from `main` at the root,
+  staging from `staging/`, and the publish candidate from `publish/`. The
+  checked-in `/docs` tree remains a local fallback.
 
 ## Conventions
 
@@ -38,3 +39,9 @@
 - Account identity and data rights stay behind the invoked system menu: email /
   password and Google share Supabase Auth, Rails owns export/deletion, and only
   Battle Clash's local profile and sync queue are cleared after deletion.
+- Release state is explicit and data-policy-bound: `build` is synthetic/local,
+  `staging` is anonymized sandbox, `publish` is production-shaped candidate,
+  and protected `main` is production. Public Pages uses `/staging/` and
+  `/publish/` paths beside the production root because a repository has one
+  Pages site. Promotion is PR-only in the order build -> staging -> publish ->
+  main, with redacted tier audits.
