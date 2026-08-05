@@ -11,7 +11,9 @@ import {
   loadProgressionProfile,
   loadWorldProfile,
   saveWorldProfile,
-  saveProgressionProfile
+  saveProgressionProfile,
+  loadContentProfile,
+  saveContentProfile
 } from "./persistence/profile-storage.js";
 import { createSupabaseAuth } from "./online/supabase-auth.js";
 import { createAccountSync } from "./online/account-sync.js";
@@ -54,6 +56,12 @@ const elements = {
   selectDelver: document.querySelector("#selectDelverButton"),
   selectLancer: document.querySelector("#selectLancerButton"),
   selectArcanist: document.querySelector("#selectArcanistButton"),
+  contentPanel: document.querySelector("#contentPanel"),
+  contentReadout: document.querySelector("#contentReadout"),
+  craftEmberWard: document.querySelector("#craftEmberWardButton"),
+  craftScoutLens: document.querySelector("#craftScoutLensButton"),
+  craftGlassbreaker: document.querySelector("#craftGlassbreakerButton"),
+  equipLastGear: document.querySelector("#equipLastGearButton"),
   fieldPrompt: document.querySelector("#fieldPrompt"),
   resultPanel: document.querySelector("#resultPanel"),
   resultEyebrow: document.querySelector("#resultEyebrow"),
@@ -101,6 +109,8 @@ let savedProgression = "";
 let savedWorld = "";
 let personalProfile = loadProgressionProfile();
 let personalWorld = loadWorldProfile();
+let savedContent = "";
+let personalContent = loadContentProfile();
 let previousPhase = null;
 let cueTimeout = null;
 let menuOpen = false;
@@ -128,6 +138,25 @@ function updateAccountUi(next = accountState) {
     elements.accountSignOut.hidden = accountState.status !== "authenticated";
     elements.accountSignIn.hidden = accountState.status === "authenticated";
     elements.accountSignUp.hidden = accountState.status === "authenticated";
+  }
+}
+
+function updateContentUi(snapshot) {
+  const content = snapshot.content ?? {};
+  const inventory = content.inventory ?? [];
+  const equipped = Object.values(content.equipped ?? {}).filter(Boolean);
+  const rooms = (content.sanctumRooms ?? []).filter((room) => room.status === "unlocked").map((room) => room.kind);
+  if (elements.contentReadout) {
+    elements.contentReadout.textContent = `${inventory.length ? inventory.join(" · ") : "No gear recovered"}${equipped.length ? ` · Equipped: ${equipped.join(" · ")}` : ""}${rooms.length ? ` · Rooms: ${rooms.join(" · ")}` : ""}`;
+  }
+  const sanctum = snapshot.scene?.current === "sanctum";
+  for (const button of [elements.craftEmberWard, elements.craftScoutLens, elements.craftGlassbreaker, elements.equipLastGear]) {
+    if (button) button.disabled = !sanctum;
+  }
+  const lastGear = content.lastLoot?.itemId ?? inventory.at(-1) ?? null;
+  if (elements.equipLastGear) {
+    elements.equipLastGear.disabled = !sanctum || !lastGear || inventory.length === 0;
+    elements.equipLastGear.dataset.itemId = lastGear ?? "";
   }
 }
 
@@ -336,6 +365,13 @@ function updateWorldUi(snapshot) {
 
 function updateUi(snapshot) {
   latestSnapshot = snapshot;
+  updateContentUi(snapshot);
+  const serializedContent = JSON.stringify(snapshot.content ?? null);
+  if (snapshot.session?.status !== "connected" && serializedContent !== savedContent) {
+    saveContentProfile(snapshot.content);
+    personalContent = structuredClone(snapshot.content ?? {});
+    savedContent = serializedContent;
+  }
   const loadoutSnapshot = isConnectedRole(snapshot, "attacker") ? game.getSnapshot() : snapshot;
   const unlocked = new Set(loadoutSnapshot.army?.unlockedArchetypes ?? ["delver"]);
   const selected = loadoutSnapshot.deployment?.selectedArchetype ?? "delver";
@@ -600,6 +636,7 @@ function createPeerSnapshot(snapshot) {
     army: snapshot.army,
     sanctum: snapshot.sanctum,
     loot: snapshot.loot,
+    content: snapshot.content,
     effects: snapshot.effects,
     hero: snapshot.hero,
     landscape: snapshot.landscape,
@@ -728,6 +765,12 @@ function applyLocalCommand(command, { remote = false } = {}) {
     case "select-archetype":
       game.selectArchetype(command.archetype, { allowLocked: remote });
       break;
+    case "craft-gear":
+      game.craftGear(command.itemId);
+      break;
+    case "equip-gear":
+      game.equipGear(command.itemId);
+      break;
     case "upgrade-sanctum":
       game.upgradeSanctum();
       break;
@@ -755,7 +798,7 @@ function dispatchCommand(command) {
   if (
     session.status === "connected" &&
     session.role === "defender" &&
-    !["fortify", "reset", "scene", "discover", "claim", "move-hero", "heal-army", "recruit-army", "select-archetype", "upgrade-sanctum", "trade-resources", "interact-landmark", "hero-ability"].includes(command.kind)
+    !["fortify", "reset", "scene", "discover", "claim", "move-hero", "heal-army", "recruit-army", "select-archetype", "craft-gear", "equip-gear", "upgrade-sanctum", "trade-resources", "interact-landmark", "hero-ability"].includes(command.kind)
   ) {
     return false;
   }
@@ -928,7 +971,8 @@ function frame(now) {
 try {
   game = createBattleClashGame({
     progression: personalProfile,
-    world: personalWorld
+    world: personalWorld,
+    content: personalContent
   });
   auth = createSupabaseAuth({
     onChange(next) {
@@ -1187,6 +1231,28 @@ try {
     dispatchCommand({ kind: "select-archetype", archetype: "arcanist" });
     showCue("Arcanist loadout selected.", 1400);
   });
+  const craft = (itemId) => {
+    if (network?.isRemoteAuthority()) {
+      if (network.sendCommand({ kind: "craft-gear", itemId })) showCue("Forge request sent to the defender Sanctum.", 1700);
+      return;
+    }
+    const result = game.craftGear(itemId);
+    renderNow();
+    showCue(result.accepted ? `${itemId} forged at Dawnwatch.` : "The forge lacks the required materials.", 1800);
+  };
+  elements.craftEmberWard.addEventListener("click", () => craft("ember-ward"));
+  elements.craftScoutLens.addEventListener("click", () => craft("scout-lens"));
+  elements.craftGlassbreaker.addEventListener("click", () => craft("glassbreaker"));
+  elements.equipLastGear.addEventListener("click", () => {
+    const itemId = elements.equipLastGear.dataset.itemId;
+    if (network?.isRemoteAuthority()) {
+      if (network.sendCommand({ kind: "equip-gear", itemId })) showCue("Loadout request sent to the defender Sanctum.", 1700);
+      return;
+    }
+    const result = game.equipGear(itemId);
+    renderNow();
+    showCue(result.accepted ? `${itemId} equipped.` : "Recover the gear before equipping it.", 1800);
+  });
   elements.discoverNext.addEventListener("click", discoverNextTerritory);
   elements.claimTerritory.addEventListener("click", () => {
     const territoryId = currentSnapshot().world.currentTerritoryId;
@@ -1283,7 +1349,10 @@ try {
     },
     setMenuOpen,
     transitionToScene: transitionScene,
-    discoverNextTerritory
+    discoverNextTerritory,
+    getContentState: () => game.getContentState(),
+    craftGear(itemId) { return game.craftGear(itemId); },
+    equipGear(itemId) { return game.equipGear(itemId); }
   });
 
   renderNow();

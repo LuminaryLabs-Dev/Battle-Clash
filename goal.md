@@ -26,8 +26,8 @@ receipt with zero console errors.
 ### Current PR audit lane
 
 The active feature branch is compatible with NexusEngine 0.0.4 semantic domains
-and adds deterministic authored room chains. Current proof is 657/657 before
-room coverage and 661/661 after it, with Player harness browser proof green.
+and adds deterministic authored room chains plus the content kit. Current proof
+is 673/673, with Player harness browser proof green.
 Main remains protected; external Supabase, Rails runtime, OAuth, hosted
 PeerServer/TURN, and required PR review are still release gates.
 

@@ -38,6 +38,7 @@ import {
 import { ARCHETYPES, WORLD_SEED } from "../data/battlefield.js";
 import { WORLD_SCENES, sceneForTerritory } from "../data/world.js";
 import { createPlayerKit } from "../domains/player/player-kit.js";
+import { createContentKit } from "../domains/content/content-kit.js";
 import { normalizePlayerObservation } from "../domains/player/player-observation.js";
 import { advanceRoomState } from "../domains/encounter/room-state.js";
 import { seedBattleState } from "../domains/shared/entity-factory.js";
@@ -211,7 +212,8 @@ export function createBattleClashGame(options = {}) {
       createDefenseKit(),
       createProgressionKit(),
       createSessionKit(),
-      createPlayerKit()
+      createPlayerKit(),
+      createContentKit({ profile: options.content })
     ]
   });
 
@@ -336,6 +338,7 @@ export function createBattleClashGame(options = {}) {
     const playerDecision = structuredClone(engine.world.getResource(Resources.PlayerDecision));
     const playerEpisode = structuredClone(engine.world.getResource(Resources.PlayerEpisode));
     const playerLearningSignal = structuredClone(engine.world.getResource(Resources.PlayerLearningSignal));
+    const content = structuredClone(engine.world.getResource(Resources.ContentState));
     const activeCells = engine.n.battleClashWorld.getActiveCells();
     const core = entities.find((entity) => entity.role === "core") ?? null;
 
@@ -372,6 +375,7 @@ export function createBattleClashGame(options = {}) {
       playerDecision,
       playerEpisode,
       playerLearningSignal,
+      content,
       productionContent: {
         schema: PRODUCTION_CONTENT_SCHEMA,
         territories: CONTENT_TERRITORIES,
@@ -410,6 +414,7 @@ export function createBattleClashGame(options = {}) {
       playerDecision: snapshot.playerDecision,
       playerEpisode: snapshot.playerEpisode,
       playerLearningSignal: snapshot.playerLearningSignal,
+      content: snapshot.content,
       defense: snapshot.defense,
       ability: snapshot.ability,
       objective: snapshot.objective,
@@ -490,6 +495,9 @@ export function createBattleClashGame(options = {}) {
     getCurrentTerritory: () => engine.n.battleClashWorld.getCurrentTerritory(),
     getHeroState: () => engine.n.battleClashWorld.getHeroState(),
     getSanctumState: () => engine.n.battleClashWorld.getSanctumState(),
+    getContentState: () => engine.n.battleClashContent.getState(),
+    craftGear: (itemId) => engine.n.battleClashContent.craft(itemId),
+    equipGear: (itemId) => engine.n.battleClashContent.equip(itemId),
     selectArchetype,
     discoverTerritory: (territoryId) =>
       engine.n.battleClashWorld.discoverTerritory(territoryId),

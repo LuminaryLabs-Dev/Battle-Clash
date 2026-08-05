@@ -20,7 +20,7 @@ const expectedDomains = [
   "n:game:battle-clash:frontier", "n:game:battle-clash:hero", "n:game:battle-clash:hero-combat",
   "n:game:battle-clash:navigation", "n:game:battle-clash:progression", "n:game:battle-clash:raid",
   "n:game:battle-clash:sanctum", "n:game:battle-clash:session", "n:game:battle-clash:targeting",
-  "n:game:battle-clash:world", "n:game:battle-clash:player", "n:interaction", "n:interaction:input",
+  "n:game:battle-clash:world", "n:game:battle-clash:player", "n:game:battle-clash:content", "n:interaction", "n:interaction:input",
   "n:network", "n:presentation", "n:presentation:camera", "n:presentation:graphics", "n:presentation:output",
   "n:presentation:ui", "n:runtime", "n:runtime:data", "n:runtime:persistence", "n:runtime:realtime",
   "n:runtime:sequence", "n:simulation", "n:spatial", "n:world", "n:world:scene"
@@ -41,7 +41,9 @@ const commandCases = [
   ["select-archetype", { kind: "select-archetype", archetype: "delver" }],
   ["upgrade-sanctum", { kind: "upgrade-sanctum" }],
   ["trade-resources", { kind: "trade-resources", from: "iron", to: "gold", amount: 1 }],
-  ["interact-landmark", { kind: "interact-landmark", landmarkId: "ash-crossing-settlement" }]
+  ["interact-landmark", { kind: "interact-landmark", landmarkId: "ash-crossing-settlement" }],
+  ["craft-gear", { kind: "craft-gear", itemId: "ember-ward" }],
+  ["equip-gear", { kind: "equip-gear", itemId: "ember-ward" }]
 ];
 
 const checks = [];
@@ -76,7 +78,8 @@ const domainNamespaces = {
   "n:game:battle-clash:hero-combat": "battleClashHero", "n:game:battle-clash:navigation": "battleClashNavigation",
   "n:game:battle-clash:progression": "battleClashProgression", "n:game:battle-clash:raid": "battleClashRaid",
   "n:game:battle-clash:sanctum": "battleClashSanctum", "n:game:battle-clash:session": "battleClashSession",
-  "n:game:battle-clash:targeting": "battleClashEncounter", "n:game:battle-clash:world": "battleClashWorld", "n:game:battle-clash:player": "battleClashPlayer"
+  "n:game:battle-clash:targeting": "battleClashEncounter", "n:game:battle-clash:world": "battleClashWorld", "n:game:battle-clash:player": "battleClashPlayer",
+  "n:game:battle-clash:content": "battleClashContent"
 };
 
 for (const domain of expectedDomains) check("domain", domain, () => requireValue(snapshot.domains.includes(domain), "domain not installed"));
@@ -146,6 +149,39 @@ check("content-behavior", "production-content-integrity", () => {
   requireValue(snapshot.productionContent?.schema === PRODUCTION_CONTENT_SCHEMA, "production content is not exposed by runtime snapshot");
   requireValue(snapshot.productionContent?.territories?.length === CONTENT_TERRITORIES.length, "runtime content territory projection drifted");
   return { territories: CONTENT_TERRITORIES.length, rooms: roomIds.size, enemyFamilies: Object.keys(ENEMY_FAMILIES).length, bossPhases: BOSS_PHASES.length };
+});
+check("content-behavior", "loot-quest-craft-equip-loop", () => {
+  const game = createBattleClashGame();
+  const emitted = new Set();
+  const originalEmit = game.engine.world.emit.bind(game.engine.world);
+  game.engine.world.emit = (event, payload) => {
+    emitted.add(Object.entries(Events).find(([, definition]) => definition === event)?.[0] ?? event?.name);
+    return originalEmit(event, payload);
+  };
+  game.prepareTerritory("ash-crossing");
+  game.transitionToScene("encounter", { territoryId: "ash-crossing", frontDirection: "east" });
+  const pattern = [[-10.5, -6], [-10.5, -2], [-10.5, 2], [-10.5, 6], [10.5, -6], [10.5, -2], [10.5, 2], [10.5, 6]];
+  for (const [x, z] of pattern) { game.deployAt(x, z); game.tick(); }
+  game.startRaid();
+  game.stepSeconds(45);
+  const looted = game.getContentState();
+  requireValue(looted.inventory.includes("ember-ward"), "entry-room loot did not promote gear");
+  requireValue(looted.quests["q-ash-first-light"].completedSteps.includes("discover"), "room win did not advance quest");
+  requireValue(game.transitionToScene("sanctum").accepted, "content loop could not return to Sanctum");
+  const economy = game.engine.world.getResource(Resources.EconomyState);
+  game.engine.world.setResource(Resources.EconomyState, {
+    ...economy,
+    resources: { ...economy.resources, gold: 100, arcane: 10 }
+  });
+  requireValue(game.craftGear("scout-lens").accepted, "Sanctum crafting rejected a valid recipe");
+  requireValue(game.equipGear("scout-lens").accepted, "owned gear could not be equipped");
+  requireValue(emitted.has("GearLooted"), "GearLooted was not emitted");
+  requireValue(emitted.has("QuestProgressed"), "QuestProgressed was not emitted");
+  for (const event of [Events.ItemCrafted, Events.GearEquipped]) {
+    const name = Object.entries(Events).find(([, definition]) => definition === event)?.[0];
+    requireValue(emitted.has(name), `${event.name} was not emitted`);
+  }
+  return { inventory: game.getContentState().inventory, equipped: game.getContentState().equipped };
 });
 check("network-behavior", "authenticated-room-receipt-contract", () => {
   const hello = createAuthenticatedHello({ roomId: "room-1", userId: "123e4567-e89b-12d3-a456-426614174000", role: "attacker", profileRevision: 4 });
@@ -279,6 +315,7 @@ const apiMethods = [
   "discoverTerritory", "enterTerritory", "prepareTerritory", "claimTerritory", "moveHero", "healArmy", "recruitArmy",
   "upgradeSanctum", "tradeResources", "interactLandmark", "findHeroPath", "findWorldPath", "findCombatPath",
   "tickEconomy", "changeLandscape", "transitionToScene", "canDeployAt", "getSnapshot", "getDeterministicSnapshot", "getDigest",
+  "getContentState", "craftGear", "equipGear",
   "getPlayerState", "startPlayerEpisode", "recordPlayerObservation", "retrievePlayerMemory", "recordPlayerDecision",
   "getPlayerObservation",
   "recordPlayerActionResult", "recordPlayerOutcome", "completePlayerEpisode", "promotePlayerSkill"

@@ -44,6 +44,7 @@ export const Resources = Object.freeze({
   ObjectiveState: defineResource("battle-clash.objective-state"),
   RoomState: defineResource("battle-clash.room-state"),
   LootState: defineResource("battle-clash.loot-state"),
+  ContentState: defineResource("battle-clash.content-state"),
   AccountState: defineResource("battle-clash.account-state"),
   AbilityState: defineResource("battle-clash.ability-state"),
   PlayerState: defineResource("battle-clash.player-state"),
@@ -91,5 +92,9 @@ export const Events = Object.freeze({
   PlayerEpisodeStarted: defineEvent("battle-clash.player.episode-started"),
   PlayerEpisodeCompleted: defineEvent("battle-clash.player.episode-completed"),
   PlayerEpisodeFailed: defineEvent("battle-clash.player.episode-failed"),
-  PlayerSkillPromoted: defineEvent("battle-clash.player.skill-promoted")
+  PlayerSkillPromoted: defineEvent("battle-clash.player.skill-promoted"),
+  GearLooted: defineEvent("battle-clash.content.gear-looted"),
+  QuestProgressed: defineEvent("battle-clash.content.quest-progressed"),
+  ItemCrafted: defineEvent("battle-clash.content.item-crafted"),
+  GearEquipped: defineEvent("battle-clash.content.gear-equipped")
 });
