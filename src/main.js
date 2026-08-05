@@ -189,8 +189,10 @@ async function exportAccountProfile() {
   const link = document.createElement("a");
   link.href = url;
   link.download = `battle-clash-profile-${accountState.userId ?? "export"}.json`;
+  document.body.append(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
   showCue("Profile export downloaded.", 1800);
 }
 
