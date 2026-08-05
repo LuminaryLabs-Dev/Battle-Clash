@@ -9,8 +9,8 @@ feature/* -> main -> staging -> publish
 
 ## Baseline alignment
 
-Before the first development change, merge the current Battle-Clash PR into
-`main`, then promote `main -> staging` and `staging -> publish` through reviewed
+After the current Battle-Clash PR is merged into the unprotected development
+`main`, promote `main -> staging` and `staging -> publish` through reviewed
 pull requests. Run:
 
 ```sh
@@ -23,8 +23,8 @@ has a different data and network policy.
 
 ## Normal change flow
 
-1. Create a short-lived feature branch from `main`.
-2. Open a PR into `main` and wait for required checks/review.
+1. Make a small change on `main` or a short-lived feature branch.
+2. Run the development checks and verify the root Pages build.
 3. Use **Promote Battle Clash tier** with `main -> staging`.
 4. Review browser, asset, and sandbox evidence before merging staging.
 5. Use the workflow again with `staging -> publish`.

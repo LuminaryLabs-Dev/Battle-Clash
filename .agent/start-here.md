@@ -14,9 +14,9 @@ Read in this order:
 10. `change-log.md`
 
 The Battle-Clash release chain is `main` (development) -> `staging`
-(production staging) -> `publish` (production). `staging` and `publish` carry
-the current `6cf2c4c` source baseline; the protected `agent/domain-validator`
-PR still needs approval before `main` can be aligned. Run
-`npm run check:tier-baseline` after that merge and before the first new change.
+(production staging) -> `publish` (production). `main` is now aligned at
+`86f960f` and is intentionally unprotected during early development. Promotion
+PR #2 is the protected `main -> staging` handoff; run the baseline check after
+that promotion and before production publication.
 Supabase/OAuth, production Rails, and hosted PeerServer/TURN remain provider
 gates.

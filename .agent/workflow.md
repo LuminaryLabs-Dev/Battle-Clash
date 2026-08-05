@@ -30,10 +30,10 @@
 | Add Supabase auth adapter, account controls, profile sync, export, and deletion | Complete on feature branch; provider configuration pending | Codex |
 | Add authenticated PeerJS room, reconnect, sequence, authority, and receipt contracts | Complete locally and in CI; hosted PeerServer/TURN pending | Codex |
 | Add Rails snapshots, RLS migration, idempotent receipts, and replay protection | Complete on feature branch and Rails CI | Codex |
-| Review feature branches and merge through protected PRs | Blocked on required approving review | User/reviewer |
+| Review feature branches and merge through protected PRs | Main development merge complete; staging/publish remain gated | User/reviewer |
 | Configure Supabase, OAuth, Rails production, PeerServer/TURN, and secrets | Pending provider setup | User/provider |
-| Redeploy Pages from updated default branch and run deployed-browser proof | Pending protected merge and deployment | Codex |
+| Redeploy Pages from updated default branch and run deployed-browser proof | Complete for main commit `86f960f` | Codex |
 | Add three branch release tiers and redacted promotion audits | Complete on feature branch and remote tiers | Codex |
 | Add tier-flow parity validator and scheduled maintenance audit | Complete on feature branch; PR #1 checks green | Codex |
-| Align `main`, `staging`, and `publish` to one source baseline | Blocked on protected PR review | User/reviewer |
-| Begin feature delivery through `main -> staging -> publish` | Pending baseline alignment | Codex |
+| Align `main`, `staging`, and `publish` to one source baseline | Main aligned; staging promotion PR #2 open | User/reviewer |
+| Begin feature delivery through `main -> staging -> publish` | Pending staging promotion | Codex |

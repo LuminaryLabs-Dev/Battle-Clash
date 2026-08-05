@@ -335,6 +335,9 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - `publish` is production at `/publish/`.
 - Promotions are pull requests in the order main -> staging -> publish;
   redacted tier audits are retained as release evidence.
+- `main` is intentionally unprotected during early development so the team can
+  iterate and play-test quickly; `staging` and `publish` remain protected
+  promotion gates.
 
 ## Conventions
 

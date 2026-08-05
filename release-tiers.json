@@ -48,7 +48,9 @@
     }
   },
   "policy": {
-    "mainReceivesOnlyThroughPullRequest": true,
+    "mainReceivesOnlyThroughPullRequest": false,
+    "mainProtection": "development-unprotected",
+    "stagingAndPublishRemainProtected": true,
     "credentials": "provider-encrypted-only",
     "pagesSiteModel": "one-repository-site-with-tier-paths",
     "developmentTierIsNeverAProductionDataSource": true

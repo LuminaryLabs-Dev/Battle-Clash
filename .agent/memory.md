@@ -41,6 +41,8 @@
   Battle Clash's local profile and sync queue are cleared after deletion.
 - Release state is explicit and data-policy-bound: `main` is development,
   `staging` is anonymized production staging, and `publish` is production.
+  `main` is intentionally unprotected during early development; `staging` and
+  `publish` retain required review/check protection.
   Public Pages uses `/staging/` and `/publish/` paths beside the development
   root because a repository has one Pages site. Promotion is PR-only in the
   order main -> staging -> publish, with redacted tier audits. The tier-flow

@@ -27,9 +27,9 @@ receipt with zero console errors.
 
 The active feature branch is compatible with NexusEngine 0.0.4 semantic domains
 and adds deterministic authored room chains plus the content kit. Current proof
-is 675/675, with Player harness browser proof green.
-Main remains protected; external Supabase, Rails runtime, OAuth, hosted
-PeerServer/TURN, and required PR review are still release gates.
+is 675/675, with Player harness browser proof green. Main is now the
+unprotected development branch; staging/publish review gates, external
+Supabase, Rails runtime, OAuth, and hosted PeerServer/TURN remain release gates.
 
 ## Acceptance Criteria
 
@@ -270,10 +270,10 @@ PeerServer/TURN, and required PR review are still release gates.
 
 ## Preserved Release Baseline
 
-The validated current source baseline is on `staging` and `publish` at commit
-`6cf2c4c`. The protected PR into `main` must be approved before the development
-branch is aligned; afterward, `npm run check:tier-baseline` is the parity gate
-before new development changes begin.
+The validated development source baseline is on `main` at merge commit
+`86f960f`. Promotion PR #2 carries it toward `staging`; after both protected
+promotions, `npm run check:tier-baseline` is the parity gate for the shared
+baseline tag.
 
 ## Later Product Work
 
