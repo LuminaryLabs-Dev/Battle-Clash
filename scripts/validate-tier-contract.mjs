@@ -5,6 +5,9 @@ const expected = ["main", "staging", "publish"];
 if (manifest.schema !== "battle-clash.release-tiers/1") throw new Error("release tier schema drifted");
 if (manifest.defaultBranch !== "main") throw new Error("main must remain the default branch");
 if (JSON.stringify(manifest.order) !== JSON.stringify(expected)) throw new Error("release tier order drifted");
+if (manifest.policy?.mainReceivesOnlyThroughPullRequest !== false) throw new Error("main development protection policy drifted");
+if (manifest.policy?.mainProtection !== "development-unprotected") throw new Error("main protection mode drifted");
+if (manifest.policy?.stagingAndPublishRemainProtected !== true) throw new Error("staging/publish protection policy drifted");
 
 for (const tier of expected) {
   const entry = manifest.tiers?.[tier];

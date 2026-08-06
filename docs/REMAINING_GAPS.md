@@ -26,14 +26,14 @@ Next loop: keep these gates unchanged while integrating external services.
 
 ## Loop 2 — protected repository integration
 
-- [x] `DONE` All repositories are private, default branch `main`, and protected
-  with one required approving review and one required CI check.
+- [x] `DONE` All repositories are private, default branch `main`; staging and
+  publish retain one required approving review and one required CI check.
 - [x] `DONE` PR auto-merge is queued without bypassing protection:
   - [Battle-Clash PR](https://github.com/LuminaryLabs-Dev/Battle-Clash/pull/1)
   - [BattleClash-Player PR](https://github.com/LuminaryLabs-Dev/BattleClash-Player/pull/1)
   - [LuminaryLabs-Backend PR](https://github.com/LuminaryLabs-Dev/LuminaryLabs-Backend/pull/1)
-- [ ] `EXTERNAL` A reviewer must approve each PR. Until then, GitHub reports
-  `BLOCKED`; no direct push to `main` is allowed.
+- [ ] `EXTERNAL` A reviewer must approve the staging and publish promotion PRs.
+  Main is intentionally unprotected during early development.
 
 Next loop after approval: verify each merge SHA, then verify the Pages workflow
 from the new Battle-Clash `main` commit.

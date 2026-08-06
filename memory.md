@@ -8,6 +8,11 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 
 ## Durable Architecture Decisions
 
+- Battle Clash Flow owns a deterministic transition-phase resource and event
+  (`exiting → preparing → loading → ready → revealing → stable/failed`) while
+  Core Scene remains authoritative for scene identity and route guards. The
+  Three.js host projects a small transition veil from snapshots only.
+
 - NexusEngine is the deterministic Core runtime and is pinned as an external dependency.
 - The feature branch is compatible with NexusEngine 0.0.4 semantic paths (`n:world`,
   `n:network`, `n:runtime:*`, `n:simulation`, `n:spatial`, `n:interaction:*`,
@@ -270,11 +275,11 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - Responsive camera framing derives from projected battlefield bounds instead
   of fixed vertical zoom values, so the full room survives compact and portrait views.
 - The private repository keeps `/docs` as a local static fallback, while the
-  primary Pages release path builds and publishes `dist/` through GitHub
-  Actions on pushes to `main`.
-- The Pages artifact workflow runs deterministic simulation checks, then
-  deploys on pushes to `main` while still supporting manual dispatch, preserving
-  the private-repository/public-Pages boundary.
+  primary Pages release path builds one artifact from the `main`, `staging`,
+  and `publish` branch snapshots.
+- The Pages artifact workflow runs deterministic checks and deploys the root,
+  `/staging/`, and `/publish/` paths on release-branch pushes while supporting
+  manual dispatch, preserving the private-repository/public-Pages boundary.
 - The Pages workflow performs a post-deploy curl health check for the published
   Battle Clash title and runtime entrypoint before reporting the deployment
   healthy.
@@ -335,6 +340,9 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - `publish` is production at `/publish/`.
 - Promotions are pull requests in the order main -> staging -> publish;
   redacted tier audits are retained as release evidence.
+- `main` is intentionally unprotected during early development so the team can
+  iterate and play-test quickly; `staging` and `publish` remain protected
+  promotion gates.
 
 ## Conventions
 

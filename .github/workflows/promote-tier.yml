@@ -41,10 +41,11 @@ jobs:
           esac
       - name: Validate source tier
         run: |
-          git fetch --no-tags origin "$SOURCE"
+          git fetch --no-tags origin main staging publish
           git checkout --detach "origin/$SOURCE"
           npm ci
           BATTLE_CLASH_TIER="$SOURCE" BATTLE_CLASH_ENFORCE_TIER=true npm run check:all
+          BATTLE_CLASH_PROMOTION_SOURCE="$SOURCE" BATTLE_CLASH_PROMOTION_TARGET="$TARGET" npm run check:tier-promotion
           BATTLE_CLASH_TIER="$SOURCE" npm run audit:tier
       - name: Open protected promotion pull request
         run: |

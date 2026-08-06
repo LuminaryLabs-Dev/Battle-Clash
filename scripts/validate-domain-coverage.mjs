@@ -23,7 +23,7 @@ const expectedDomains = [
   "n:game:battle-clash:world", "n:game:battle-clash:player", "n:game:battle-clash:content", "n:interaction", "n:interaction:input",
   "n:network", "n:presentation", "n:presentation:camera", "n:presentation:graphics", "n:presentation:output",
   "n:presentation:ui", "n:runtime", "n:runtime:data", "n:runtime:persistence", "n:runtime:realtime",
-  "n:runtime:sequence", "n:simulation", "n:spatial", "n:world", "n:world:scene"
+  "n:runtime:sequence", "n:runtime:startup", "n:simulation", "n:spatial", "n:world", "n:world:scene"
 ];
 
 const commandCases = [
@@ -69,7 +69,7 @@ const domainNamespaces = {
   "n:presentation": "presentation", "n:presentation:camera": "cameraFraming", "n:presentation:graphics": "graphics",
   "n:presentation:output": "presentationOutput", "n:presentation:ui": "ui", "n:runtime": "runtime",
   "n:runtime:data": "data", "n:runtime:persistence": "persistence", "n:runtime:realtime": "realtime",
-  "n:runtime:sequence": "sequence", "n:simulation": "simulation", "n:spatial": "spatial", "n:world": "world",
+  "n:runtime:sequence": "sequence", "n:runtime:startup": "startup", "n:simulation": "simulation", "n:spatial": "spatial", "n:world": "world",
   "n:world:scene": "scene", "n:game:battle-clash:army": "battleClashArmy", "n:game:battle-clash:combat": "battleClashRaid",
   "n:game:battle-clash:defense": "battleClashDefense", "n:game:battle-clash:deployment": "battleClashDeployment",
   "n:game:battle-clash:economy": "battleClashEconomy", "n:game:battle-clash:encounter": "battleClashEncounter",
@@ -210,6 +210,14 @@ check("event-behavior", "AccountChanged", () => {
   game.updateAccount({ syncStatus: "validator" });
   requireValue(game.engine.world.readEvents(Events.AccountChanged).length > 0, "AccountChanged was not emitted");
 });
+check("event-behavior", "SceneTransitionChanged", () => {
+  const game = createBattleClashGame();
+  requireValue(game.transitionToScene("overworld").accepted, "scene transition rejected");
+  requireValue(game.getTransitionState().phase === "exiting", "transition did not enter exiting phase");
+  requireValue(game.engine.world.readEvents(Events.SceneTransitionChanged).length >= 2, "transition start events were not emitted");
+  game.stepSeconds(1);
+  requireValue(game.getTransitionState().phase === "stable", "transition did not settle");
+});
 check("event-behavior", "world-event-emission", () => {
   const game = createBattleClashGame();
   game.transitionToScene("overworld");
@@ -263,7 +271,7 @@ check("event-behavior", "complete-event-catalog", () => {
     "RaidStarted", "RaidCompleted", "RaidReset", "ProgressionAwarded", "LevelGained", "DefenseFortified",
     "SessionChanged", "SceneChanged", "RoomChanged", "HeroMoved", "TerritoryDiscovered", "TerritoryEntered", "TerritoryClaimed",
     "EconomyTicked", "LandmarkInteracted", "LandscapeChanged", "ObjectiveProgressed", "ObjectiveCompleted",
-    "AccountChanged", "AbilityUsed"
+    "AccountChanged", "AbilityUsed", "SceneTransitionChanged"
   ];
   for (const name of required) check("event-behavior", name, () => requireValue(emitted.has(name), `${name} was not emitted`));
   return { events: required.length, observed: emitted.size };
@@ -314,7 +322,7 @@ const apiMethods = [
   "updateAccount", "getWorldState", "getCurrentTerritory", "getHeroState", "getSanctumState", "selectArchetype",
   "discoverTerritory", "enterTerritory", "prepareTerritory", "claimTerritory", "moveHero", "healArmy", "recruitArmy",
   "upgradeSanctum", "tradeResources", "interactLandmark", "findHeroPath", "findWorldPath", "findCombatPath",
-  "tickEconomy", "changeLandscape", "transitionToScene", "canDeployAt", "getSnapshot", "getDeterministicSnapshot", "getDigest",
+  "tickEconomy", "changeLandscape", "transitionToScene", "getTransitionState", "markSceneReady", "canDeployAt", "getSnapshot", "getDeterministicSnapshot", "getDigest",
   "getContentState", "craftGear", "equipGear",
   "getPlayerState", "startPlayerEpisode", "recordPlayerObservation", "retrievePlayerMemory", "recordPlayerDecision",
   "getPlayerObservation",

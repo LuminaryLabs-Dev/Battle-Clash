@@ -21,6 +21,15 @@
         aria-label="Battle Clash dungeon. Deploy blue delvers on the glowing perimeter, then attack the purple Dungeon Heart."
       ></canvas>
 
+      <section id="sceneTransition" class="scene-transition" hidden aria-live="polite" aria-busy="false">
+        <div class="scene-transition__veil" aria-hidden="true"></div>
+        <div class="scene-transition__copy">
+          <span id="sceneTransitionPhase">FOLLOWING THE FRONT</span>
+          <strong id="sceneTransitionTitle">Preparing destination</strong>
+          <div class="scene-transition__progress" aria-hidden="true"><i id="sceneTransitionProgress"></i></div>
+        </div>
+      </section>
+
       <p id="objective" class="sr-only" aria-live="polite">
         Deploy your delver party, then shatter the Dungeon Heart.
       </p>
