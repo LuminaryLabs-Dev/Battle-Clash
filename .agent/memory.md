@@ -21,9 +21,9 @@
   interactions; other state belongs in the world or the invoked system menu.
 - Responsive camera framing must fit projected room bounds across desktop,
   compact landscape, and portrait viewports.
-- Pages publishes one combined artifact: production from `main` at the root,
-  staging from `staging/`, and the publish candidate from `publish/`. The
-  checked-in `/docs` tree remains a local fallback.
+- Pages publishes one combined artifact: development from `main` at the root,
+  staging from `staging/`, and production from `publish/`. The checked-in
+  `/docs` tree remains a local fallback.
 
 ## Conventions
 
@@ -41,6 +41,10 @@
   Battle Clash's local profile and sync queue are cleared after deletion.
 - Release state is explicit and data-policy-bound: `main` is development,
   `staging` is anonymized production staging, and `publish` is production.
+  `main` is intentionally unprotected during early development; `staging` and
+  `publish` retain required review/check protection.
   Public Pages uses `/staging/` and `/publish/` paths beside the development
   root because a repository has one Pages site. Promotion is PR-only in the
-  order main -> staging -> publish, with redacted tier audits.
+  order main -> staging -> publish, with redacted tier audits. The tier-flow
+  validator checks exact baseline parity and prevents target-only commits from
+  entering a promotion.

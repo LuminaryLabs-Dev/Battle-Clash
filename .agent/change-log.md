@@ -1,5 +1,16 @@
 # Agent Change Log
 
+## 2026-08-05
+
+- Audited the live NexusEngine Core domain/kit catalog and mapped Battle Clash
+  expansion ownership in `docs/NEXUS_EXPANSION_CHECKLIST.md`.
+- Added the ECS-owned Flow transition coordinator with deterministic phases,
+  readiness, cancellation, failure, progress, and transition events.
+- Composed Core Runtime Startup preparation contracts, Core Scene route guards,
+  and a renderer-only diegetic transition veil/progress projection.
+- Added transition resource/event/API behavior gates; semantic coverage is
+  684/684 (100%).
+
 ## 2026-07-28 18:49:31 EDT
 
 - Bootstrapped the repository-local agent workspace.
@@ -174,3 +185,19 @@
   production staging `staging`, and production `publish`.
 - Removed the build-tier workflow and changed the promotion path to
   `main -> staging -> publish`; production Pages is now `/publish/`.
+
+## 2026-08-05 01:36:18 EDT
+
+- Added `validate-tier-flow.mjs` with release-ref, exact-baseline, and
+  fast-forwardable-promotion modes.
+- Added package scripts, release-manifest parity metadata, branch-audit checks,
+  and a weekly/manual tier-maintenance workflow.
+- Added the tier maintenance runbook and reconciled stale agent/release notes
+  with the three-branch development -> staging -> production flow.
+
+## 2026-08-05 01:45:00 EDT
+
+- Pushed the maintenance guardrails to `agent/domain-validator` and updated
+  PR #1; branch-audit and checks completed successfully.
+- Enabled protected auto-merge without bypassing review. Baseline alignment is
+  waiting on GitHub's required approving review.

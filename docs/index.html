@@ -13,8 +13,8 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2313b8ff'/%3E%3Cpath d='M17 14h21c8 0 13 4 13 11 0 4-2 7-5 9 4 2 6 6 6 10 0 8-6 12-15 12H17V14zm12 10v7h8c3 0 4-1 4-4s-2-3-5-3h-7zm0 16v7h9c3 0 5-1 5-4 0-2-2-3-5-3h-9z' fill='%2307111f'/%3E%3C/svg%3E"
     />
     <title>Battle Clash</title>
-    <script type="module" crossorigin src="/Battle-Clash/assets/index-D1oo2dQd.js"></script>
-    <link rel="stylesheet" crossorigin href="/Battle-Clash/assets/index-CQDJhGGt.css">
+    <script type="module" crossorigin src="/Battle-Clash/assets/index-DvqXIoHV.js"></script>
+    <link rel="stylesheet" crossorigin href="/Battle-Clash/assets/index-Drwlv6IL.css">
   </head>
   <body>
     <main id="app">
@@ -22,6 +22,15 @@
         id="game"
         aria-label="Battle Clash dungeon. Deploy blue delvers on the glowing perimeter, then attack the purple Dungeon Heart."
       ></canvas>
+
+      <section id="sceneTransition" class="scene-transition" hidden aria-live="polite" aria-busy="false">
+        <div class="scene-transition__veil" aria-hidden="true"></div>
+        <div class="scene-transition__copy">
+          <span id="sceneTransitionPhase">FOLLOWING THE FRONT</span>
+          <strong id="sceneTransitionTitle">Preparing destination</strong>
+          <div class="scene-transition__progress" aria-hidden="true"><i id="sceneTransitionProgress"></i></div>
+        </div>
+      </section>
 
       <p id="objective" class="sr-only" aria-live="polite">
         Deploy your delver party, then shatter the Dungeon Heart.

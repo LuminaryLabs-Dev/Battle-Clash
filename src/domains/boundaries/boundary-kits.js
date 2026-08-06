@@ -1,5 +1,12 @@
 import { defineDomainServiceKit } from "nexusengine/domain-service-kit";
-import { Resources } from "../shared/definitions.js";
+import { Events, Resources } from "../shared/definitions.js";
+import {
+  beginSceneTransition,
+  installSceneTransitionState,
+  markSceneTransitionReady,
+  publishSceneTransition,
+  sceneTransitionSystem
+} from "../flow/scene-transition.js";
 
 function boundary({ id, domain, path, apiName, services, owns, read }) {
   return defineDomainServiceKit({
@@ -28,14 +35,68 @@ function boundary({ id, domain, path, apiName, services, owns, read }) {
 }
 
 export function createFlowBoundaryKit() {
-  return boundary({
+  return defineDomainServiceKit({
     id: "battle-clash-flow-boundary-kit",
     domain: "battle-clash-flow",
-    path: "n:game:battle-clash:flow",
+    domainPath: "n:game:battle-clash:flow",
+    parentDomainPath: "n:game:battle-clash",
     apiName: "battleClashFlow",
-    services: ["scene-routing", "transition-guards", "recovery"],
-    owns: ["scene route intent", "transition recovery policy"],
-    read: (engine) => structuredClone(engine.world.getResource(Resources.SceneState))
+    stability: "experimental",
+    version: "0.2.0",
+    provides: ["n:game:battle-clash:flow"],
+    requires: ["n:game:battle-clash", "n:world", "n:world:scene", "n:runtime:sequence", "n:runtime:startup"],
+    services: ["scene-routing", "transition-guards", "recovery", "transition-state", "readiness"],
+    resources: { SceneTransitionState: Resources.SceneTransitionState },
+    events: { SceneTransitionChanged: Events.SceneTransitionChanged },
+    systems: [{ phase: "resolve", name: "battleClashSceneTransitionSystem", system: sceneTransitionSystem }],
+    initWorld({ world }) {
+      installSceneTransitionState(world);
+    },
+    createApi({ engine, world }) {
+      const read = () => structuredClone(world.getResource(Resources.SceneTransitionState));
+      return {
+        getState: read,
+        begin(request = {}) {
+          const result = beginSceneTransition(read(), request);
+          if (result.accepted && !result.duplicate) publishSceneTransition(world, result.state);
+          return { ...result, state: read() };
+        },
+        markReady(request = {}) {
+          const result = markSceneTransitionReady(read(), request);
+          if (result.accepted) publishSceneTransition(world, result.state);
+          return { ...result, state: read() };
+        },
+        fail(error = {}) {
+          const current = read();
+          const next = { ...current, phase: "failed", active: false, ready: false, progress: 0, error: structuredClone(error), sequence: Number(current.sequence ?? 0) + 1 };
+          publishSceneTransition(world, next);
+          return { accepted: true, state: read() };
+        },
+        cancel(reason = "cancelled") {
+          const current = read();
+          const next = {
+            ...current,
+            phase: "failed",
+            active: false,
+            ready: false,
+            progress: 0,
+            error: { code: "scene-transition-cancelled", message: String(reason) },
+            sequence: Number(current.sequence ?? 0) + 1
+          };
+          publishSceneTransition(world, next);
+          return { accepted: true, state: read() };
+        },
+        getSceneState: () => structuredClone(engine.n.battleClashWorld?.getWorldState?.() ?? {})
+      };
+    },
+    metadata: {
+      owns: ["scene route intent", "transition recovery policy", "Battle Clash transition phase state", "transition readiness bridge"],
+      doesNotOwn: ["Nexus Core scene identity", "Nexus startup preparation semantics", "Three.js presentation", "PeerJS transport", "browser storage"],
+      rendererAgnostic: true,
+      deterministic: true,
+      snapshot: true,
+      reset: true
+    }
   });
 }
 

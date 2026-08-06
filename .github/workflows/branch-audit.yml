@@ -19,6 +19,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Fetch release tier refs
+        run: git fetch --no-tags origin main staging publish
       - name: Resolve tier policy
         run: |
           case "${GITHUB_REF_NAME}" in
@@ -28,6 +30,7 @@ jobs:
           echo "BATTLE_CLASH_TIER=$tier" >> "$GITHUB_ENV"
           echo "BATTLE_CLASH_ENFORCE_TIER=true" >> "$GITHUB_ENV"
       - run: npm run check:tier
+      - run: npm run check:tier-flow
       - run: npm run check:release
       - run: npm run check:domains
       - run: git diff --check

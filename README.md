@@ -118,6 +118,9 @@ Battle Clash uses three ordered branch tiers: `main` (development), `staging`
 
 The tiered Pages workflow builds the three public branches into one Pages site:
 
+Nexus ownership and the expansion checklist are documented in
+[`docs/NEXUS_EXPANSION_CHECKLIST.md`](docs/NEXUS_EXPANSION_CHECKLIST.md).
+
 - Development: <https://luminarylabs-dev.github.io/Battle-Clash/>
 - Staging: <https://luminarylabs-dev.github.io/Battle-Clash/staging/>
 - Production: <https://luminarylabs-dev.github.io/Battle-Clash/publish/>
@@ -140,6 +143,10 @@ private while the Pages game is public.
 Use `.github/workflows/promote-tier.yml` to open a checked promotion PR in the
 only permitted order: `main -> staging -> publish`. The promotion
 workflow does not merge or push to `main`.
+
+See [docs/TIER_MAINTENANCE.md](docs/TIER_MAINTENANCE.md) for baseline parity,
+promotion, drift checks, and recovery procedures. The weekly tier maintenance
+workflow also provides manual baseline and promotion audits.
 
 See [MASTER_PLAN.md](MASTER_PLAN.md) for the domain and product roadmap.
 

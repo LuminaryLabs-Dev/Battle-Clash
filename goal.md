@@ -11,6 +11,11 @@ defend boundaries.
 
 ## Status
 
+The Nexus expansion baseline is implemented locally on `main`: Flow transition
+state/readiness is composed with Core Scene and Runtime Startup, the renderer
+projects a diegetic transition veil, and semantic coverage is 684/684 (100%).
+See `docs/NEXUS_EXPANSION_CHECKLIST.md` for the domain-to-kit contract.
+
 Complete locally on `agent/domain-validator` (not pushed to `main`). Home Base, overworld,
 territory state, economy ticks, scene transitions, and NexusEngine-backed world,
 territory, and combat A* queries are wired and validated. Dynamic landscape
@@ -27,9 +32,9 @@ receipt with zero console errors.
 
 The active feature branch is compatible with NexusEngine 0.0.4 semantic domains
 and adds deterministic authored room chains plus the content kit. Current proof
-is 675/675, with Player harness browser proof green.
-Main remains protected; external Supabase, Rails runtime, OAuth, hosted
-PeerServer/TURN, and required PR review are still release gates.
+is 675/675, with Player harness browser proof green. Main is now the
+unprotected development branch; staging/publish review gates, external
+Supabase, Rails runtime, OAuth, and hosted PeerServer/TURN remain release gates.
 
 ## Acceptance Criteria
 
@@ -261,18 +266,19 @@ PeerServer/TURN, and required PR review are still release gates.
 - A clean level-scaled two-tab browser run proves networked Heart victory,
   defender authority, synchronized Home Base return, territory ownership, and
   persisted loot/economy receipts on both peers.
-- The private-repository Pages workflow validates and deploys the `dist/`
-  artifact on pushes to `main` while retaining manual dispatch for controlled
-  releases; `/docs` remains a local static fallback.
+- The private-repository Pages workflow validates the `main`, `staging`, and
+  `publish` snapshots and deploys one artifact at the root, `/staging/`, and
+  `/publish/`; `/docs` remains a local static fallback.
 - Three.js and PeerJS never own gameplay outcomes.
 - Deterministic checks, production build, zero-error browser launch, screenshots,
   and human-view acceptance all pass.
 
 ## Preserved Release Baseline
 
-The first public implementation remains on `main`, with solo fallback,
-defender-host PeerJS authority, persistent progression, and GitHub Pages
-deployment already proven.
+The validated development source baseline is on `main` at merge commit
+`86f960f`. Promotion PR #2 carries it toward `staging`; after both protected
+promotions, `npm run check:tier-baseline` is the parity gate for the shared
+baseline tag.
 
 ## Later Product Work
 

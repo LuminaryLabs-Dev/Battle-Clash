@@ -53,7 +53,10 @@ no longer a release tier.
 
 ## Operating rules
 
-- Keep `main` protected and merge through a reviewed promotion PR.
+- `main` is intentionally unprotected during early development; use normal
+  checks and PRs when useful, but do not treat it as the production gate.
+- Keep `staging` and `publish` protected and merge them only through reviewed
+  promotion PRs.
 - Keep credentials in GitHub/Supabase/Rails provider settings; never in a
   branch or tier metadata file.
 - Never send real user profiles or receipts to `main` or `staging`.
