@@ -50,7 +50,9 @@ export function createInitialSceneTransitionState() {
     progress: 1,
     ready: true,
     error: null,
-    remote: false
+    remote: false,
+    startupReady: true,
+    preparations: []
   };
 }
 
@@ -86,7 +88,9 @@ export function beginSceneTransition(state, request = {}) {
       progress: 0,
       ready: false,
       error: null,
-      remote: Boolean(request.remote)
+      remote: Boolean(request.remote),
+      startupReady: request.startupReady !== false,
+      preparations: clone(request.preparations ?? [])
     })
   };
 }
@@ -97,7 +101,17 @@ export function markSceneTransitionReady(state, request = {}) {
   if (request.transitionId && request.transitionId !== current.transitionId) {
     return { accepted: false, reason: "transition-id-mismatch", state: clone(current) };
   }
-  return { accepted: true, state: withSequence(current, { ready: true }) };
+  const preparations = (current.preparations ?? []).map((preparation) => ({
+    ...preparation,
+    status: preparation.required === false || request.preparationId == null || request.preparationId === preparation.id
+      ? "ready"
+      : preparation.status,
+    progress: preparation.required === false || request.preparationId == null || request.preparationId === preparation.id
+      ? 1
+      : preparation.progress
+  }));
+  const requiredReady = preparations.filter((item) => item.required !== false).every((item) => item.status === "ready");
+  return { accepted: true, state: withSequence(current, { ready: requiredReady, preparations }) };
 }
 
 export function failSceneTransition(state, error = {}) {
@@ -189,4 +203,3 @@ export function sceneTransitionSystem(world) {
   const result = advanceSceneTransition(current, world.__nexusClock?.delta ?? 0);
   if (result.changed) publishSceneTransition(world, result.state);
 }
-

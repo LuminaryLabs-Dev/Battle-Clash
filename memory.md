@@ -12,6 +12,10 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
   (`exiting → preparing → loading → ready → revealing → stable/failed`) while
   Core Scene remains authoritative for scene identity and route guards. The
   Three.js host projects a small transition veil from snapshots only.
+- Flow scene preparation is an ECS resource with weighted data/assets/camera
+  records and optional texture/audio/effect records; Core Runtime Startup is
+  bootstrapped to playable readiness before routes begin, while the renderer
+  remains a consumer of readiness snapshots.
 
 - NexusEngine is the deterministic Core runtime and is pinned as an external dependency.
 - The feature branch is compatible with NexusEngine 0.0.4 semantic paths (`n:world`,
