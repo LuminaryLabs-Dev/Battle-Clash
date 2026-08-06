@@ -249,7 +249,14 @@ export const WORLD_SCENES = Object.freeze([
     exits: Object.freeze([
       Object.freeze({ id: "to-overworld", to: "overworld", label: "Open frontier map" })
     ]),
-    metadata: Object.freeze({ role: "home-base", territoryId: "dawnwatch-sanctum" })
+    metadata: Object.freeze({
+      role: "home-base", territoryId: "dawnwatch-sanctum", version: 1,
+      contentHash: "scene-sanctum-v1", seed: "battle-clash:sanctum",
+      hostBinding: "sanctum", camera: { mode: "orthographic", target: "sanctum-core", framing: "wide" },
+      lighting: { profile: "dawnwatch-blue", fog: "soft-void", colorGrade: "warm-cyan" },
+      audio: { ambient: "sanctum-wind", mix: "quiet" }, effects: { profile: "sanctum-embers" },
+      assets: ["objaverse-fc1339e225b7408caec82681be2746c5"], objective: "prepare-the-banner"
+    })
   }),
   Object.freeze({
     id: "overworld",
@@ -259,7 +266,13 @@ export const WORLD_SCENES = Object.freeze([
       Object.freeze({ id: "to-sanctum", to: "sanctum", label: "Return to sanctum" }),
       Object.freeze({ id: "to-territory", to: "territory", label: "Enter territory" })
     ]),
-    metadata: Object.freeze({ role: "world-map" })
+    metadata: Object.freeze({
+      role: "world-map", version: 1, contentHash: "scene-overworld-v1", seed: "battle-clash:overworld",
+      hostBinding: "overworld", camera: { mode: "orthographic", target: "frontier-graph", framing: "map" },
+      lighting: { profile: "frontier-dusk", fog: "distant-veil", colorGrade: "steel-blue" },
+      audio: { ambient: "frontier-wind", mix: "exploration" }, effects: { profile: "route-glow" },
+      assets: [], objective: "choose-a-front"
+    })
   }),
   Object.freeze({
     id: "territory",
@@ -269,7 +282,13 @@ export const WORLD_SCENES = Object.freeze([
       Object.freeze({ id: "to-overworld", to: "overworld", label: "Return to frontier" }),
       Object.freeze({ id: "to-encounter", to: "encounter", label: "Enter front" })
     ]),
-    metadata: Object.freeze({ role: "territory-front" })
+    metadata: Object.freeze({
+      role: "territory-front", version: 1, contentHash: "scene-territory-v1", seed: "battle-clash:territory",
+      hostBinding: "territory", camera: { mode: "orthographic", target: "hero", framing: "grid" },
+      lighting: { profile: "contested-front", fog: "grid-haze", colorGrade: "faction-aware" },
+      audio: { ambient: "front-pressure", mix: "tension" }, effects: { profile: "hazard-pulse" },
+      assets: [], objective: "reach-the-front"
+    })
   }),
   Object.freeze({
     id: "encounter",
@@ -278,7 +297,53 @@ export const WORLD_SCENES = Object.freeze([
     exits: Object.freeze([
       Object.freeze({ id: "to-territory", to: "territory", label: "Return to territory" })
     ]),
-    metadata: Object.freeze({ role: "attack-defend-encounter", territoryId: "obsidian-vault" })
+    metadata: Object.freeze({
+      role: "attack-defend-encounter", territoryId: "obsidian-vault", version: 1,
+      contentHash: "scene-encounter-v1", seed: "battle-clash:encounter",
+      hostBinding: "encounter", camera: { mode: "orthographic", target: "dungeon-heart", framing: "combat" },
+      lighting: { profile: "dungeon-ember", fog: "combat-smoke", colorGrade: "violet-amber" },
+      audio: { ambient: "dungeon-heart", mix: "combat" }, effects: { profile: "combat-feedback" },
+      assets: ["objaverse-fc1339e225b7408caec82681be2746c5"], objective: "shatter-the-heart"
+    })
+  }),
+  Object.freeze({
+    id: "victory",
+    title: "Front Secured",
+    kind: "web-three-scene",
+    exits: Object.freeze([Object.freeze({ id: "to-sanctum", to: "sanctum", label: "Return to Sanctum" })]),
+    metadata: Object.freeze({
+      role: "victory-reward", version: 1, contentHash: "scene-victory-v1", seed: "battle-clash:victory",
+      hostBinding: "victory", camera: { mode: "orthographic", target: "reward-cache", framing: "reveal" },
+      lighting: { profile: "victory-dawn", fog: "clear", colorGrade: "gold" },
+      audio: { ambient: "victory-rise", mix: "reward" }, effects: { profile: "victory-collapse" },
+      assets: [], objective: "secure-the-reward", transient: true
+    })
+  }),
+  Object.freeze({
+    id: "defeat",
+    title: "Front Lost",
+    kind: "web-three-scene",
+    exits: Object.freeze([Object.freeze({ id: "to-sanctum", to: "sanctum", label: "Fall Back to Sanctum" })]),
+    metadata: Object.freeze({
+      role: "defeat-recovery", version: 1, contentHash: "scene-defeat-v1", seed: "battle-clash:defeat",
+      hostBinding: "defeat", camera: { mode: "orthographic", target: "dungeon-heart", framing: "recovery" },
+      lighting: { profile: "defeat-ember", fog: "heavy", colorGrade: "red-violet" },
+      audio: { ambient: "defeat-fall", mix: "recovery" }, effects: { profile: "defeat-collapse" },
+      assets: [], objective: "return-to-sanctum", transient: true
+    })
+  }),
+  Object.freeze({
+    id: "room",
+    title: "Dungeon Room",
+    kind: "web-three-scene",
+    exits: Object.freeze([Object.freeze({ id: "to-encounter", to: "encounter", label: "Enter room" })]),
+    metadata: Object.freeze({
+      role: "room-chain", version: 1, contentHash: "scene-room-v1", seed: "battle-clash:room",
+      hostBinding: "encounter-room", camera: { mode: "orthographic", target: "room-objective", framing: "combat" },
+      lighting: { profile: "room-ember", fog: "room-smoke", colorGrade: "violet-amber" },
+      audio: { ambient: "room-threat", mix: "combat" }, effects: { profile: "room-hazard" },
+      assets: [], objective: "complete-room", transient: true
+    })
   }),
   ...TERRITORIES
     .filter((territory) => territory.kind !== "sanctum")
@@ -294,7 +359,12 @@ export const WORLD_SCENES = Object.freeze([
         role: "territory-front",
         territoryId: territory.id,
         territoryKind: territory.kind,
-        grid: { ...TERRITORY_GRID }
+        grid: { ...TERRITORY_GRID }, version: 1,
+        contentHash: `scene-${territory.id}-v1`, seed: `battle-clash:${territory.id}`,
+        hostBinding: "territory", camera: { mode: "orthographic", target: "hero", framing: "grid" },
+        lighting: { profile: `${territory.kind}-front`, fog: "grid-haze", colorGrade: "faction-aware" },
+        audio: { ambient: `${territory.kind}-ambient`, mix: "exploration" }, effects: { profile: "hazard-pulse" },
+        assets: [], objective: "reach-the-front"
       })
     }))
 ]);
