@@ -501,6 +501,7 @@ function updateUi(snapshot) {
       personalWorld = structuredClone(snapshot.world);
       savedWorld = serializedWorld;
     }
+    updateTransitionUi(snapshot);
     return;
   }
   elements.worldPanel.hidden = true;
@@ -650,6 +651,7 @@ function updateUi(snapshot) {
     personalWorld = structuredClone(snapshot.world);
     savedWorld = serializedWorld;
   }
+  updateTransitionUi(snapshot);
 }
 
 function updateTransitionUi(snapshot) {
@@ -675,6 +677,16 @@ function updateTransitionUi(snapshot) {
     : `Entering ${destination}`;
   elements.sceneTransitionProgress.style.transform = `scaleX(${Math.max(0, Math.min(1, Number(transition.progress ?? 0)))})`;
   document.body.dataset.transition = phase;
+  const inputLocked = active && phase !== "failed";
+  for (const control of [
+    elements.deployMode, elements.start, elements.fortify, elements.heroAbility,
+    elements.playAgain, elements.returnAfterRaid, elements.enterFrontier,
+    elements.healArmy, elements.recruitArmy, elements.upgradeSanctum,
+    elements.tradeResources, elements.discoverNext, elements.claimTerritory,
+    elements.enterEncounter, elements.returnSanctum
+  ]) {
+    if (control) control.disabled = inputLocked || control.dataset.transitionDisabled === "true";
+  }
 }
 
 function currentSnapshot() {
@@ -896,6 +908,7 @@ function applyLocalCommand(command, { remote = false } = {}) {
 }
 
 function dispatchCommand(command) {
+  if (game?.getTransitionState?.().active && command.kind !== "scene") return false;
   const session = network?.getState() ?? game.getSnapshot().session;
   if (session.status === "connected" && session.role === "attacker") {
     if (command.kind === "select-archetype") {
