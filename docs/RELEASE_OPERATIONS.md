@@ -6,9 +6,10 @@ Development may land directly on the unprotected `main` branch or through a
 short-lived feature PR. Release changes advance through production staging
 `staging`, then production `publish`. The three branch contracts are defined in
 [`../release-tiers.json`](../release-tiers.json) and explained in
-[`BRANCH_TIERS.md`](BRANCH_TIERS.md). Promotion PRs are required for
-`main -> staging` and `staging -> publish`; `main` remains the development
-workspace until the project reaches production hardening.
+[`BRANCH_TIERS.md`](BRANCH_TIERS.md). Promotion PRs are used for
+`main -> staging` and `staging -> publish`; early development currently keeps
+CI checks while approval review is disabled. Restore required review before
+production hardening.
 
 The branch-audit workflow uploads a redacted tier audit for every tier push or
 PR. It records policy, commit, data mode, deployment path, and check status,

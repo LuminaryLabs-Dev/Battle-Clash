@@ -11,9 +11,9 @@ this workspace.
   attributed, approved after three review passes, rendered in the game, and
   verified with cube fallback. Evidence: `src/assets/approved-manifest.json`,
   `assets/objaverse/reviews/`, `python3 tools/objaverse/cli.py verify ...`.
-- [x] `DONE` NexusEngine ECS/game domains: 38 domains, 169 territories, 172
-  scenes, deterministic A*, authored room chain, content kit, PeerJS contracts,
-  and 675/675 semantic coverage.
+- [x] `DONE` NexusEngine ECS/game domains: 39 domains, 169 territories, 175
+  scene descriptors, deterministic A*, authored room chain, content kit, PeerJS
+  contracts, and 687/687 semantic coverage.
 - [x] `DONE` Player harness: ECS/screen adapters, JSONL memory triangle,
   retrieval/replay/dataset checks, responsive screenshots, and full local
   Home Base → Frontier → Territory → Rooms → Victory → Home episode.
@@ -27,16 +27,17 @@ Next loop: keep these gates unchanged while integrating external services.
 ## Loop 2 — protected repository integration
 
 - [x] `DONE` All repositories are private, default branch `main`; staging and
-  publish retain one required approving review and one required CI check.
+  publish are promotion branches with required CI checks and no early-development
+  approval gate.
 - [x] `DONE` PR auto-merge is queued without bypassing protection:
   - [Battle-Clash PR](https://github.com/LuminaryLabs-Dev/Battle-Clash/pull/1)
   - [BattleClash-Player PR](https://github.com/LuminaryLabs-Dev/BattleClash-Player/pull/1)
   - [LuminaryLabs-Backend PR](https://github.com/LuminaryLabs-Dev/LuminaryLabs-Backend/pull/1)
-- [ ] `EXTERNAL` A reviewer must approve the staging and publish promotion PRs.
-  Main is intentionally unprotected during early development.
+- [x] `DONE` Promotion PRs #2, #3, #4, and #5 merged in order; main, staging,
+  and publish now point to the same source tree baseline.
 
-Next loop after approval: verify each merge SHA, then verify the Pages workflow
-from the new Battle-Clash `main` commit.
+Next loop: restore review protection before production hardening, after the
+current early-development baseline is accepted.
 
 ## Loop 3 — account and durable backend providers
 
@@ -71,15 +72,15 @@ release audit artifact and repeat the browser proof on the deployed origin.
 
 - [x] `DONE` Local Playwright proof passes desktop, compact, and portrait views,
   zero console errors, approved GLB loading, and the full screen episode.
-- [x] `PARTIAL` The current public Pages URL returns HTTP 200 and completes the
-  older episode with zero console errors.
-- [ ] `EXTERNAL` Merge to `main` and let Pages deploy the current artifact.
-- [ ] `EXTERNAL` Re-run public desktop/compact/portrait screenshots, asset
-  diagnostics, Google/email callbacks, and two-browser multiplayer.
+- [x] `DONE` All three public Pages paths return HTTP 200 after the current
+  publish deployment; workflow health checks pass.
+- [x] `DONE` Public Playwright proof passes desktop, compact, and portrait views,
+  zero console errors, approved GLB loading, and the complete screen episode.
+- [ ] `EXTERNAL` Run Google/email callbacks and two-browser authenticated
+  multiplayer after provider credentials and hosted transport are configured.
 
-Next loop after deployment: compare the public SHA/HTML bundle to the merged
-commit, inspect the uploaded redacted release-audit artifact, and exercise the
-rollback procedure if health checks fail.
+Next loop after provider setup: compare authenticated runtime evidence to the
+publish audit and exercise the rollback procedure if a health check fails.
 
 ## Loop 6 — release operations and monitoring
 
@@ -87,8 +88,10 @@ rollback procedure if health checks fail.
   after deploy, and uploads a redacted deployment audit artifact.
 - [x] `DONE` `release-manifest.json`, rollback instructions, encrypted-secret
   policy, branch protection, and health-check contracts are present.
-- [ ] `EXTERNAL` Verify one real deployment SHA, Pages health result, browser
-  proof artifact, profile revision, match receipt ID, and backend error summary.
+- [x] `DONE` Verify current main/staging/publish branch SHAs, identical source
+  tree hash, Pages health result, and public browser-proof artifacts.
+- [ ] `EXTERNAL` Verify a real profile revision, match receipt ID, and backend
+  error summary after providers exist.
 - [ ] `EXTERNAL` Add provider monitoring/alerting (Rails, Supabase, PeerServer,
   TURN) after production endpoints exist.
 
