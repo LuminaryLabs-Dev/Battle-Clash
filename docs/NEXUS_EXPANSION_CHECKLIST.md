@@ -39,8 +39,9 @@ composition point, proof, and player result.
 
 ## Current baseline
 
-- Flow state machine and diegetic transition projection: implemented.
-- Nexus semantic coverage: **684/684 (100%)**.
+- Flow state machine, deterministic preparation manifests, Runtime Startup
+  readiness bridge, and diegetic transition projection: implemented.
+- Nexus semantic coverage: **694/694 (100%)**.
 - Simulation, auth/sync/PeerJS contracts, build, and Pages artifact: pass.
 - Supabase, hosted PeerServer/TURN, OAuth credentials, and fresh deployed
   browser proof remain provider-gated and are not claimed as locally complete.
