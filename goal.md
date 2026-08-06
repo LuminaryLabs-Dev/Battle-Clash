@@ -13,7 +13,8 @@ defend boundaries.
 
 The Nexus expansion baseline is implemented locally on `main`: Flow transition
 state/readiness is composed with Core Scene and Runtime Startup, the renderer
-projects a diegetic transition veil, and semantic coverage is 684/684 (100%).
+projects a diegetic transition veil, weighted preparation records bridge to Core
+Startup, and semantic coverage is 694/694 (100%).
 See `docs/NEXUS_EXPANSION_CHECKLIST.md` for the domain-to-kit contract.
 
 Complete locally on `agent/domain-validator` (not pushed to `main`). Home Base, overworld,

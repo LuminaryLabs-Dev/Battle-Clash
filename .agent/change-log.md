@@ -10,6 +10,8 @@
   and a renderer-only diegetic transition veil/progress projection.
 - Added transition resource/event/API behavior gates; semantic coverage is
   684/684 (100%).
+- Added weighted scene-preparation manifests, preparation events, and a Core
+  Runtime Startup boot/readiness bridge; coverage is now 694/694 (100%).
 
 ## 2026-07-28 18:49:31 EDT
 

@@ -41,6 +41,7 @@ import { WORLD_SCENES, sceneForTerritory } from "../data/world.js";
 import { createPlayerKit } from "../domains/player/player-kit.js";
 import { createContentKit } from "../domains/content/content-kit.js";
 import { normalizePlayerObservation } from "../domains/player/player-observation.js";
+import { createScenePreparationManifest } from "../domains/flow/scene-preparation.js";
 import { advanceRoomState } from "../domains/encounter/room-state.js";
 import { seedBattleState } from "../domains/shared/entity-factory.js";
 import {
@@ -225,6 +226,22 @@ export function createBattleClashGame(options = {}) {
     ]
   });
 
+  const startup = engine.n.startup;
+  startup.launch({
+    launchId: "battle-clash:boot",
+    projectId: "battle-clash",
+    preparations: [
+      { id: "battle-clash-scene-data", label: "Scene data", weight: 2 },
+      { id: "battle-clash-assets", label: "Scene assets", weight: 2 },
+      { id: "battle-clash-presentation", label: "Presentation", weight: 1 }
+    ]
+  });
+  for (const preparation of ["battle-clash-scene-data", "battle-clash-assets", "battle-clash-presentation"]) {
+    startup.ready(preparation, { source: "battle-clash-composition" }, "Initial composition ready");
+  }
+  startup.presentFirstFrame({ frameId: "battle-clash:first-frame", presentationId: "battle-clash" });
+  startup.enter({ inputReady: true });
+
   function updateCommands(patch) {
     const current = engine.world.getResource(Resources.CommandQueue);
     engine.world.setResource(Resources.CommandQueue, {
@@ -331,6 +348,9 @@ export function createBattleClashGame(options = {}) {
     const transition = structuredClone(
       engine.world.getResource(Resources.SceneTransitionState)
     );
+    const preparation = structuredClone(
+      engine.world.getResource(Resources.ScenePreparationState)
+    );
     const hero = structuredClone(engine.world.getResource(Resources.HeroState));
     const army = structuredClone(engine.world.getResource(Resources.ArmyState));
     const sanctum = structuredClone(engine.world.getResource(Resources.SanctumState));
@@ -374,6 +394,7 @@ export function createBattleClashGame(options = {}) {
       effects,
       scene,
       transition,
+      preparation,
       world: worldState,
       hero,
       army,
@@ -413,6 +434,7 @@ export function createBattleClashGame(options = {}) {
       battleMetadata: snapshot.battleMetadata,
       scene: snapshot.scene,
       transition: snapshot.transition,
+      preparation: snapshot.preparation,
       world: snapshot.world,
       hero: snapshot.hero,
       army: snapshot.army,
@@ -574,12 +596,18 @@ export function createBattleClashGame(options = {}) {
       const result = engine.n.battleClashWorld.transitionScene(sceneId, payload);
       if (!result?.accepted) return result;
       const transition = result.transition ?? {};
+      const destinationScene = engine.n.scene?.getCurrentScene?.() ?? { id: transition.toSceneId ?? result.state?.currentSceneId ?? sceneId };
+      const preparation = engine.n.battleClashFlow.prepare(destinationScene, {
+        assets: destinationScene.metadata?.assets ?? []
+      });
       const flow = engine.n.battleClashFlow.begin({
         transitionId: transition.transitionId,
         fromSceneId: transition.fromSceneId ?? before,
         toSceneId: transition.toSceneId ?? result.state?.currentSceneId ?? sceneId,
         reason: payload.reason ?? "navigation",
-        payload
+        payload,
+        preparations: preparation.state?.manifest ?? [],
+        startupReady: engine.n.startup.getState().playable
       });
       if (flow.accepted) {
         engine.n.battleClashFlow.markReady({ transitionId: flow.state.transitionId });
@@ -587,6 +615,9 @@ export function createBattleClashGame(options = {}) {
       return { ...result, transition: engine.n.battleClashFlow.getState() };
     },
     getTransitionState: () => engine.n.battleClashFlow.getState(),
+    getPreparationState: () => engine.n.battleClashFlow.getPreparationState(),
+    prepare: (scene, options = {}) => engine.n.battleClashFlow.prepare(scene, options),
+    markPreparationReady: (preparationId, detail) => engine.n.battleClashFlow.markPreparationReady(preparationId, detail),
     markSceneReady: (request = {}) => engine.n.battleClashFlow.markReady(request),
     canDeployAt: (x, z) => engine.n.battleClashDeployment.canDeployAt(x, z),
     getSnapshot,

@@ -218,6 +218,19 @@ check("event-behavior", "SceneTransitionChanged", () => {
   game.stepSeconds(1);
   requireValue(game.getTransitionState().phase === "stable", "transition did not settle");
 });
+check("flow", "startup-preparation-bridge", () => {
+  const game = createBattleClashGame();
+  requireValue(game.engine.n.startup.getState().playable === true, "Core Startup did not reach playable readiness");
+  const preparation = game.prepare({
+    id: "validator-scene",
+    metadata: { assets: ["objaverse-fc1339e225b7408caec82681be2746c5"] }
+  });
+  requireValue(preparation.accepted && preparation.state.manifest.length >= 6, "scene preparation manifest was not created");
+  const first = preparation.state.manifest.find((item) => item.required !== false && item.status !== "ready");
+  requireValue(first && game.markPreparationReady(first.id).accepted, "preparation readiness could not advance");
+  requireValue(game.getPreparationState().status === "preparing", "partial readiness was not preserved");
+  return { preparations: game.getPreparationState().manifest.length, startup: game.engine.n.startup.getState().launch.status };
+});
 check("event-behavior", "world-event-emission", () => {
   const game = createBattleClashGame();
   game.transitionToScene("overworld");
@@ -322,7 +335,7 @@ const apiMethods = [
   "updateAccount", "getWorldState", "getCurrentTerritory", "getHeroState", "getSanctumState", "selectArchetype",
   "discoverTerritory", "enterTerritory", "prepareTerritory", "claimTerritory", "moveHero", "healArmy", "recruitArmy",
   "upgradeSanctum", "tradeResources", "interactLandmark", "findHeroPath", "findWorldPath", "findCombatPath",
-  "tickEconomy", "changeLandscape", "transitionToScene", "getTransitionState", "markSceneReady", "canDeployAt", "getSnapshot", "getDeterministicSnapshot", "getDigest",
+  "tickEconomy", "changeLandscape", "transitionToScene", "getTransitionState", "getPreparationState", "prepare", "markPreparationReady", "markSceneReady", "canDeployAt", "getSnapshot", "getDeterministicSnapshot", "getDigest",
   "getContentState", "craftGear", "equipGear",
   "getPlayerState", "startPlayerEpisode", "recordPlayerObservation", "retrievePlayerMemory", "recordPlayerDecision",
   "getPlayerObservation",
