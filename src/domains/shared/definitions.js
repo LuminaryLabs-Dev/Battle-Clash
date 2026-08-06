@@ -52,7 +52,8 @@ export const Resources = Object.freeze({
   PlayerMemory: defineResource("battle-clash.player-memory"),
   PlayerDecision: defineResource("battle-clash.player-decision"),
   PlayerEpisode: defineResource("battle-clash.player-episode"),
-  PlayerLearningSignal: defineResource("battle-clash.player-learning-signal")
+  PlayerLearningSignal: defineResource("battle-clash.player-learning-signal"),
+  SceneTransitionState: defineResource("battle-clash.scene-transition-state")
 });
 
 export const Events = Object.freeze({
@@ -96,5 +97,6 @@ export const Events = Object.freeze({
   GearLooted: defineEvent("battle-clash.content.gear-looted"),
   QuestProgressed: defineEvent("battle-clash.content.quest-progressed"),
   ItemCrafted: defineEvent("battle-clash.content.item-crafted"),
-  GearEquipped: defineEvent("battle-clash.content.gear-equipped")
+  GearEquipped: defineEvent("battle-clash.content.gear-equipped"),
+  SceneTransitionChanged: defineEvent("battle-clash.flow.scene-transition-changed")
 });

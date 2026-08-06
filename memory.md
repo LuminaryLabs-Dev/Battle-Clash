@@ -8,6 +8,11 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 
 ## Durable Architecture Decisions
 
+- Battle Clash Flow owns a deterministic transition-phase resource and event
+  (`exiting → preparing → loading → ready → revealing → stable/failed`) while
+  Core Scene remains authoritative for scene identity and route guards. The
+  Three.js host projects a small transition veil from snapshots only.
+
 - NexusEngine is the deterministic Core runtime and is pinned as an external dependency.
 - The feature branch is compatible with NexusEngine 0.0.4 semantic paths (`n:world`,
   `n:network`, `n:runtime:*`, `n:simulation`, `n:spatial`, `n:interaction:*`,

@@ -1,5 +1,16 @@
 # Agent Change Log
 
+## 2026-08-05
+
+- Audited the live NexusEngine Core domain/kit catalog and mapped Battle Clash
+  expansion ownership in `docs/NEXUS_EXPANSION_CHECKLIST.md`.
+- Added the ECS-owned Flow transition coordinator with deterministic phases,
+  readiness, cancellation, failure, progress, and transition events.
+- Composed Core Runtime Startup preparation contracts, Core Scene route guards,
+  and a renderer-only diegetic transition veil/progress projection.
+- Added transition resource/event/API behavior gates; semantic coverage is
+  684/684 (100%).
+
 ## 2026-07-28 18:49:31 EDT
 
 - Bootstrapped the repository-local agent workspace.

@@ -118,6 +118,9 @@ Battle Clash uses three ordered branch tiers: `main` (development), `staging`
 
 The tiered Pages workflow builds the three public branches into one Pages site:
 
+Nexus ownership and the expansion checklist are documented in
+[`docs/NEXUS_EXPANSION_CHECKLIST.md`](docs/NEXUS_EXPANSION_CHECKLIST.md).
+
 - Development: <https://luminarylabs-dev.github.io/Battle-Clash/>
 - Staging: <https://luminarylabs-dev.github.io/Battle-Clash/staging/>
 - Production: <https://luminarylabs-dev.github.io/Battle-Clash/publish/>

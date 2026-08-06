@@ -21,6 +21,10 @@ import { accountStateFromAuth, SIGNED_OUT_ACCOUNT } from "./online/account-state
 
 const elements = {
   canvas: document.querySelector("#game"),
+  sceneTransition: document.querySelector("#sceneTransition"),
+  sceneTransitionPhase: document.querySelector("#sceneTransitionPhase"),
+  sceneTransitionTitle: document.querySelector("#sceneTransitionTitle"),
+  sceneTransitionProgress: document.querySelector("#sceneTransitionProgress"),
   objective: document.querySelector("#objective"),
   phase: document.querySelector("#phaseValue"),
   time: document.querySelector("#timeValue"),
@@ -443,6 +447,7 @@ function updateWorldUi(snapshot) {
 
 function updateUi(snapshot) {
   latestSnapshot = snapshot;
+  updateTransitionUi(snapshot);
   updateContentUi(snapshot);
   const serializedContent = JSON.stringify(snapshot.content ?? null);
   if (snapshot.session?.status !== "connected" && serializedContent !== savedContent) {
@@ -645,6 +650,31 @@ function updateUi(snapshot) {
     personalWorld = structuredClone(snapshot.world);
     savedWorld = serializedWorld;
   }
+}
+
+function updateTransitionUi(snapshot) {
+  const transition = snapshot.transition;
+  if (!transition || !elements.sceneTransition) return;
+  const phase = String(transition.phase ?? "stable");
+  const active = Boolean(transition.active) || phase === "failed";
+  const destination = String(transition.toSceneId ?? "destination").replaceAll("-", " ");
+  const labels = {
+    exiting: "LEAVING THE CURRENT FRONT",
+    preparing: "PREPARING THE ROUTE",
+    loading: "READING THE TERRITORY",
+    ready: "THE PATH IS OPEN",
+    revealing: "ENTERING THE SCENE",
+    failed: "ROUTE INTERRUPTED"
+  };
+  elements.sceneTransition.hidden = !active;
+  elements.sceneTransition.dataset.phase = phase;
+  elements.sceneTransition.setAttribute("aria-busy", String(active && phase !== "failed"));
+  elements.sceneTransitionPhase.textContent = labels[phase] ?? "FOLLOWING THE FRONT";
+  elements.sceneTransitionTitle.textContent = phase === "failed"
+    ? "Return to a safe route"
+    : `Entering ${destination}`;
+  elements.sceneTransitionProgress.style.transform = `scaleX(${Math.max(0, Math.min(1, Number(transition.progress ?? 0)))})`;
+  document.body.dataset.transition = phase;
 }
 
 function currentSnapshot() {

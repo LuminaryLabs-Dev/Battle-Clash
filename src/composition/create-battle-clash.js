@@ -2,6 +2,7 @@ import { createEngine } from "nexusengine/engine";
 import { defineDomainServiceKit } from "nexusengine/domain-service-kit";
 import { createCameraFramingKit as createCoreCameraKit } from "nexusengine/domains/presentation/camera/framing";
 import { createDataKit as createCoreDataKit } from "nexusengine/domains/runtime/data";
+import { createStartupKit as createCoreStartupKit } from "nexusengine/domains/runtime/startup";
 import { createGraphicsKit as createCoreGraphicsKit } from "nexusengine/domains/presentation/graphics";
 import { createInputKit as createCoreInputKit } from "nexusengine/domains/interaction/input";
 import { createInteractionKit as createCoreInteractionKit } from "nexusengine/domains/interaction/runtime";
@@ -135,6 +136,13 @@ export function createBattleClashGame(options = {}) {
           seed: WORLD_SEED,
           streams: ["battle"]
         }
+      }),
+      createCoreStartupKit({
+        preparations: [
+          { id: "battle-clash-scene-data", label: "Scene data", weight: 2 },
+          { id: "battle-clash-assets", label: "Scene assets", weight: 2 },
+          { id: "battle-clash-presentation", label: "Presentation", weight: 1 }
+        ]
       }),
       createCorePersistenceKit({
         descriptors: {
@@ -320,6 +328,9 @@ export function createBattleClashGame(options = {}) {
     const worldState = structuredClone(
       engine.world.getResource(Resources.WorldState)
     );
+    const transition = structuredClone(
+      engine.world.getResource(Resources.SceneTransitionState)
+    );
     const hero = structuredClone(engine.world.getResource(Resources.HeroState));
     const army = structuredClone(engine.world.getResource(Resources.ArmyState));
     const sanctum = structuredClone(engine.world.getResource(Resources.SanctumState));
@@ -362,6 +373,7 @@ export function createBattleClashGame(options = {}) {
       entities,
       effects,
       scene,
+      transition,
       world: worldState,
       hero,
       army,
@@ -400,6 +412,7 @@ export function createBattleClashGame(options = {}) {
       progression: snapshot.progression,
       battleMetadata: snapshot.battleMetadata,
       scene: snapshot.scene,
+      transition: snapshot.transition,
       world: snapshot.world,
       hero: snapshot.hero,
       army: snapshot.army,
@@ -550,8 +563,31 @@ export function createBattleClashGame(options = {}) {
     tickEconomy: (deltaSeconds) =>
       engine.n.battleClashWorld.tickEconomy(deltaSeconds),
     changeLandscape: (patch) => engine.n.battleClashWorld.changeLandscape(patch),
-    transitionToScene: (sceneId, payload = {}) =>
-      engine.n.battleClashWorld.transitionScene(sceneId, payload),
+    transitionToScene: (sceneId, payload = {}) => {
+      const activeTransition = engine.n.battleClashFlow.getState();
+      if (activeTransition?.active) {
+        engine.n.battleClashFlow.cancel("superseded-by-navigation");
+      }
+      const before = engine.world.getResource(Resources.SceneState)?.current
+        ?? engine.n.battleClashWorld.getWorldState()?.currentSceneId
+        ?? null;
+      const result = engine.n.battleClashWorld.transitionScene(sceneId, payload);
+      if (!result?.accepted) return result;
+      const transition = result.transition ?? {};
+      const flow = engine.n.battleClashFlow.begin({
+        transitionId: transition.transitionId,
+        fromSceneId: transition.fromSceneId ?? before,
+        toSceneId: transition.toSceneId ?? result.state?.currentSceneId ?? sceneId,
+        reason: payload.reason ?? "navigation",
+        payload
+      });
+      if (flow.accepted) {
+        engine.n.battleClashFlow.markReady({ transitionId: flow.state.transitionId });
+      }
+      return { ...result, transition: engine.n.battleClashFlow.getState() };
+    },
+    getTransitionState: () => engine.n.battleClashFlow.getState(),
+    markSceneReady: (request = {}) => engine.n.battleClashFlow.markReady(request),
     canDeployAt: (x, z) => engine.n.battleClashDeployment.canDeployAt(x, z),
     getSnapshot,
     getDeterministicSnapshot,
