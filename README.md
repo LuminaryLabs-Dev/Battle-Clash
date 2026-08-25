@@ -142,22 +142,15 @@ NAT environments.
 
 ## Deployment
 
-Battle Clash uses three ordered branch tiers: `main` (development), `staging`
-(production staging), and `publish` (production). The policy and promotion requirements are in
-[`docs/BRANCH_TIERS.md`](docs/BRANCH_TIERS.md).
+Battle Clash has one deployment workflow and one public site:
 
-The tiered Pages workflow builds the three public branches into one Pages site:
+- Workflow: `.github/workflows/deploy.yml`
+- Source branch: `main`
+- Public site: <https://luminarylabs-dev.github.io/Battle-Clash/>
 
-Nexus ownership and the expansion checklist are documented in
-[`docs/NEXUS_EXPANSION_CHECKLIST.md`](docs/NEXUS_EXPANSION_CHECKLIST.md).
-
-- Development: <https://luminarylabs-dev.github.io/Battle-Clash/>
-- Staging: <https://luminarylabs-dev.github.io/Battle-Clash/staging/>
-- Production: <https://luminarylabs-dev.github.io/Battle-Clash/publish/>
-
-GitHub Pages gives one site per repository, so staging and production use stable subpaths of the
-same private-repository Pages site rather than pretending each branch is a
-separate Pages project.
+Every push to `main` installs dependencies, builds the Vite `dist/` artifact,
+uploads it to GitHub Pages, and deploys it through the `github-pages`
+environment. Manual dispatch is also available.
 
 For a local static fallback, refresh the checked-in `/docs` artifact with:
 
@@ -165,18 +158,8 @@ For a local static fallback, refresh the checked-in `/docs` artifact with:
 npm run build:pages
 ```
 
-`.github/workflows/deploy-pages.yml` rebuilds production, staging, and publish
-after a push to any of those branches; manual dispatch remains available.
 Configure repository Pages to use GitHub Actions. The GitHub repository remains
 private while the Pages game is public.
-
-Use `.github/workflows/promote-tier.yml` to open a checked promotion PR in the
-only permitted order: `main -> staging -> publish`. The promotion
-workflow does not merge or push to `main`.
-
-See [docs/TIER_MAINTENANCE.md](docs/TIER_MAINTENANCE.md) for baseline parity,
-promotion, drift checks, and recovery procedures. The weekly tier maintenance
-workflow also provides manual baseline and promotion audits.
 
 See [MASTER_PLAN.md](MASTER_PLAN.md) for the domain and product roadmap.
 

@@ -226,3 +226,11 @@
   actions, PeerJS command coverage, persistence proof, and generator/building validation scripts.
 - Validated a 15-second 960x540 CPU-Vulkan build/upgrade capture at 24 FPS with
   360 non-empty frames and authoritative before/after state receipts.
+
+## 2026-08-25 — Single Pages workflow
+
+- Replaced all repository Actions workflows with one `.github/workflows/deploy.yml`.
+- The workflow builds `main` with the `/Battle-Clash/` base path, uploads `dist/`,
+  and deploys the public GitHub Pages site through the standard Pages actions.
+- Removed automated branch audits, checks, tier maintenance, and promotion
+  workflows; local validation scripts remain available as explicit commands.

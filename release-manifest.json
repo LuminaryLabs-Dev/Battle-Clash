@@ -2,22 +2,13 @@
   "schema": "battle-clash.release/1",
   "project": "Battle Clash",
   "runtime": "Three.js + NexusEngine ECS",
-  "requiredChecks": ["npm ci", "npm run check", "npm run check:domains", "npm run check:tier-flow", "npm run build", "npm run build:pages", "git diff --check"],
+  "requiredChecks": ["npm ci", "npm run check", "npm run check:domains", "npm run check:buildings", "npm run build", "git diff --check"],
   "deployment": {
     "provider": "github-pages",
-    "sourceBranch": "publish",
-    "workflow": ".github/workflows/deploy-pages.yml",
-    "siteModel": "one-repository-site-with-tier-paths",
-    "developmentUrl": "https://luminarylabs-dev.github.io/Battle-Clash/",
-    "stagingUrl": "https://luminarylabs-dev.github.io/Battle-Clash/staging/",
-    "productionUrl": "https://luminarylabs-dev.github.io/Battle-Clash/publish/"
-  },
-  "branchFlow": {
-    "order": ["main", "staging", "publish"],
-    "promotionWorkflow": ".github/workflows/promote-tier.yml",
-    "parityScript": "scripts/validate-tier-flow.mjs",
-    "baselineMode": "identical-tree",
-    "promotionMode": "target-is-ancestor-of-source"
+    "sourceBranch": "main",
+    "workflow": ".github/workflows/deploy.yml",
+    "siteModel": "single-main-branch-pages-site",
+    "productionUrl": "https://luminarylabs-dev.github.io/Battle-Clash/"
   },
   "tiers": "release-tiers.json",
   "online": { "identity": "supabase-auth", "transport": "peerjs", "durableApi": "rails" },
