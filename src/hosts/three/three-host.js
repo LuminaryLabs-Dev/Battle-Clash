@@ -4,6 +4,9 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { BATTLEFIELD } from "../../data/battlefield.js";
 import { TERRITORIES, isTerritorySceneId } from "../../data/world.js";
 import { assetById } from "../../assets/catalog.js";
+import { BUILDING_PLOTS } from "../../data/buildings.js";
+import { battleBuildingStyle, generateProceduralBuilding } from "../../buildings/procedural-building-generator.js";
+import { createProceduralBuildingView, disposeProceduralBuildingView } from "../shared/procedural-building-view.js";
 
 const sharedBody = new RoundedBoxGeometry(1, 1, 1, 4, 0.08);
 const sharedCap = new RoundedBoxGeometry(1, 1, 1, 3, 0.12);
@@ -88,6 +91,27 @@ function createEntityView(entity) {
   const edges = new THREE.LineSegments(sharedEdges, edgeMaterial);
   edges.scale.fromArray(entity.renderable.size.map((value) => value * 1.006));
   group.add(edges);
+
+  const buildingStyle = battleBuildingStyle(entity);
+  const procedural = buildingStyle
+    ? createProceduralBuildingView(
+        THREE,
+        generateProceduralBuilding({
+          id: `${entity.id}:procedural`,
+          style: buildingStyle,
+          level: entity.role === "core" ? 3 : entity.role === "wall" ? 1 : 2,
+          seed: entity.id
+        }),
+        { roundedBoxFactory: (x, y, z, radius) => new RoundedBoxGeometry(x, y, z, 4, radius) }
+      )
+    : null;
+  if (procedural) {
+    procedural.position.y = -entity.renderable.size[1] / 2;
+    group.add(procedural);
+    body.visible = false;
+    cap.visible = false;
+    edges.visible = false;
+  }
 
   let crest = null;
   if (entity.role !== "wall") {
@@ -195,7 +219,8 @@ function createEntityView(entity) {
     faction: entity.faction,
     movement: entity.movement?.state ?? null,
     assetId: entity.renderable?.assetId ?? null,
-    fallbackParts: [body, cap, edges, crest].filter(Boolean),
+    fallbackParts: [body, cap, edges, crest, procedural].filter(Boolean),
+    procedural,
     assetRoot: null,
     assetRequested: false,
     assetFailed: false,
@@ -333,25 +358,35 @@ function createSanctumView() {
   const group = new THREE.Group();
   group.name = "dawnwatch-sanctum";
   const base = new THREE.Mesh(
-    new RoundedBoxGeometry(8, 0.72, 8, 6, 0.25),
+    new RoundedBoxGeometry(21, 0.72, 21, 6, 0.25),
     new THREE.MeshStandardMaterial({ color: 0x172554, emissive: 0x172554, emissiveIntensity: 0.32, roughness: 0.72 })
   );
   base.position.y = -0.12;
   base.receiveShadow = true;
-  const heart = new THREE.Mesh(
-    new THREE.OctahedronGeometry(1.1, 0),
-    new THREE.MeshStandardMaterial({ color: 0x7dd3fc, emissive: 0x0ea5e9, emissiveIntensity: 1.8, roughness: 0.24, metalness: 0.18 })
-  );
-  heart.position.y = 1.35;
-  heart.castShadow = true;
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(2.15, 0.075, 8, 48),
-    new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.68 })
-  );
-  ring.rotation.x = Math.PI / 2;
-  ring.position.y = 0.08;
-  group.add(base, heart, ring);
-  group.userData = { heart, ring };
+  const keepDescriptor = generateProceduralBuilding({ id: "dawnwatch-keep", style: "dungeon-heart", level: 3, seed: "dawnwatch-keep" });
+  const keep = createProceduralBuildingView(THREE, keepDescriptor, {
+    roundedBoxFactory: (x, y, z, radius) => new RoundedBoxGeometry(x, y, z, 4, radius)
+  });
+  keep.userData.buildingId = "dawnwatch-keep";
+  const heartIndex = keepDescriptor.parts.findIndex((part) => part.kind === "octahedron");
+  const ringIndex = keepDescriptor.parts.findIndex((part) => part.kind === "torus");
+  const heart = keep.children[heartIndex];
+  const ring = keep.children[ringIndex];
+  const plots = new THREE.Group();
+  plots.name = "sanctum-building-plots";
+  for (const plot of BUILDING_PLOTS) {
+    const marker = new THREE.Mesh(
+      new RoundedBoxGeometry(plot.size[0], 0.08, plot.size[1], 3, 0.16),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.18, depthWrite: false })
+    );
+    marker.position.set(plot.position.x, 0.42, plot.position.z);
+    marker.userData.plotId = plot.id;
+    plots.add(marker);
+  }
+  const structures = new THREE.Group();
+  structures.name = "sanctum-player-buildings";
+  group.add(base, keep, plots, structures);
+  group.userData = { heart, ring, keep, plots, structures, buildingViews: new Map() };
   return group;
 }
 
@@ -383,6 +418,8 @@ export function createThreeHost({
   onTerritorySelect,
   onFrontSelect,
   onLandmarkSelect,
+  onBuildingPlotSelect,
+  onBuildingSelect,
   canDeployAt
 }) {
   const scene = new THREE.Scene();
@@ -749,8 +786,49 @@ export function createThreeHost({
       heroMarker.position.set((hero.position.x - 50) * 0.22, 0.88, (hero.position.z - 50) * 0.22);
     }
     if (sceneId === "sanctum") {
-      sanctumView.userData.heart.rotation.y = timeSeconds * 0.55;
-      sanctumView.userData.ring.rotation.z = timeSeconds * 0.24;
+      if (sanctumView.userData.heart) sanctumView.userData.heart.rotation.y = timeSeconds * 0.55;
+      if (sanctumView.userData.ring) sanctumView.userData.ring.rotation.z = timeSeconds * 0.24;
+      syncSanctumBuildings(snapshot);
+    }
+  }
+
+  function syncSanctumBuildings(snapshot) {
+    const state = snapshot.buildings ?? snapshot.world?.buildings;
+    if (!state) return;
+    const desired = new Set(Object.keys(state.structures ?? {}));
+    for (const [id, entry] of sanctumView.userData.buildingViews) {
+      const structure = state.structures?.[id];
+      if (desired.has(id) && entry.level === structure?.level && entry.blueprintId === structure?.blueprintId) continue;
+      sanctumView.userData.structures.remove(entry.view);
+      disposeProceduralBuildingView(entry.view);
+      sanctumView.userData.buildingViews.delete(id);
+    }
+    for (const structure of Object.values(state.structures ?? {})) {
+      if (sanctumView.userData.buildingViews.has(structure.id)) continue;
+      const descriptor = generateProceduralBuilding({
+        id: structure.id,
+        blueprintId: structure.blueprintId,
+        level: structure.level,
+        seed: structure.seed
+      });
+      const view = createProceduralBuildingView(THREE, descriptor, {
+        roundedBoxFactory: (x, y, z, radius) => new RoundedBoxGeometry(x, y, z, 4, radius)
+      });
+      view.position.set(structure.position.x, 0.4, structure.position.z);
+      view.userData.buildingId = structure.id;
+      view.userData.plotId = structure.plotId;
+      sanctumView.userData.structures.add(view);
+      sanctumView.userData.buildingViews.set(structure.id, {
+        view,
+        level: structure.level,
+        blueprintId: structure.blueprintId
+      });
+    }
+    for (const marker of sanctumView.userData.plots.children) {
+      const plot = state.plots.find((candidate) => candidate.id === marker.userData.plotId);
+      const selected = state.selectedPlotId === marker.userData.plotId;
+      marker.material.color.set(plot?.buildingId ? 0xf59e0b : selected ? 0x67e8f9 : 0x38bdf8);
+      marker.material.opacity = selected ? 0.46 : plot?.buildingId ? 0.12 : 0.2;
     }
   }
 
@@ -799,6 +877,22 @@ export function createThreeHost({
   });
   canvas.addEventListener("pointerdown", (event) => {
     const sceneId = latestSnapshot?.scene?.current ?? "encounter";
+    if (sceneId === "sanctum") {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hit = raycaster.intersectObjects([sanctumView.userData.structures, sanctumView.userData.plots], true)[0];
+      if (!hit) return;
+      let node = hit.object;
+      while (node && !node.userData?.buildingId && !node.userData?.plotId) node = node.parent;
+      if (node?.userData?.buildingId && typeof onBuildingSelect === "function") {
+        onBuildingSelect(node.userData.buildingId);
+      } else if (node?.userData?.plotId && typeof onBuildingPlotSelect === "function") {
+        onBuildingPlotSelect(node.userData.plotId);
+      }
+      return;
+    }
     if (sceneId === "overworld") {
       if (typeof onTerritorySelect !== "function") return;
       pointer.x = ((event.clientX - canvas.getBoundingClientRect().left) / canvas.clientWidth) * 2 - 1;
@@ -878,6 +972,7 @@ export function createThreeHost({
       ring.material.dispose();
       ring.geometry.dispose();
     }
+    if (view.userData.procedural) disposeProceduralBuildingView(view.userData.procedural);
   }
 
   function syncEntities(snapshot, timeSeconds) {
@@ -1195,6 +1290,8 @@ export function createThreeHost({
     getSnapshot: () => latestSnapshot,
     dispose() {
       observer.disconnect();
+      for (const entry of sanctumView.userData.buildingViews.values()) disposeProceduralBuildingView(entry.view);
+      disposeProceduralBuildingView(sanctumView.userData.keep);
       renderer.dispose();
     }
   };

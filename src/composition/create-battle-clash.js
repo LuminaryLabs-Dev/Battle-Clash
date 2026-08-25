@@ -27,6 +27,7 @@ import { createSessionKit } from "../domains/session/session-kit.js";
 import { Components, Events, Resources } from "../domains/shared/definitions.js";
 import { createTargetingKit } from "../domains/targeting/targeting-kit.js";
 import { createBattleWorldKit } from "../domains/world/world-kit.js";
+import { createBuildingKit } from "../domains/building/building-kit.js";
 import {
   createArmyBoundaryKit,
   createEconomyBoundaryKit,
@@ -204,6 +205,7 @@ export function createBattleClashGame(options = {}) {
         progression: options.progression,
         world: options.world
       }),
+      createBuildingKit(),
       createFlowBoundaryKit(),
       createFrontierBoundaryKit(),
       createHeroBoundaryKit(),
@@ -354,6 +356,7 @@ export function createBattleClashGame(options = {}) {
     const hero = structuredClone(engine.world.getResource(Resources.HeroState));
     const army = structuredClone(engine.world.getResource(Resources.ArmyState));
     const sanctum = structuredClone(engine.world.getResource(Resources.SanctumState));
+    const buildings = structuredClone(engine.world.getResource(Resources.BuildingState));
     const economy = structuredClone(
       engine.world.getResource(Resources.EconomyState)
     );
@@ -399,6 +402,7 @@ export function createBattleClashGame(options = {}) {
       hero,
       army,
       sanctum,
+      buildings,
       economy,
       territory,
       landscape,
@@ -439,6 +443,7 @@ export function createBattleClashGame(options = {}) {
       hero: snapshot.hero,
       army: snapshot.army,
       sanctum: snapshot.sanctum,
+      buildings: snapshot.buildings,
       economy: snapshot.economy,
       territory: snapshot.territory,
       landscape: snapshot.landscape,
@@ -531,6 +536,13 @@ export function createBattleClashGame(options = {}) {
     getCurrentTerritory: () => engine.n.battleClashWorld.getCurrentTerritory(),
     getHeroState: () => engine.n.battleClashWorld.getHeroState(),
     getSanctumState: () => engine.n.battleClashWorld.getSanctumState(),
+    getBuildingState: () => engine.n.battleClashBuilding.getState(),
+    selectBuildingBlueprint: (blueprintId) => engine.n.battleClashBuilding.selectBlueprint(blueprintId),
+    selectBuildingPlot: (plotId) => engine.n.battleClashBuilding.selectPlot(plotId),
+    selectBuilding: (buildingId) => engine.n.battleClashBuilding.selectBuilding(buildingId),
+    placeBuilding: (request = {}) => engine.n.battleClashBuilding.place(request),
+    upgradeBuilding: (buildingId) => engine.n.battleClashBuilding.upgrade(buildingId),
+    demolishBuilding: (buildingId) => engine.n.battleClashBuilding.demolish(buildingId),
     getContentState: () => engine.n.battleClashContent.getState(),
     setContentProfile: (profile) => engine.n.battleClashContent.setProfile(profile),
     craftGear: (itemId) => engine.n.battleClashContent.craft(itemId),

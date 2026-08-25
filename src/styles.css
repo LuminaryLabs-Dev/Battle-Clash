@@ -478,6 +478,12 @@ body[data-transition="failed"] .scene-transition__veil { background: radial-grad
   text-transform: uppercase;
 }
 
+.world-panel__buildings {
+  margin-top: 6px !important;
+  color: #bae6fd;
+  line-height: 1.45;
+}
+
 .world-panel__fronts {
   margin-top: 6px !important;
   color: #fda4af;

@@ -7,6 +7,7 @@ import {
   territoryById,
   territorySceneId
 } from "../../data/world.js";
+import { applyBuildingBonuses, createDefaultBuildingState } from "../building/building-state.js";
 
 const RESOURCE_KEYS = ["gold", "food", "iron", "arcane"];
 
@@ -416,7 +417,8 @@ export function createDefaultWorldState(profile = {}) {
       territories[currentTerritoryId]?.landscape ?? landscapeForTerritory(currentTerritoryId, 0)
     )
   };
-  return initialState;
+  initialState.buildings = createDefaultBuildingState(profile.buildings);
+  return applyBuildingBonuses(initialState, initialState.buildings);
 }
 
 export function interactLandmark(state, landmarkId) {
@@ -867,6 +869,7 @@ export function tickEconomy(state, deltaSeconds) {
       const route = frontierState.supplyRoutes?.find((item) => item.territoryId === id);
       return sum + finite(territorySource[id]?.economy?.[key]) * productionMultiplier(territorySource[id]) * Number(route?.efficiency ?? 1);
     }, 0) / 60;
+    if (key === "iron") total[key] *= 1 + finite(frontierState.buildings?.bonuses?.ironProduction);
     return total;
   }, {});
   const rosterCount = state.army.roster.reduce((sum, unit) => sum + Number(unit.count ?? 0), 0);
@@ -876,7 +879,10 @@ export function tickEconomy(state, deltaSeconds) {
     total[key] = Math.max(0, Math.min(frontierState.economy.storage[key], frontierState.economy.resources[key] + rates[key] * delta - cost));
     return total;
   }, {});
-  const capacity = 12 + frontierState.controlledTerritoryIds.length * 2 + Math.max(0, frontierState.sanctum.level - 1) * 4;
+  const capacity = 12
+    + Math.max(0, frontierState.controlledTerritoryIds.length - 1) * 2
+    + Math.max(0, frontierState.sanctum.level - 1) * 4
+    + finite(frontierState.buildings?.bonuses?.armyCapacity);
   const roster = frontierState.army.roster.map((unit) => ({ ...unit }));
   const recruits = resources.food >= 10
     ? Math.max(0, Math.floor((frontierState.economy.lastTick + delta) / 30) - Math.floor(frontierState.economy.lastTick / 30))

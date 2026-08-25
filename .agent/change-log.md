@@ -1,5 +1,15 @@
 # Agent Change Log
 
+## 2026-08-25
+
+- Added a game-owned headless Three.js host adapter backed by the real
+  `createBattleClashGame()` composition and deterministic fixed-step simulation.
+- Added a stable deployment target, projection/raycast action boundary, and a
+  one-command Headless Editor review runner.
+- Proved before/action/after state and PNG changes through Mesa Lavapipe CPU
+  Vulkan, then recorded and inspected a six-second 960x540 MP4 review.
+- Kept deployment workflows and the browser Three.js host unchanged.
+
 ## 2026-08-05
 
 - Audited the live NexusEngine Core domain/kit catalog and mapped Battle Clash
@@ -203,3 +213,16 @@
   PR #1; branch-audit and checks completed successfully.
 - Enabled protected auto-merge without bypassing review. Baseline alignment is
   waiting on GitHub's required approving review.
+
+## 2026-08-25 — Procedural building system
+
+- Added `n:game:battle-clash:building` with persistent selection, placement,
+  AABB collision, costs, three upgrade levels, demolition refunds, receipts,
+  ECS events/resources, and derived army/economy/defense bonuses.
+- Added deterministic procedural building descriptors and one shared Three.js
+  constructor used by the live browser, encounter headless adapter, and a
+  dedicated Dawnwatch build-loop review adapter.
+- Added direct isometric plot/building selection, build/upgrade/demolish HUD
+  actions, PeerJS command coverage, persistence proof, and generator/building validation scripts.
+- Validated a 15-second 960x540 CPU-Vulkan build/upgrade capture at 24 FPS with
+  360 non-empty frames and authoritative before/after state receipts.

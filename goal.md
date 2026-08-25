@@ -11,10 +11,12 @@ defend boundaries.
 
 ## Status
 
-The Nexus expansion baseline is implemented locally on `main`: Flow transition
-state/readiness is composed with Core Scene and Runtime Startup, the renderer
-projects a diegetic transition veil, weighted preparation records bridge to Core
-Startup, and semantic coverage is 694/694 (100%).
+The Nexus expansion baseline and persistent Sanctum building proof are
+implemented: Flow transition state/readiness is composed with Core Scene and
+Runtime Startup, while the Building domain owns deterministic plot collision,
+costs, three upgrade tiers, demolition receipts, and economy/army bonuses.
+Browser and headless hosts now share procedural building descriptors instead of
+reconstructing conflicting block stand-ins. Semantic coverage is 701/701 (100%).
 See `docs/NEXUS_EXPANSION_CHECKLIST.md` for the domain-to-kit contract.
 
 Complete locally on `agent/domain-validator` (not pushed to `main`). Home Base, overworld,
@@ -65,6 +67,10 @@ Supabase, Rails runtime, OAuth, and hosted PeerServer/TURN remain release gates.
 - World persistence stores the connected territory graph, ownership, routes,
   landscape revisions, hero position, army roster, and economy alongside XP.
 - Economy storage caps, army upkeep, and Sanctum trading are simulation-owned.
+- Sanctum construction is persistent `WorldState`/`BuildingState`: six fixed
+  plots validate AABB clearance from the central keep and existing structures;
+  four blueprints spend resources, upgrade to level 3, apply derived bonuses,
+  and return a bounded 35% refund when demolished.
 - Encounter objectives are data-derived from territory kind/front recipes and
   resolve through `ObjectiveState`, not through Three.js or UI state.
 - Territory scenes seed settlement, resource, and signature-site entities from

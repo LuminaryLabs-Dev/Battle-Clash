@@ -5,6 +5,7 @@ import {
 } from "./composition/create-battle-clash.js";
 import { ARCHETYPES, BATTLEFIELD } from "./data/battlefield.js";
 import { isTerritorySceneId } from "./data/world.js";
+import { BUILDING_BLUEPRINT_ORDER, BUILDING_BLUEPRINTS, buildingCost } from "./data/buildings.js";
 import { createThreeHost } from "./hosts/three/three-host.js";
 import { createPeerJsRoomAdapter } from "./network/peerjs-room-adapter.js";
 import {
@@ -82,11 +83,16 @@ const elements = {
   worldFronts: document.querySelector("#worldFronts"),
   worldHeroReadout: document.querySelector("#worldHeroReadout"),
   worldResources: document.querySelector("#worldResources"),
+  buildingReadout: document.querySelector("#buildingReadout"),
   enterFrontier: document.querySelector("#enterFrontierButton"),
   healArmy: document.querySelector("#healArmyButton"),
   recruitArmy: document.querySelector("#recruitArmyButton"),
   upgradeSanctum: document.querySelector("#upgradeSanctumButton"),
   tradeResources: document.querySelector("#tradeResourcesButton"),
+  cycleBuilding: document.querySelector("#cycleBuildingButton"),
+  placeBuilding: document.querySelector("#placeBuildingButton"),
+  upgradeBuilding: document.querySelector("#upgradeBuildingButton"),
+  demolishBuilding: document.querySelector("#demolishBuildingButton"),
   discoverNext: document.querySelector("#discoverNextButton"),
   claimTerritory: document.querySelector("#claimTerritoryButton"),
   enterEncounter: document.querySelector("#enterEncounterButton"),
@@ -422,12 +428,30 @@ function updateWorldUi(snapshot) {
   elements.worldHeroReadout.textContent = `${snapshot.hero?.name ?? "EMBER"} · LV ${snapshot.hero?.level ?? 1} · SCOUT R${snapshot.hero?.discoveryRadius ?? 2}${heroUnlocks.length ? ` · ${heroUnlocks.join(" · ")}` : ""}`;
   const resourceValue = (key) => Math.floor(Number(resources[key] ?? 0));
   elements.worldResources.textContent = `G ${resourceValue("gold")} · F ${resourceValue("food")} · I ${resourceValue("iron")} · A ${resourceValue("arcane")}`;
+  const buildingState = snapshot.buildings ?? world.buildings;
+  const blueprint = BUILDING_BLUEPRINTS[buildingState?.selectedBlueprintId] ?? BUILDING_BLUEPRINTS.barracks;
+  const selectedPlot = buildingState?.plots?.find((plot) => plot.id === buildingState.selectedPlotId);
+  const selectedBuilding = buildingState?.structures?.[buildingState.selectedBuildingId];
+  const cost = buildingCost(blueprint.id, 1);
+  const costLabel = Object.entries(cost ?? {}).filter(([, value]) => value > 0).map(([key, value]) => `${value}${key[0].toUpperCase()}`).join(" · ");
+  if (elements.buildingReadout) {
+    const selectedLabel = selectedBuilding
+      ? `${BUILDING_BLUEPRINTS[selectedBuilding.blueprintId]?.label ?? selectedBuilding.blueprintId} LV ${selectedBuilding.level}`
+      : `${blueprint.label} · ${String(selectedPlot?.id ?? "select plot").replace("plot-", "").replaceAll("-", " ")}`;
+    elements.buildingReadout.textContent = `${selectedLabel.toUpperCase()} · ${Object.keys(buildingState?.structures ?? {}).length} / ${buildingState?.plots?.length ?? 6} BUILT · ${costLabel}`;
+    elements.buildingReadout.hidden = sceneId !== "sanctum";
+  }
+  if (elements.cycleBuilding) elements.cycleBuilding.textContent = `Plan: ${blueprint.label}`;
   elements.worldPanel.hidden = false;
   elements.enterFrontier.hidden = sceneId !== "sanctum";
   elements.healArmy.hidden = sceneId !== "sanctum";
   elements.recruitArmy.hidden = sceneId !== "sanctum";
   elements.upgradeSanctum.hidden = sceneId !== "sanctum";
   elements.tradeResources.hidden = sceneId !== "sanctum";
+  elements.cycleBuilding.hidden = sceneId !== "sanctum";
+  elements.placeBuilding.hidden = sceneId !== "sanctum" || Boolean(selectedPlot?.buildingId);
+  elements.upgradeBuilding.hidden = sceneId !== "sanctum" || !selectedBuilding;
+  elements.demolishBuilding.hidden = sceneId !== "sanctum" || !selectedBuilding;
   elements.discoverNext.hidden = sceneId !== "overworld";
   // Territory capture is encounter-owned in the player flow; the domain API
   // remains available for deterministic setup and server-side resolution.
@@ -439,6 +463,10 @@ function updateWorldUi(snapshot) {
   elements.recruitArmy.disabled = sceneId !== "sanctum";
   elements.upgradeSanctum.disabled = sceneId !== "sanctum";
   elements.tradeResources.disabled = sceneId !== "sanctum";
+  elements.cycleBuilding.disabled = sceneId !== "sanctum";
+  elements.placeBuilding.disabled = sceneId !== "sanctum" || Boolean(selectedPlot?.buildingId);
+  elements.upgradeBuilding.disabled = sceneId !== "sanctum" || !selectedBuilding || selectedBuilding.level >= 3;
+  elements.demolishBuilding.disabled = sceneId !== "sanctum" || !selectedBuilding;
   elements.discoverNext.disabled = sceneId !== "overworld";
   elements.claimTerritory.disabled = true;
   elements.enterEncounter.disabled = !territoryScene;
@@ -682,7 +710,8 @@ function updateTransitionUi(snapshot) {
     elements.deployMode, elements.start, elements.fortify, elements.heroAbility,
     elements.playAgain, elements.returnAfterRaid, elements.enterFrontier,
     elements.healArmy, elements.recruitArmy, elements.upgradeSanctum,
-    elements.tradeResources, elements.discoverNext, elements.claimTerritory,
+    elements.tradeResources, elements.cycleBuilding, elements.placeBuilding,
+    elements.upgradeBuilding, elements.demolishBuilding, elements.discoverNext, elements.claimTerritory,
     elements.enterEncounter, elements.returnSanctum
   ]) {
     if (control) control.disabled = inputLocked || control.dataset.transitionDisabled === "true";
@@ -692,9 +721,11 @@ function updateTransitionUi(snapshot) {
 function currentSnapshot() {
   const local = game.getSnapshot();
   if (network?.isRemoteAuthority() && remoteSnapshot) {
+    const world = mergeRemoteWorld(local.world, remoteSnapshot.world);
     return {
       ...remoteSnapshot,
-      world: mergeRemoteWorld(local.world, remoteSnapshot.world),
+      world,
+      buildings: remoteSnapshot.buildings ?? world.buildings ?? local.buildings,
       session: local.session
     };
   }
@@ -755,6 +786,7 @@ function createPeerSnapshot(snapshot) {
     economy: snapshot.economy,
     army: snapshot.army,
     sanctum: snapshot.sanctum,
+    buildings: snapshot.buildings,
     loot: snapshot.loot,
     content: snapshot.content,
     effects: snapshot.effects,
@@ -894,6 +926,24 @@ function applyLocalCommand(command, { remote = false } = {}) {
     case "upgrade-sanctum":
       game.upgradeSanctum();
       break;
+    case "select-building-blueprint":
+      game.selectBuildingBlueprint(command.blueprintId);
+      break;
+    case "select-building-plot":
+      game.selectBuildingPlot(command.plotId);
+      break;
+    case "select-building":
+      game.selectBuilding(command.buildingId);
+      break;
+    case "place-building":
+      game.placeBuilding({ blueprintId: command.blueprintId, plotId: command.plotId });
+      break;
+    case "upgrade-building":
+      game.upgradeBuilding(command.buildingId);
+      break;
+    case "demolish-building":
+      game.demolishBuilding(command.buildingId);
+      break;
     case "trade-resources":
       game.tradeResources(command);
       break;
@@ -919,7 +969,7 @@ function dispatchCommand(command) {
   if (
     session.status === "connected" &&
     session.role === "defender" &&
-    !["fortify", "reset", "scene", "discover", "claim", "move-hero", "heal-army", "recruit-army", "select-archetype", "craft-gear", "equip-gear", "upgrade-sanctum", "trade-resources", "interact-landmark", "hero-ability"].includes(command.kind)
+    !["fortify", "reset", "scene", "discover", "claim", "move-hero", "heal-army", "recruit-army", "select-archetype", "craft-gear", "equip-gear", "upgrade-sanctum", "select-building-blueprint", "select-building-plot", "select-building", "place-building", "upgrade-building", "demolish-building", "trade-resources", "interact-landmark", "hero-ability"].includes(command.kind)
   ) {
     return false;
   }
@@ -1189,6 +1239,15 @@ try {
         showCue(summary ? `Landmark gathered · ${summary}.` : "Landmark surveyed.", 1800);
       }
     },
+    onBuildingPlotSelect(plotId) {
+      dispatchCommand({ kind: "select-building-plot", plotId });
+      showCue(`Build plot selected · ${plotId.replace("plot-", "").replaceAll("-", " ")}.`, 1500);
+    },
+    onBuildingSelect(buildingId) {
+      dispatchCommand({ kind: "select-building", buildingId });
+      const structure = currentSnapshot().buildings?.structures?.[buildingId];
+      showCue(`${BUILDING_BLUEPRINTS[structure?.blueprintId]?.label ?? "Building"} · level ${structure?.level ?? 1}.`, 1500);
+    },
     onDeploy(x, z) {
       dispatchCommand({ kind: "deploy", x, z });
       showCue("Delver bound to the perimeter.", 1400);
@@ -1355,6 +1414,44 @@ try {
       showCue("Five iron traded for frontier gold.", 1800);
     } else showCue("The sanctum cannot complete that trade.", 1800);
   });
+  elements.cycleBuilding.addEventListener("click", () => {
+    const state = currentSnapshot().buildings;
+    const index = BUILDING_BLUEPRINT_ORDER.indexOf(state.selectedBlueprintId);
+    const blueprintId = BUILDING_BLUEPRINT_ORDER[(index + 1) % BUILDING_BLUEPRINT_ORDER.length];
+    dispatchCommand({ kind: "select-building-blueprint", blueprintId });
+    showCue(`${BUILDING_BLUEPRINTS[blueprintId].label} plan selected.`, 1400);
+  });
+  elements.placeBuilding.addEventListener("click", () => {
+    const state = currentSnapshot().buildings;
+    const command = { kind: "place-building", blueprintId: state.selectedBlueprintId, plotId: state.selectedPlotId };
+    if (network?.isRemoteAuthority()) {
+      if (network.sendCommand(command)) showCue("Build order sent to host.", 1600);
+      return;
+    }
+    const result = game.placeBuilding(command);
+    renderNow();
+    showCue(result.accepted ? `${BUILDING_BLUEPRINTS[command.blueprintId].label} completed.` : `Build rejected · ${result.reason.replaceAll("-", " ")}.`, 1900);
+  });
+  elements.upgradeBuilding.addEventListener("click", () => {
+    const buildingId = currentSnapshot().buildings.selectedBuildingId;
+    if (network?.isRemoteAuthority()) {
+      if (network.sendCommand({ kind: "upgrade-building", buildingId })) showCue("Upgrade order sent to host.", 1600);
+      return;
+    }
+    const result = game.upgradeBuilding(buildingId);
+    renderNow();
+    showCue(result.accepted ? `Building upgraded to level ${result.building.level}.` : `Upgrade rejected · ${result.reason.replaceAll("-", " ")}.`, 1900);
+  });
+  elements.demolishBuilding.addEventListener("click", () => {
+    const buildingId = currentSnapshot().buildings.selectedBuildingId;
+    if (network?.isRemoteAuthority()) {
+      if (network.sendCommand({ kind: "demolish-building", buildingId })) showCue("Demolition order sent to host.", 1600);
+      return;
+    }
+    const result = game.demolishBuilding(buildingId);
+    renderNow();
+    showCue(result.accepted ? "Building demolished · 35% materials recovered." : `Demolition rejected · ${result.reason.replaceAll("-", " ")}.`, 1900);
+  });
   elements.selectDelver.addEventListener("click", () => {
     dispatchCommand({ kind: "select-archetype", archetype: "delver" });
     showCue("Delver loadout selected.", 1400);
@@ -1491,7 +1588,12 @@ try {
     discoverNextTerritory,
     getContentState: () => game.getContentState(),
     craftGear(itemId) { return game.craftGear(itemId); },
-    equipGear(itemId) { return game.equipGear(itemId); }
+    equipGear(itemId) { return game.equipGear(itemId); },
+    selectBuildingPlot(plotId) { dispatchCommand({ kind: "select-building-plot", plotId }); return currentSnapshot(); },
+    selectBuildingBlueprint(blueprintId) { dispatchCommand({ kind: "select-building-blueprint", blueprintId }); return currentSnapshot(); },
+    placeBuilding(request = {}) { dispatchCommand({ kind: "place-building", ...request }); return currentSnapshot(); },
+    upgradeBuilding(buildingId) { dispatchCommand({ kind: "upgrade-building", buildingId }); return currentSnapshot(); },
+    demolishBuilding(buildingId) { dispatchCommand({ kind: "demolish-building", buildingId }); return currentSnapshot(); }
   });
 
   renderNow();

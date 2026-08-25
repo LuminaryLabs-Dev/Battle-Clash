@@ -9,7 +9,8 @@ Play: <https://luminarylabs-dev.github.io/Battle-Clash/>
 
 ## First Playable
 
-- Bird's-eye Three.js dungeon made from readable colored cubes.
+- Isometric Three.js battlefields with deterministic procedural fortifications,
+  towers, vaults, walls, and a readable Dungeon Heart silhouette.
 - World-first active play with tiny masked interaction sigils instead of a dashboard.
 - Rounded cube silhouettes, layered lighting, deployment runes, attached damage
   feedback, projectile trails, terminal shockwaves, and responsive camera framing.
@@ -34,6 +35,11 @@ Play: <https://luminarylabs-dev.github.io/Battle-Clash/>
   world A* routes precede territory-grid A* movement.
 - Economy storage, army upkeep, Sanctum recruitment/healing/upgrades, and
   resource trading are persistent simulation state.
+- Dawnwatch has six selectable construction plots and four persistent building
+  blueprints: Delver Hall, Ember Foundry, Frontier Watch, and Vault Storehouse.
+- Building placement uses renderer-neutral AABB collision, deducts authoritative
+  resources, upgrades through three visual/gameplay tiers, applies army,
+  production, defense, scouting, and storage bonuses, and supports a 35% demolition refund.
 
 ## Architecture
 
@@ -46,7 +52,7 @@ Browser
 │  ├─ deterministic room discovery
 │  └─ transports commands and snapshots only
 └─ Battle Clash composition
-   ├─ flow, world, frontier, hero, army, economy
+   ├─ flow, world, frontier, hero, army, economy, building
    ├─ encounter, sanctum, raid, deployment, navigation, targeting, combat
    ├─ defense, progression, and session domains
    └─ NexusEngine Core
@@ -77,12 +83,36 @@ Validation:
 
 ```sh
 npm run check
+npm run check:buildings
 npm run build
+```
+
+Headless Editor review:
+
+```sh
+NEXUS_ENGINE_EDITOR_PATH=/path/to/NexusEngine-Editor/src/headless/index.js \
+  npm run review:headless
+```
+
+The game-owned adapter at
+`src/hosts/headless/battle-clash-headless-adapter.js` imports the real
+NexusEngine composition, projects the stable `deploy-slot` target through the
+real Three.js camera, raycasts it, calls `deployAt()` and `startRaid()`, advances
+the fixed simulation, and emits before/after image and state evidence. It does
+not move combat, deployment, or victory truth into Three.js and does not require
+Chromium or Xvfb.
+
+The procedural generator can also emit a renderer-neutral review descriptor:
+
+```sh
+npm run generate:building -- watchtower 2 artifacts/buildings/watchtower-level-2.json
 ```
 
 Controls:
 
 - Click a glowing perimeter rune to deploy a delver.
+- In Dawnwatch, click a blue plot, cycle the building plan, then build; click an
+  occupied structure to upgrade or demolish it.
 - `1` toggles deployment focus and `Space` begins the run.
 - `F` invokes the defender ward when it becomes available.
 - `Escape` opens the system menu; reset and diagnostics stay inside it.

@@ -8,6 +8,11 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 
 ## Durable Architecture Decisions
 
+- The game-owned headless Three.js adapter imports the real Battle Clash
+  composition, exposes stable raycast targets, and calls semantic game actions;
+  it never owns combat or deployment truth. NexusEngine Editor owns provider
+  selection, before/after capture, interaction evidence, and validation.
+
 - Battle Clash Flow owns a deterministic transition-phase resource and event
   (`exiting → preparing → loading → ready → revealing → stable/failed`) while
   Core Scene remains authoritative for scene identity and route guards. The
@@ -356,3 +361,15 @@ layouts, UI, text, audio, or balance of Clash of Clans, Diablo, or another game.
 - Keep active-play UI visually tiny while preserving larger invisible pointer
   targets, keyboard focus, screen-reader labels, and an invoked accessibility surface.
 - Update this file by replacing outdated decisions rather than accumulating duplicates.
+
+## Procedural Sanctum Construction
+
+- `n:game:battle-clash:building` owns plot selection, placement validation,
+  resource costs, upgrades, demolition, and derived bonuses. Its serializable
+  state is embedded in `WorldState` for the existing local/cloud persistence boundary.
+- `src/buildings/procedural-building-generator.js` emits deterministic,
+  renderer-neutral part and AABB descriptors. Browser and headless Three hosts
+  consume the same descriptors; neither host owns gameplay truth.
+- Dawnwatch uses six fixed construction plots around a reserved central-keep
+  collider. Player structures have three tiers and demolition returns 35% of
+  cumulative invested resources.

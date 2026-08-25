@@ -462,6 +462,7 @@ function territoryCompletionSystem(world) {
   world.setResource(Resources.ArmyState, structuredClone(next.army));
   world.setResource(Resources.EconomyState, structuredClone(next.economy));
   world.setResource(Resources.SanctumState, structuredClone(next.sanctum));
+  world.setResource(Resources.BuildingState, structuredClone(next.buildings));
   world.setResource(Resources.TerritoryState, structuredClone(next.territories[next.currentTerritoryId]));
   world.setResource(Resources.LandscapeState, {
     ...structuredClone(next.landscape),
@@ -535,6 +536,7 @@ function commitWorldState(engine, next, transition) {
   engine.world.setResource(Resources.ArmyState, structuredClone(committed.army));
   engine.world.setResource(Resources.EconomyState, structuredClone(committed.economy));
   engine.world.setResource(Resources.SanctumState, structuredClone(committed.sanctum));
+  engine.world.setResource(Resources.BuildingState, structuredClone(committed.buildings));
   engine.world.setResource(
     Resources.TerritoryState,
     structuredClone(committed.territories[committed.currentTerritoryId])

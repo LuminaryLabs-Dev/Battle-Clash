@@ -18,11 +18,14 @@
     "check:auth": "node scripts/check-auth-contract.mjs",
     "check:sync": "node scripts/check-sync-contract.mjs",
     "check:peer": "node scripts/check-peer-contract.mjs",
-    "check:all": "npm run check:domains && npm run check:tier && npm run check && npm run check:auth && npm run check:sync && npm run check:peer && npm run check:release && npm run build && npm run check:pages-artifact",
+    "check:all": "npm run check:domains && npm run check:buildings && npm run check:tier && npm run check && npm run check:auth && npm run check:sync && npm run check:peer && npm run check:release && npm run build && npm run check:pages-artifact",
     "audit:tier": "node scripts/write-tier-audit.mjs",
     "preview": "vite preview",
     "check": "node scripts/validate-simulation.mjs",
-    "server": "node server/peer-server.mjs"
+    "server": "node server/peer-server.mjs",
+    "review:headless": "node scripts/run-headless-editor-review.mjs",
+    "generate:building": "node scripts/generate-procedural-building.mjs",
+    "check:buildings": "node scripts/validate-building-system.mjs"
   },
   "dependencies": {
     "nexusengine": "https://codeload.github.com/LuminaryLabs-Dev/NexusEngine/tar.gz/c9218a79a84d8ea1980edef8a99df8918d688b6f",

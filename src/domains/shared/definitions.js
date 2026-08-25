@@ -41,6 +41,7 @@ export const Resources = Object.freeze({
   EconomyState: defineResource("battle-clash.economy-state"),
   LandscapeState: defineResource("battle-clash.landscape-state"),
   SanctumState: defineResource("battle-clash.sanctum-state"),
+  BuildingState: defineResource("battle-clash.building-state"),
   ObjectiveState: defineResource("battle-clash.objective-state"),
   RoomState: defineResource("battle-clash.room-state"),
   LootState: defineResource("battle-clash.loot-state"),
@@ -100,5 +101,10 @@ export const Events = Object.freeze({
   ItemCrafted: defineEvent("battle-clash.content.item-crafted"),
   GearEquipped: defineEvent("battle-clash.content.gear-equipped"),
   SceneTransitionChanged: defineEvent("battle-clash.flow.scene-transition-changed"),
-  ScenePreparationChanged: defineEvent("battle-clash.flow.scene-preparation-changed")
+  ScenePreparationChanged: defineEvent("battle-clash.flow.scene-preparation-changed"),
+  BuildingSelected: defineEvent("battle-clash.building.selected"),
+  BuildingPlaced: defineEvent("battle-clash.building.placed"),
+  BuildingUpgraded: defineEvent("battle-clash.building.upgraded"),
+  BuildingDemolished: defineEvent("battle-clash.building.demolished"),
+  BuildingRejected: defineEvent("battle-clash.building.rejected")
 });
